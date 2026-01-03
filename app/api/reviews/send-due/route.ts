@@ -51,14 +51,18 @@ export async function POST(req: Request) {
       `?bookingId=${encodeURIComponent(b.id)}` +
       `&token=${encodeURIComponent(token)}`;
 
-    await sendReviewRequestEmail({
-      to: b.customerEmail,
-      businessName: b.business.name,
-      serviceName: b.serviceName,
-      date: b.date,
-      time: b.time,
-      reviewLink
-    });
+    const date = b.startsAt.toISOString().slice(0, 10); // YYYY-MM-DD
+const time = b.startsAt.toISOString().slice(11, 16); // HH:MM (UTC)
+
+await sendReviewRequestEmail({
+  to: b.customerEmail,
+  businessName: b.business.name,
+  serviceName: b.serviceName,
+  date,
+  time,
+  reviewLink,
+});
+
 
     sent++;
   }
