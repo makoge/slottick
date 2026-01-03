@@ -1,0 +1,18 @@
+{
+  "home": {
+    "brand": "Slotta",
+    "tagline": "Réservation pour les techniciennes de cils",
+    "headline": "Des réservations sans aller-retour.",
+    "subheadline": "Les clientes choisissent un service, un horaire, et paient un acompte — via un seul lien.",
+    "ctaPrimary": "Tester la réservation",
+    "ctaSecondary": "Ouvrir le tableau de bord",
+    "features": {
+      "servicesTitle": "Prestations",
+      "servicesDesc": "Classique, Hybride, Volume, Remplissages — durée + prix.",
+      "availabilityTitle": "Disponibilités",
+      "availabilityDesc": "Planning hebdo + pauses + marge, sans double réservation.",
+      "depositsTitle": "Acomptes",
+      "depositsDesc": "Moins d’absences grâce aux acomptes et des règles claires."
+    }
+  }
+}

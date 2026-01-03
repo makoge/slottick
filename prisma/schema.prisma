@@ -1,0 +1,182 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+model Business {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // public profile
+  name     String
+  slug     String @unique
+  category String
+  city     String
+  country  String
+  website  String?
+
+  // auth
+  ownerEmail       String   @unique
+  passwordHash     String
+  emailVerifiedAt  DateTime?
+
+  failedLoginCount Int      @default(0)
+  lockUntil        DateTime?
+
+  // marketplace
+  marketplaceEligibleAt DateTime?
+
+  // relations
+  services                Service[]
+  availabilityRule        AvailabilityRule?
+  bookings                Booking[]
+  reviews                 Review[]
+  sessions                Session[]
+  resetTokens             PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+
+  @@index([category])
+  @@index([city])
+  @@index([country])
+}
+
+model Service {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name        String
+  durationMin Int
+  price       Int
+  currency    String // "EUR" | "USD" | "FCFA"
+
+  @@index([businessId])
+}
+
+model AvailabilityRule {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // one-to-one
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  timezone    String
+  daysJson    String // JSON: [1,2,3] (Mon=1 ... Sun=0)
+  start       String // "10:00"
+  end         String // "18:00"
+  breakStart  String?
+  breakEnd    String?
+  bufferMin   Int
+  slotStepMin Int
+
+  @@index([businessId])
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  serviceName String
+  durationMin Int
+  price       Int
+  currency    String
+
+  // ✅ single source of truth for time
+  startsAt DateTime
+
+  customerName  String
+  customerPhone String
+  customerEmail String?
+  notes         String?
+
+  status      BookingStatus @default(CONFIRMED)
+  cancelledAt DateTime?
+
+  // review workflow
+  reviewEmailSentAt DateTime?
+  review            Review?
+  reviewTokenHash String?
+
+
+  // prevent double booking at same exact start time
+  @@unique([businessId, startsAt])
+  @@index([businessId, startsAt])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  rating  Int // 1..5
+  comment String?
+
+  @@index([businessId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  tokenHash String   @unique
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  tokenHash String   @unique
+  usedAt    DateTime?
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  tokenHash String   @unique
+  usedAt    DateTime?
+
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([expiresAt])
+}

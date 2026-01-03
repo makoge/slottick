@@ -1,0 +1,18 @@
+{
+  "home": {
+    "brand": "Slotta",
+    "tagline": "Booking for lash techs",
+    "headline": "Take bookings without the back-and-forth.",
+    "subheadline": "Let clients pick a service, choose a time, and pay a deposit — all in one link.",
+    "ctaPrimary": "Try the booking flow",
+    "ctaSecondary": "Open dashboard",
+    "features": {
+      "servicesTitle": "Services",
+      "servicesDesc": "Classic, Hybrid, Volume, Refills — set durations + prices.",
+      "availabilityTitle": "Availability",
+      "availabilityDesc": "Weekly schedule + breaks + buffer time, no double-booking.",
+      "depositsTitle": "Deposits",
+      "depositsDesc": "Reduce no-shows with deposits and clear cancellation rules."
+    }
+  }
+}
