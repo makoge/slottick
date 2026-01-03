@@ -8,7 +8,7 @@ function getLocale(pathname: string) {
   return seg || "en";
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // protect dashboard + owner api routes
