@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthedBusiness } from "@/lib/auth";
+
+export const runtime = "nodejs";
 
 function safeDays(days: unknown) {
   if (!Array.isArray(days)) return [];
@@ -14,7 +16,7 @@ export async function GET() {
   if (!business) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const ar = await prisma.availabilityRule.findUnique({
-    where: { businessId: business.id }
+    where: { businessId: business.id },
   });
 
   if (!ar) return NextResponse.json({ rule: null });
@@ -33,12 +35,12 @@ export async function GET() {
       breakStart: ar.breakStart,
       breakEnd: ar.breakEnd,
       bufferMin: ar.bufferMin,
-      slotStepMin: ar.slotStepMin
-    }
+      slotStepMin: ar.slotStepMin,
+    },
   });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   const business = await getAuthedBusiness();
   if (!business) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -46,7 +48,7 @@ export async function POST(req: Request) {
   const rule = body?.rule;
   if (!rule) return NextResponse.json({ error: "Missing rule" }, { status: 400 });
 
-  const saved = await prisma.availabilityRule.upsert({
+  await prisma.availabilityRule.upsert({
     where: { businessId: business.id },
     create: {
       businessId: business.id,
@@ -57,7 +59,7 @@ export async function POST(req: Request) {
       breakStart: rule.breakStart ? String(rule.breakStart) : null,
       breakEnd: rule.breakEnd ? String(rule.breakEnd) : null,
       bufferMin: Number(rule.bufferMin ?? 0),
-      slotStepMin: Number(rule.slotStepMin ?? 30)
+      slotStepMin: Number(rule.slotStepMin ?? 30),
     },
     update: {
       timezone: String(rule.timezone ?? "UTC"),
@@ -67,10 +69,9 @@ export async function POST(req: Request) {
       breakStart: rule.breakStart ? String(rule.breakStart) : null,
       breakEnd: rule.breakEnd ? String(rule.breakEnd) : null,
       bufferMin: Number(rule.bufferMin ?? 0),
-      slotStepMin: Number(rule.slotStepMin ?? 30)
-    }
+      slotStepMin: Number(rule.slotStepMin ?? 30),
+    },
   });
 
-  return NextResponse.json({ ok: true, rule: saved });
+  return NextResponse.json({ ok: true });
 }
-
