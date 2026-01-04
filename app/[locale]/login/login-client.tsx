@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 
 type BusinessDTO = {
   name: string;
@@ -13,10 +13,19 @@ type BusinessDTO = {
   ownerEmail: string;
 };
 
+function getLocaleFromPath(pathname: string) {
+  // pathname like: /en/login, /fr/dashboard, etc.
+  const seg = pathname.split("/").filter(Boolean)[0];
+  // allow only known locales you support (adjust if needed)
+  if (seg === "en" || seg === "fr") return seg;
+  return "en";
+}
+
 export default function LoginClient() {
   const router = useRouter();
-  const params = useParams<{ locale?: string }>();
-  const locale = params?.locale ?? "en";
+  const pathname = usePathname();
+
+  const locale = useMemo(() => getLocaleFromPath(pathname || "/en"), [pathname]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,6 +50,8 @@ export default function LoginClient() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // IMPORTANT: make sure cookies are included
+        credentials: "include",
         body: JSON.stringify({ email: safeEmail, password })
       });
 
@@ -55,23 +66,26 @@ export default function LoginClient() {
         return;
       }
 
-      const b = data.business as BusinessDTO;
+      // optional local cache (NOT used for auth)
+      const b = data.business as BusinessDTO | undefined;
+      if (b?.slug) {
+        localStorage.setItem(
+          "slotta_account",
+          JSON.stringify({
+            createdAt: new Date().toISOString(),
+            businessName: b.name,
+            slug: b.slug,
+            website: b.website ?? undefined,
+            email: b.ownerEmail,
+            category: b.category,
+            city: b.city,
+            country: b.country
+          })
+        );
+      }
 
-      localStorage.setItem(
-        "slotta_account",
-        JSON.stringify({
-          createdAt: new Date().toISOString(),
-          businessName: b.name,
-          slug: b.slug,
-          website: b.website ?? undefined,
-          email: b.ownerEmail,
-          category: b.category,
-          city: b.city,
-          country: b.country
-        })
-      );
-
-      router.push(`/${locale}/dashboard`);
+      // use replace to avoid back button returning to login
+      router.replace(`/${locale}/dashboard`);
     } catch {
       setError("Network error. Try again.");
     } finally {
