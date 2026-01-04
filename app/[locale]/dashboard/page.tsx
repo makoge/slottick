@@ -7,12 +7,24 @@ export default async function DashboardPage({
 }: {
   params: { locale: string };
 }) {
-  const { locale } = await params;
+  const { locale } = params;
 
   const business = await getAuthedBusiness();
-  if (!business) {
-    redirect(`/${locale}/login`);
-  }
+  if (!business) redirect(`/${locale}/login`);
 
-  return <DashboardClient locale={locale} />;
+  return (
+    <DashboardClient
+      locale={locale}
+      business={{
+        name: business.name,
+        slug: business.slug,
+        website: business.website ?? undefined,
+        ownerEmail: business.ownerEmail,
+        category: business.category,
+        city: business.city,
+        country: business.country,
+        createdAt: business.createdAt.toISOString()
+      }}
+    />
+  );
 }

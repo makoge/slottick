@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import AvailabilityEditor from "./availability";
 import ServicesEditor from "./services";
 import BookingsPanel from "./bookings";
@@ -20,8 +21,24 @@ type Account = {
 
 type Props = { locale: string };
 
+type MeResponse =
+  | {
+      business: {
+        createdAt: string;
+        name: string;
+        slug: string;
+        website: string | null;
+        ownerEmail: string;
+        category: string | null;
+        city: string | null;
+        country: string | null;
+      };
+    }
+  | { error: string };
+
 export default function DashboardClient({ locale }: Props) {
   const router = useRouter();
+
   const [account, setAccount] = useState<Account | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -32,28 +49,37 @@ export default function DashboardClient({ locale }: Props) {
 
     async function run() {
       setLoading(true);
-      const res = await fetch("/api/owner/me", { cache: "no-store" });
-      const data = await res.json().catch(() => ({}));
 
-      if (cancelled) return;
+      try {
+        const res = await fetch("/api/owner/me", {
+          method: "GET",
+          cache: "no-store"
+        });
 
-      if (!res.ok) {
-        router.replace(`/${locale}/login`);
-        return;
+        const data = (await res.json().catch(() => ({}))) as MeResponse;
+
+        if (cancelled) return;
+
+        if (!res.ok || !("business" in data)) {
+          router.replace(`/${locale}/login`);
+          return;
+        }
+
+        setAccount({
+          createdAt: String(data.business.createdAt),
+          businessName: String(data.business.name),
+          slug: String(data.business.slug),
+          website: data.business.website ?? null,
+          email: String(data.business.ownerEmail),
+          category: data.business.category ?? null,
+          city: data.business.city ?? null,
+          country: data.business.country ?? null
+        });
+      } catch {
+        if (!cancelled) router.replace(`/${locale}/login`);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      setAccount({
-        createdAt: String(data.business.createdAt),
-        businessName: String(data.business.name),
-        slug: String(data.business.slug),
-        website: data.business.website ?? null,
-        email: String(data.business.ownerEmail),
-        category: data.business.category ?? null,
-        city: data.business.city ?? null,
-        country: data.business.country ?? null,
-      });
-
-      setLoading(false);
     }
 
     run();
@@ -107,11 +133,16 @@ export default function DashboardClient({ locale }: Props) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-medium text-slate-600">Dashboard</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">{account.businessName}</h1>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight">
+              {account.businessName}
+            </h1>
             <p className="mt-1 text-sm text-slate-600">
               Category:{" "}
-              <span className="font-semibold text-slate-900">{account.category ?? "Service"}</span>{" "}
-              • Slug: <span className="font-semibold text-slate-900">{account.slug}</span>
+              <span className="font-semibold text-slate-900">
+                {account.category ?? "Service"}
+              </span>{" "}
+              • Slug:{" "}
+              <span className="font-semibold text-slate-900">{account.slug}</span>
             </p>
           </div>
 
@@ -139,8 +170,12 @@ export default function DashboardClient({ locale }: Props) {
         <section className="mt-8 rounded-2xl border border-slate-200 p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-sm font-medium text-slate-600">Your shareable booking link</div>
-              <div className="mt-1 break-all text-lg font-semibold">{bookingUrl || bookingPath}</div>
+              <div className="text-sm font-medium text-slate-600">
+                Your shareable booking link
+              </div>
+              <div className="mt-1 break-all text-lg font-semibold">
+                {bookingUrl || bookingPath}
+              </div>
               <div className="mt-1 text-sm text-slate-500">
                 Share this link on Instagram bio, WhatsApp, your website, anywhere.
               </div>
@@ -156,15 +191,18 @@ export default function DashboardClient({ locale }: Props) {
           </div>
         </section>
 
+        {/* Owner schedule */}
         <div className="mt-8">
           <SchedulePanel slug={account.slug} />
         </div>
 
+        {/* Main grid */}
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           <AvailabilityEditor slug={account.slug} />
           <ServicesEditor slug={account.slug} />
         </div>
 
+        {/* Bookings */}
         <div className="mt-6">
           <BookingsPanel slug={account.slug} />
         </div>

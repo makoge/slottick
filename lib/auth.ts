@@ -1,6 +1,6 @@
 import "server-only";
-import { cookies } from "next/headers";
 import crypto from "crypto";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { COOKIE_NAME } from "@/lib/auth-constants";
 
@@ -9,7 +9,8 @@ export function hashToken(token: string) {
 }
 
 export async function getAuthedBusiness() {
-  const token = (await cookies()).get(COOKIE_NAME)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
 
   const tokenHash = hashToken(token);
@@ -17,16 +18,18 @@ export async function getAuthedBusiness() {
   const session = await prisma.session.findUnique({
     where: { tokenHash },
     select: {
+      tokenHash: true,
       expiresAt: true,
       business: {
         select: {
           id: true,
+          createdAt: true,
           name: true,
           slug: true,
-          website: true,
           category: true,
           city: true,
           country: true,
+          website: true,
           ownerEmail: true,
           emailVerifiedAt: true
         }
@@ -36,13 +39,10 @@ export async function getAuthedBusiness() {
 
   if (!session) return null;
 
-  if (session.expiresAt.getTime() <= Date.now()) {
+  if (session.expiresAt < new Date()) {
     await prisma.session.delete({ where: { tokenHash } }).catch(() => {});
     return null;
   }
-
-  // ✅ optional: block until verified
-  // if (!session.business.emailVerifiedAt) return null;
 
   return session.business;
 }
