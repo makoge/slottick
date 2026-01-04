@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { locales } from "@/lib/i18n";
+import { Analytics } from "@vercel/analytics/next"
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -18,6 +19,7 @@ export default async function LocaleLayout({
   return (
     <div className="min-h-dvh bg-white">
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur">
+      <Analytics/>
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href={`/${locale}`} className="text-lg font-semibold tracking-tight">
             Slottick

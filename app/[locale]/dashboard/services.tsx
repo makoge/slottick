@@ -1,22 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import {
-  Currency,
-  Service,
-  defaultServices,
-  formatMoney,
-  makeId,
-  servicesKey
-} from "@/lib/services";
+import { useEffect, useState } from "react";
+import { Currency, Service, formatMoney } from "@/lib/services";
 
 const currencyOptions: Currency[] = ["EUR", "USD", "FCFA"];
 
-export default function ServicesEditor({ slug }: { slug: string }) {
-  const key = useMemo(() => servicesKey(slug), [slug]);
+type DbService = {
+  id: string;
+  name: string;
+  durationMin: number;
+  price: number;
+  currency: Currency | string;
+};
 
-  const [services, setServices] = useState<Service[]>(defaultServices);
+export default function ServicesEditor({ slug }: { slug: string }) {
+  const [services, setServices] = useState<Service[]>([]);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   // add form
   const [name, setName] = useState("");
@@ -24,22 +25,59 @@ export default function ServicesEditor({ slug }: { slug: string }) {
   const [price, setPrice] = useState<number>(50);
   const [currency, setCurrency] = useState<Currency>("EUR");
 
+  // ✅ load from DB (owner endpoint or public is fine; owner is fine here)
   useEffect(() => {
-    const raw = localStorage.getItem(key);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as Service[];
-      if (Array.isArray(parsed) && parsed.length) setServices(parsed);
-    } catch {
-      // ignore
-    }
-  }, [key]);
+    let cancelled = false;
 
-  function save(next: Service[]) {
+    async function run() {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/owner/services?slug=${encodeURIComponent(slug)}`, {
+          cache: "no-store",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
+
+        if (res.ok && Array.isArray(data.services)) {
+          const mapped: Service[] = (data.services as DbService[]).map((s) => ({
+            id: String(s.id),
+            name: String(s.name),
+            durationMin: Number(s.durationMin),
+            price: Number(s.price),
+            currency: String(s.currency) as Currency,
+          }));
+          setServices(mapped);
+        } else {
+          setServices([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  async function persist(next: Service[]) {
     setServices(next);
-    localStorage.setItem(key, JSON.stringify(next));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1200);
+    setSaving(true);
+    setSaved(false);
+
+    const res = await fetch("/api/owner/services", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, services: next }),
+    });
+
+    setSaving(false);
+
+    if (res.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1200);
+    }
   }
 
   function addService(e: React.FormEvent) {
@@ -49,16 +87,17 @@ export default function ServicesEditor({ slug }: { slug: string }) {
 
     const next: Service[] = [
       {
-        id: makeId(),
+        id: crypto.randomUUID(), // client id placeholder; server will store its own ids if you want
         name: cleanName,
         durationMin: Math.max(5, Number(durationMin) || 5),
         price: Math.max(0, Number(price) || 0),
-        currency
+        currency,
       },
-      ...services
+      ...services,
     ];
 
-    save(next);
+    persist(next);
+
     setName("");
     setDurationMin(60);
     setPrice(50);
@@ -67,19 +106,21 @@ export default function ServicesEditor({ slug }: { slug: string }) {
 
   function updateService(id: string, patch: Partial<Service>) {
     const next = services.map((s) => (s.id === id ? { ...s, ...patch } : s));
-    save(next);
+    persist(next);
   }
 
   function deleteService(id: string) {
     const next = services.filter((s) => s.id !== id);
-    save(next);
+    persist(next);
   }
 
   return (
     <section className="rounded-2xl border border-slate-200 p-6 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Services</h2>
-        <span className="text-sm text-slate-600">{saved ? "Saved ✓" : ""}</span>
+        <span className="text-sm text-slate-600">
+          {loading ? "Loading..." : saving ? "Saving..." : saved ? "Saved ✓" : ""}
+        </span>
       </div>
 
       <p className="mt-2 text-sm text-slate-600">
@@ -144,7 +185,8 @@ export default function ServicesEditor({ slug }: { slug: string }) {
 
         <button
           type="submit"
-          className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+          disabled={loading || saving}
+          className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
         >
           Add service
         </button>
@@ -152,7 +194,11 @@ export default function ServicesEditor({ slug }: { slug: string }) {
 
       {/* List */}
       <div className="mt-5 grid gap-3">
-        {services.length === 0 ? (
+        {loading ? (
+          <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
+            Loading services...
+          </div>
+        ) : services.length === 0 ? (
           <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
             No services yet — add your first one.
           </div>
@@ -170,7 +216,8 @@ export default function ServicesEditor({ slug }: { slug: string }) {
                 <button
                   type="button"
                   onClick={() => deleteService(s.id)}
-                  className="w-fit rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                  disabled={saving}
+                  className="w-fit rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
                 >
                   Delete
                 </button>
@@ -196,7 +243,9 @@ export default function ServicesEditor({ slug }: { slug: string }) {
                     className="rounded-xl border border-slate-200 px-3 py-2"
                     value={s.durationMin}
                     onChange={(e) =>
-                      updateService(s.id, { durationMin: Math.max(5, Number(e.target.value) || 5) })
+                      updateService(s.id, {
+                        durationMin: Math.max(5, Number(e.target.value) || 5),
+                      })
                     }
                   />
                 </label>
@@ -235,3 +284,4 @@ export default function ServicesEditor({ slug }: { slug: string }) {
     </section>
   );
 }
+

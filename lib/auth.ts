@@ -9,23 +9,40 @@ export function hashToken(token: string) {
 }
 
 export async function getAuthedBusiness() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
 
   const tokenHash = hashToken(token);
 
   const session = await prisma.session.findUnique({
     where: { tokenHash },
-    include: { business: true }
+    select: {
+      expiresAt: true,
+      business: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          website: true,
+          category: true,
+          city: true,
+          country: true,
+          ownerEmail: true,
+          emailVerifiedAt: true
+        }
+      }
+    }
   });
 
   if (!session) return null;
 
-  if (session.expiresAt < new Date()) {
+  if (session.expiresAt.getTime() <= Date.now()) {
     await prisma.session.delete({ where: { tokenHash } }).catch(() => {});
     return null;
   }
+
+  // ✅ optional: block until verified
+  // if (!session.business.emailVerifiedAt) return null;
 
   return session.business;
 }

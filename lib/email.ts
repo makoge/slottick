@@ -1,14 +1,20 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+/**
+ * Config
+ */
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
-// If you DON'T have a verified domain yet, Resend usually requires a verified sender.
-// Use their onboarding sender (or your verified sender) until slotta.io is verified.
+// If you DON'T have a verified domain yet, use onboarding sender (works for testing)
 const FROM_FALLBACK = process.env.RESEND_FROM || "onboarding@resend.dev";
 const FROM = process.env.SLOTTA_FROM || `Slotta <${FROM_FALLBACK}>`;
 
 // Optional: where replies should go (owner email etc.)
 const REPLY_TO = process.env.SLOTTA_REPLY_TO || undefined;
+
+// Where YOU receive signup notifications
+const OWNER_NOTIFY_EMAIL = process.env.OWNER_NOTIFY_EMAIL || "";
 
 type SendArgs = {
   to: string;
@@ -17,8 +23,8 @@ type SendArgs = {
 };
 
 async function safeSend({ to, subject, html }: SendArgs) {
-  // In dev, don’t hard-fail your app if Resend key isn’t set
-  if (!process.env.RESEND_API_KEY) {
+  // Never crash the app/build if key is missing
+  if (!resend) {
     console.warn("[email] RESEND_API_KEY missing; skipping email:", { to, subject });
     return { skipped: true };
   }
@@ -29,15 +35,17 @@ async function safeSend({ to, subject, html }: SendArgs) {
       to,
       subject,
       html,
-      ...(REPLY_TO ? { replyTo: REPLY_TO } : {})
+      ...(REPLY_TO ? { replyTo: REPLY_TO } : {}),
     });
   } catch (err) {
     console.error("[email] send failed:", err);
-    // Don’t throw — booking/login should still work
     return { error: true };
   }
 }
 
+/**
+ * Template helpers
+ */
 function btn(href: string, text: string) {
   return `
     <a href="${href}"
@@ -47,7 +55,7 @@ function btn(href: string, text: string) {
   `;
 }
 
-function wrap(title: string, bodyHtml: string, footer = "Powered by Slotta") {
+function wrap(title: string, bodyHtml: string, footer = "Powered by Slottick") {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h2 style="margin:0 0 12px 0">${title}</h2>
@@ -64,7 +72,7 @@ export async function sendVerifyEmail(args: { to: string; verifyLink: string }) 
   const html = wrap(
     "Verify your email",
     `
-      <p>Click below to verify your Slotta account.</p>
+      <p>Click below to verify your Slottick account.</p>
       <p>${btn(args.verifyLink, "Verify email")}</p>
       <p style="color:#64748b;font-size:14px">This link expires in 30 minutes.</p>
     `
@@ -72,8 +80,8 @@ export async function sendVerifyEmail(args: { to: string; verifyLink: string }) 
 
   return safeSend({
     to: args.to,
-    subject: "Verify your Slotta email",
-    html
+    subject: "Verify your Slottick email",
+    html,
   });
 }
 
@@ -84,7 +92,7 @@ export async function sendResetPasswordEmail(args: { to: string; resetLink: stri
   const html = wrap(
     "Reset your password",
     `
-      <p>You requested a password reset for Slotta.</p>
+      <p>You requested a password reset for Slottick.</p>
       <p>${btn(args.resetLink, "Reset password")}</p>
       <p style="color:#64748b;font-size:14px">This link expires in 30 minutes.</p>
       <p style="color:#64748b;font-size:14px">If you didn’t request this, ignore this email.</p>
@@ -93,8 +101,8 @@ export async function sendResetPasswordEmail(args: { to: string; resetLink: stri
 
   return safeSend({
     to: args.to,
-    subject: "Reset your Slotta password",
-    html
+    subject: "Reset your Slottick password",
+    html,
   });
 }
 
@@ -105,7 +113,7 @@ export async function sendBookingConfirmationEmail(args: {
   to: string;
   businessName: string;
   serviceName: string;
-  date: string; // keep as YYYY-MM-DD for now
+  date: string; // YYYY-MM-DD
   time: string; // HH:MM
   durationMin: number;
   priceText: string;
@@ -131,7 +139,7 @@ export async function sendBookingConfirmationEmail(args: {
   return safeSend({
     to: args.to,
     subject: `Confirmed: ${args.serviceName} on ${args.date} at ${args.time}`,
-    html
+    html,
   });
 }
 
@@ -162,7 +170,67 @@ export async function sendReviewRequestEmail(args: {
   return safeSend({
     to: args.to,
     subject: `Leave a review for ${args.businessName}`,
-    html
+    html,
   });
 }
 
+/* -----------------------------
+   5) Welcome email (business owner)
+------------------------------ */
+export async function sendWelcomeOwnerEmail(args: {
+  to: string;
+  businessName: string;
+  dashboardLink: string;
+}) {
+  const html = wrap(
+    "Your Slottick account has been created succesfully 👋",
+    `
+      <p>Welcome, and congrats on setting up <strong>${args.businessName}</strong>.</p>
+      <p>Next steps:</p>
+      <ul>
+        <li>Add your services</li>
+        <li>Set your availability</li>
+        <li>Share your booking link</li>
+      </ul>
+      <p>${btn(args.dashboardLink, "Open your dashboard")}</p>
+    `,
+    "If you need help, just reply to this email."
+  );
+
+  return safeSend({
+    to: args.to,
+    subject: `Welcome to Slottick, ${args.businessName}!`,
+    html,
+  });
+}
+
+/* -----------------------------
+   6) Notify you about new signup
+------------------------------ */
+export async function notifyOwnerNewSignup(args: {
+  ownerEmail: string;
+  businessName: string;
+  slug: string;
+  createdAt?: string;
+}) {
+  if (!OWNER_NOTIFY_EMAIL) {
+    console.warn("[email] OWNER_NOTIFY_EMAIL missing; skipping signup notify");
+    return { skipped: true };
+  }
+
+  const html = wrap(
+    "New business signup 🎉",
+    `
+      <p><strong>Business:</strong> ${args.businessName}</p>
+      <p><strong>Owner email:</strong> ${args.ownerEmail}</p>
+      <p><strong>Slug:</strong> ${args.slug}</p>
+      ${args.createdAt ? `<p><strong>Created:</strong> ${args.createdAt}</p>` : ""}
+    `
+  );
+
+  return safeSend({
+    to: OWNER_NOTIFY_EMAIL,
+    subject: `New signup: ${args.businessName}`,
+    html,
+  });
+}

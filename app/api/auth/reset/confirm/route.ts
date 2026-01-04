@@ -9,8 +9,8 @@ function sha256(x: string) {
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
-  const token = String(body.token ?? "");
-  const newPassword = String(body.newPassword ?? "");
+  const token = String(body.token ?? "").trim();
+  const newPassword = String(body.newPassword ?? "").trim();
 
   if (!token || newPassword.length < 6) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -29,16 +29,22 @@ export async function POST(req: Request) {
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
 
-  await prisma.$transaction([
-    prisma.business.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.business.update({
       where: { id: rec.businessId },
       data: { passwordHash, failedLoginCount: 0, lockUntil: null }
-    }),
-    prisma.passwordResetToken.update({
+    });
+
+    await tx.passwordResetToken.update({
       where: { id: rec.id },
       data: { usedAt: new Date() }
-    })
-  ]);
+    });
+
+    // ✅ invalidate all sessions after password reset
+    await tx.session.deleteMany({
+      where: { businessId: rec.businessId }
+    });
+  });
 
   return NextResponse.json({ ok: true });
 }

@@ -1,78 +1,50 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-/**
- * Convert a YYYY-MM-DD business-local day into a UTC range
- */
-function businessDayToUtcRange(date: string, timezone: string) {
-  // Start of day in business timezone
-  const startLocal = new Date(`${date}T00:00:00`);
-  const endLocal = new Date(`${date}T23:59:59`);
+function dayWindowUTC(isoDate: string) {
+  // isoDate = "YYYY-MM-DD"
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
+  if (!m) return null;
 
-  // Convert local → UTC using Intl
-  const startUTC = new Date(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: timezone,
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
-    }).format(startLocal)
-  );
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
 
-  const endUTC = new Date(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: timezone,
-      hour12: false,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
-    }).format(endLocal)
-  );
-
-  return { startUTC, endUTC };
+  const start = new Date(Date.UTC(y, mo, d, 0, 0, 0));
+  const end = new Date(Date.UTC(y, mo, d + 1, 0, 0, 0));
+  return { start, end };
 }
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const businessSlug = searchParams.get("businessSlug");
-  const date = searchParams.get("date"); // YYYY-MM-DD
+  const businessSlug = String(searchParams.get("businessSlug") ?? "").trim();
+  const date = String(searchParams.get("date") ?? "").trim(); // YYYY-MM-DD
 
   if (!businessSlug || !date) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 });
   }
 
-  const business = await prisma.business.findUnique({
-    where: { slug: businessSlug },
-    include: { availabilityRule: true }
-  });
-
-  if (!business || !business.availabilityRule) {
-    return NextResponse.json({ bookings: [] });
+  const win = dayWindowUTC(date);
+  if (!win) {
+    return NextResponse.json({ error: "Invalid date" }, { status: 400 });
   }
 
-  const timezone = business.availabilityRule.timezone;
-  const { startUTC, endUTC } = businessDayToUtcRange(date, timezone);
+  const business = await prisma.business.findUnique({
+    where: { slug: businessSlug },
+    select: { id: true }
+  });
+
+  if (!business) {
+    return NextResponse.json({ bookings: [] });
+  }
 
   const bookings = await prisma.booking.findMany({
     where: {
       businessId: business.id,
       status: "CONFIRMED",
-      startsAt: {
-        gte: startUTC,
-        lte: endUTC
-      }
+      startsAt: { gte: win.start, lt: win.end }
     },
-    select: {
-      startsAt: true,
-      durationMin: true
-    },
+    select: { startsAt: true, durationMin: true },
     orderBy: { startsAt: "asc" }
   });
 
@@ -83,4 +55,3 @@ export async function GET(req: Request) {
     }))
   });
 }
-

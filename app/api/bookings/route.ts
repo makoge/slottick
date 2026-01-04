@@ -27,8 +27,7 @@ function toDate(d: unknown) {
   return Number.isFinite(x.getTime()) ? x : null;
 }
 
-// build a time window [startOfDay, endOfDay) in business timezone later.
-// for now: use UTC day boundaries from startsAt date.
+// for MVP we assume startsAt is UTC (you create it as ...Z on client)
 function dayWindowUTC(startsAt: Date) {
   const y = startsAt.getUTCFullYear();
   const m = startsAt.getUTCMonth();
@@ -38,11 +37,22 @@ function dayWindowUTC(startsAt: Date) {
   return { start, end };
 }
 
-// convert Date -> "HH:MM" for your slotRangeForService helpers
 function hhmmUTC(dt: Date) {
   const h = String(dt.getUTCHours()).padStart(2, "0");
   const m = String(dt.getUTCMinutes()).padStart(2, "0");
   return `${h}:${m}`;
+}
+
+function getLocaleFromReferer(req: Request) {
+  const ref = req.headers.get("referer");
+  if (!ref) return "en";
+  try {
+    const { pathname } = new URL(ref);
+    const seg = pathname.split("/").filter(Boolean)[0];
+    return seg || "en";
+  } catch {
+    return "en";
+  }
 }
 
 export async function POST(req: Request) {
@@ -54,7 +64,6 @@ export async function POST(req: Request) {
   const price = Number(body.price ?? 0);
   const currency = String(body.currency ?? "EUR").trim();
 
-  // ✅ NEW: startsAt only
   const startsAt = toDate(body.startsAt);
 
   const customerName = String(body.customerName ?? "").trim();
@@ -95,7 +104,7 @@ export async function POST(req: Request) {
     slotStepMin: ar?.slotStepMin ?? defaultAvailability.slotStepMin
   };
 
-  // collision check (DB truth) using same-day bookings window
+  // collision check (DB truth)
   const { start, end } = dayWindowUTC(startsAt);
 
   const sameDayBookings = await prisma.booking.findMany({
@@ -115,10 +124,7 @@ export async function POST(req: Request) {
     const blocked = slotRangeForService(bTime, rule, b.durationMin);
     const blockedSet = new Set(blocked);
     if (neededSlots.some((x) => blockedSet.has(x))) {
-      return NextResponse.json(
-        { error: "This slot was just booked" },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "This slot was just booked" }, { status: 409 });
     }
   }
 
@@ -146,23 +152,33 @@ export async function POST(req: Request) {
     );
   }
 
-  // Email (optional)
+  // Email (optional) — never fail booking because of email
   if (customerEmail) {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const manageLink = `${baseUrl}/en/book/${business.slug}/success?id=${encodeURIComponent(
+    const baseUrl =
+      process.env.NEXT_PUBLIC_BASE_URL ??
+      process.env.NEXT_PUBLIC_APP_URL ??
+      "http://localhost:3000";
+
+    const locale = getLocaleFromReferer(req);
+
+    const manageLink = `${baseUrl}/${locale}/book/${business.slug}/success?id=${encodeURIComponent(
       booking.id
     )}`;
 
-    await sendBookingConfirmationEmail({
-      to: customerEmail,
-      businessName: business.name,
-      serviceName,
-      date: startsAt.toISOString().slice(0, 10), // YYYY-MM-DD
-      time: requestedTime,
-      durationMin,
-      priceText: money(price, currency),
-      manageLink
-    });
+    try {
+      await sendBookingConfirmationEmail({
+        to: customerEmail,
+        businessName: business.name,
+        serviceName,
+        date: startsAt.toISOString().slice(0, 10),
+        time: requestedTime,
+        durationMin,
+        priceText: money(price, currency),
+        manageLink
+      });
+    } catch (e) {
+      console.error("[booking] confirmation email failed", e);
+    }
   }
 
   return NextResponse.json({ booking });
