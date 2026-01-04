@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 type BusinessDTO = {
   name: string;
@@ -13,8 +13,10 @@ type BusinessDTO = {
   ownerEmail: string;
 };
 
-export default function LoginClient({ locale }: { locale: string }) {
+export default function LoginClient() {
   const router = useRouter();
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? "en";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,17 +48,15 @@ export default function LoginClient({ locale }: { locale: string }) {
 
       if (!res.ok) {
         setError(data.error || "Login failed");
-
         if (data.resetRequired) {
           setResetRequired(true);
-          setPassword(""); // stop re-trying passwords
+          setPassword("");
         }
         return;
       }
 
       const b = data.business as BusinessDTO;
 
-      // MVP local cache (cookie is the real auth)
       localStorage.setItem(
         "slotta_account",
         JSON.stringify({
@@ -112,7 +112,8 @@ export default function LoginClient({ locale }: { locale: string }) {
                 {error}
                 {resetRequired ? (
                   <div className="mt-2 text-amber-800">
-                    For security, this account is temporarily locked. Reset your password to continue.
+                    For security, this account is temporarily locked. Reset your password to
+                    continue.
                   </div>
                 ) : null}
               </div>
