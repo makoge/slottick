@@ -10,14 +10,15 @@ type DbService = {
   name: string;
   durationMin: number;
   price: number;
-  currency: Currency | string;
+  currency: string;
 };
 
-export default function ServicesEditor({ slug }: { slug: string }) {
+export default function ServicesEditor() {
   const [services, setServices] = useState<Service[]>([]);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // add form
   const [name, setName] = useState("");
@@ -25,58 +26,87 @@ export default function ServicesEditor({ slug }: { slug: string }) {
   const [price, setPrice] = useState<number>(50);
   const [currency, setCurrency] = useState<Currency>("EUR");
 
-  // ✅ load from DB (owner endpoint or public is fine; owner is fine here)
-  useEffect(() => {
-    let cancelled = false;
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/services", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
 
-    async function run() {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/owner/services?slug=${encodeURIComponent(slug)}`, {
-          cache: "no-store",
-        });
-        const data = await res.json().catch(() => ({}));
-        if (cancelled) return;
+      if (!res.ok) {
+        setServices([]);
+        setError(data.error || "Failed to load services");
+        return;
+      }
 
-        if (res.ok && Array.isArray(data.services)) {
-          const mapped: Service[] = (data.services as DbService[]).map((s) => ({
+      const mapped: Service[] = Array.isArray(data.services)
+        ? (data.services as DbService[]).map((s) => ({
             id: String(s.id),
             name: String(s.name),
             durationMin: Number(s.durationMin),
             price: Number(s.price),
-            currency: String(s.currency) as Currency,
-          }));
-          setServices(mapped);
-        } else {
-          setServices([]);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
+            currency: String(s.currency) as Currency
+          }))
+        : [];
 
-    run();
+      setServices(mapped);
+    } catch {
+      setError("Network error loading services");
+      setServices([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (cancelled) return;
+      await load();
+    })();
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, []);
 
   async function persist(next: Service[]) {
     setServices(next);
     setSaving(true);
     setSaved(false);
+    setError(null);
 
-    const res = await fetch("/api/owner/services", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, services: next }),
-    });
+    try {
+      const res = await fetch("/api/services", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ services: next })
+      });
 
-    setSaving(false);
+      const data = await res.json().catch(() => ({}));
 
-    if (res.ok) {
+      if (!res.ok) {
+        setError(data.error || "Failed to save services");
+        return;
+      }
+
+      // trust server as source of truth (ids etc)
+      if (Array.isArray(data.services)) {
+        const mapped: Service[] = (data.services as DbService[]).map((s) => ({
+          id: String(s.id),
+          name: String(s.name),
+          durationMin: Number(s.durationMin),
+          price: Number(s.price),
+          currency: String(s.currency) as Currency
+        }));
+        setServices(mapped);
+      }
+
       setSaved(true);
       setTimeout(() => setSaved(false), 1200);
+    } catch {
+      setError("Network error saving services");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -87,13 +117,13 @@ export default function ServicesEditor({ slug }: { slug: string }) {
 
     const next: Service[] = [
       {
-        id: crypto.randomUUID(), // client id placeholder; server will store its own ids if you want
+        id: crypto.randomUUID(), // temp client id; server will replace
         name: cleanName,
         durationMin: Math.max(5, Number(durationMin) || 5),
         price: Math.max(0, Number(price) || 0),
-        currency,
+        currency
       },
-      ...services,
+      ...services
     ];
 
     persist(next);
@@ -127,7 +157,12 @@ export default function ServicesEditor({ slug }: { slug: string }) {
         Add your services with duration and price. Currency can be EUR, USD, or FCFA (for now).
       </p>
 
-      {/* Add form */}
+      {error ? (
+        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
       <form onSubmit={addService} className="mt-5 grid gap-3 rounded-2xl bg-slate-50 p-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="grid gap-1 text-sm">
@@ -136,8 +171,9 @@ export default function ServicesEditor({ slug }: { slug: string }) {
               className="rounded-xl border border-slate-200 px-3 py-2"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Wispy Hybrid Set"
+              placeholder="Haircut"
               required
+              disabled={loading || saving}
             />
           </label>
 
@@ -150,6 +186,7 @@ export default function ServicesEditor({ slug }: { slug: string }) {
               className="rounded-xl border border-slate-200 px-3 py-2"
               value={durationMin}
               onChange={(e) => setDurationMin(Number(e.target.value))}
+              disabled={loading || saving}
             />
           </label>
         </div>
@@ -164,6 +201,7 @@ export default function ServicesEditor({ slug }: { slug: string }) {
               className="rounded-xl border border-slate-200 px-3 py-2"
               value={price}
               onChange={(e) => setPrice(Number(e.target.value))}
+              disabled={loading || saving}
             />
           </label>
 
@@ -173,6 +211,7 @@ export default function ServicesEditor({ slug }: { slug: string }) {
               className="rounded-xl border border-slate-200 px-3 py-2"
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
+              disabled={loading || saving}
             >
               {currencyOptions.map((c) => (
                 <option key={c} value={c}>
@@ -192,7 +231,6 @@ export default function ServicesEditor({ slug }: { slug: string }) {
         </button>
       </form>
 
-      {/* List */}
       <div className="mt-5 grid gap-3">
         {loading ? (
           <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
@@ -223,7 +261,6 @@ export default function ServicesEditor({ slug }: { slug: string }) {
                 </button>
               </div>
 
-              {/* Inline edit */}
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <label className="grid gap-1 text-sm">
                   Name
@@ -231,6 +268,7 @@ export default function ServicesEditor({ slug }: { slug: string }) {
                     className="rounded-xl border border-slate-200 px-3 py-2"
                     value={s.name}
                     onChange={(e) => updateService(s.id, { name: e.target.value })}
+                    disabled={saving}
                   />
                 </label>
 
@@ -243,10 +281,9 @@ export default function ServicesEditor({ slug }: { slug: string }) {
                     className="rounded-xl border border-slate-200 px-3 py-2"
                     value={s.durationMin}
                     onChange={(e) =>
-                      updateService(s.id, {
-                        durationMin: Math.max(5, Number(e.target.value) || 5),
-                      })
+                      updateService(s.id, { durationMin: Math.max(5, Number(e.target.value) || 5) })
                     }
+                    disabled={saving}
                   />
                 </label>
 
@@ -262,11 +299,15 @@ export default function ServicesEditor({ slug }: { slug: string }) {
                       onChange={(e) =>
                         updateService(s.id, { price: Math.max(0, Number(e.target.value) || 0) })
                       }
+                      disabled={saving}
                     />
                     <select
                       className="rounded-xl border border-slate-200 px-3 py-2"
                       value={s.currency}
-                      onChange={(e) => updateService(s.id, { currency: e.target.value as Currency })}
+                      onChange={(e) =>
+                        updateService(s.id, { currency: e.target.value as Currency })
+                      }
+                      disabled={saving}
                     >
                       {currencyOptions.map((c) => (
                         <option key={c} value={c}>
@@ -284,4 +325,3 @@ export default function ServicesEditor({ slug }: { slug: string }) {
     </section>
   );
 }
-

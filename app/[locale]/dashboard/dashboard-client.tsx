@@ -26,9 +26,7 @@ export default function DashboardClient({ locale, business }: Props) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 
-  const bookingPath = useMemo(() => {
-    return `/${locale}/book/${business.slug}`;
-  }, [business.slug, locale]);
+  const bookingPath = useMemo(() => `/${locale}/book/${business.slug}`, [business.slug, locale]);
 
   const bookingUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -54,18 +52,14 @@ export default function DashboardClient({ locale, business }: Props) {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-5xl px-6 py-12">
-        {/* Top bar */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-medium text-slate-600">Dashboard</p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight">{business.name}</h1>
             <p className="mt-1 text-sm text-slate-600">
               Category:{" "}
-              <span className="font-semibold text-slate-900">
-                {business.category ?? "Service"}
-              </span>{" "}
-              • Slug:{" "}
-              <span className="font-semibold text-slate-900">{business.slug}</span>
+              <span className="font-semibold text-slate-900">{business.category ?? "Service"}</span>{" "}
+              • Slug: <span className="font-semibold text-slate-900">{business.slug}</span>
             </p>
           </div>
 
@@ -89,16 +83,11 @@ export default function DashboardClient({ locale, business }: Props) {
           </div>
         </div>
 
-        {/* Booking link card */}
         <section className="mt-8 rounded-2xl border border-slate-200 p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-sm font-medium text-slate-600">
-                Your shareable booking link
-              </div>
-              <div className="mt-1 break-all text-lg font-semibold">
-                {bookingUrl || bookingPath}
-              </div>
+              <div className="text-sm font-medium text-slate-600">Your shareable booking link</div>
+              <div className="mt-1 break-all text-lg font-semibold">{bookingUrl || bookingPath}</div>
               <div className="mt-1 text-sm text-slate-500">
                 Share this link on Instagram bio, WhatsApp, your website, anywhere.
               </div>
@@ -114,17 +103,18 @@ export default function DashboardClient({ locale, business }: Props) {
           </div>
         </section>
 
+        {/* ✅ these should use session-based APIs, not slug-based */}
         <div className="mt-8">
-          <SchedulePanel slug={business.slug} />
+          <SchedulePanel />
         </div>
 
         <div className="mt-8 grid gap-6 md:grid-cols-2">
-          <AvailabilityEditor slug={business.slug} />
-          <ServicesEditor slug={business.slug} />
+          <AvailabilityEditor />
+          <ServicesEditor />
         </div>
 
         <div className="mt-6">
-          <BookingsPanel slug={business.slug} />
+          <BookingsPanel />
         </div>
       </div>
     </main>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendBookingConfirmationEmail } from "@/lib/email";
+import { getAuthedBusiness } from "@/lib/auth";
 import {
   defaultAvailability,
   slotRangeForService,
@@ -55,6 +56,52 @@ function getLocaleFromReferer(req: Request) {
   }
 }
 
+/**
+ * GET /api/bookings?scope=owner
+ * Owner dashboard list (auth via cookie session)
+ */
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const scope = url.searchParams.get("scope");
+
+  if (scope !== "owner") {
+    return NextResponse.json({ error: "Bad request" }, { status: 400 });
+  }
+
+  const business = await getAuthedBusiness();
+  if (!business) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const bookings = await prisma.booking.findMany({
+    where: { businessId: business.id },
+    orderBy: { startsAt: "desc" },
+    select: {
+      id: true,
+      startsAt: true,
+      durationMin: true,
+      serviceName: true,
+      price: true,
+      currency: true,
+      customerName: true,
+      customerPhone: true,
+      notes: true,
+      status: true
+    }
+  });
+
+  return NextResponse.json({
+    bookings: bookings.map((b) => ({
+      ...b,
+      startsAt: b.startsAt.toISOString()
+    }))
+  });
+}
+
+/**
+ * POST /api/bookings
+ * Client creates booking
+ */
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
 
@@ -128,7 +175,6 @@ export async function POST(req: Request) {
     }
   }
 
-  // Create booking (unique constraint: @@unique([businessId, startsAt]))
   let booking;
   try {
     booking = await prisma.booking.create({

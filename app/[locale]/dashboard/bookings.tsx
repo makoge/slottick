@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/lib/services";
+import { useParams, useRouter } from "next/navigation";
 
 type DbBooking = {
   id: string;
@@ -27,25 +28,34 @@ function toLocalDateTimeParts(iso: string) {
   return { date, time };
 }
 
-export default function BookingsPanel({ slug }: { slug: string }) {
+export default function BookingsPanel() {
+  const router = useRouter();
+  const params = useParams<{ locale?: string }>();
+  const locale = params?.locale ?? "en";
+
   const [bookings, setBookings] = useState<DbBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
-    const res = await fetch(`/api/owner/bookings?slug=${encodeURIComponent(slug)}`, {
-      cache: "no-store",
-    });
-    const data = await res.json().catch(() => ({}));
-    setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/bookings?scope=owner", { cache: "no-store" });
+      if (res.status === 401) {
+        router.replace(`/${locale}/login`);
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
+  }, []);
 
   const sorted = useMemo(() => {
     return [...bookings]
@@ -56,13 +66,18 @@ export default function BookingsPanel({ slug }: { slug: string }) {
   async function cancel(id: string) {
     setBusyId(id);
     try {
-      const res = await fetch(`/api/owner/bookings/${encodeURIComponent(id)}/cancel`, {
-        method: "POST",
+      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/cancel`, {
+        method: "POST"
       });
+
+      if (res.status === 401) {
+        router.replace(`/${locale}/login`);
+        return;
+      }
+
       if (res.ok) {
-        // optimistic update
         setBookings((prev) =>
-          prev.map((b) => (b.id === id ? { ...b, status: "CANCELLED" as const } : b))
+          prev.map((b) => (b.id === id ? { ...b, status: "CANCELLED" } : b))
         );
       }
     } finally {

@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  AvailabilityRule,
-  Weekday,
-  defaultAvailability
-} from "@/lib/availability";
 import { useParams, useRouter } from "next/navigation";
+import { AvailabilityRule, Weekday, defaultAvailability } from "@/lib/availability";
 
 const dayLabels: Record<Weekday, string> = {
   0: "Sun",
@@ -15,7 +11,7 @@ const dayLabels: Record<Weekday, string> = {
   3: "Wed",
   4: "Thu",
   5: "Fri",
-  6: "Sat"
+  6: "Sat",
 };
 
 function toggleDay(days: Weekday[], d: Weekday) {
@@ -24,7 +20,7 @@ function toggleDay(days: Weekday[], d: Weekday) {
     : ([...days, d].sort() as Weekday[]);
 }
 
-export default function AvailabilityEditor({ slug }: { slug: string }) {
+export default function AvailabilityEditor() {
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
   const locale = params?.locale ?? "en";
@@ -35,7 +31,7 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load rule from DB (cookie session auth)
+  // Load from DB (session cookie)
   useEffect(() => {
     let cancelled = false;
 
@@ -60,7 +56,7 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
           setRule(defaultAvailability);
         }
       } catch {
-        // keep defaults
+        if (!cancelled) setRule(defaultAvailability);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -74,6 +70,7 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
 
   async function save() {
     if (saving) return;
+
     setSaving(true);
     setError(null);
 
@@ -81,7 +78,7 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
       const res = await fetch("/api/availability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rule })
+        body: JSON.stringify({ rule }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -146,14 +143,12 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
                   <button
                     key={d}
                     type="button"
-                    onClick={() =>
-                      setRule((r) => ({ ...r, days: toggleDay(r.days, d) }))
-                    }
+                    onClick={() => setRule((r) => ({ ...r, days: toggleDay(r.days, d) }))}
                     className={[
                       "rounded-xl border px-3 py-2 text-sm font-semibold",
                       active
                         ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200 hover:bg-slate-50"
+                        : "border-slate-200 hover:bg-slate-50",
                     ].join(" ")}
                   >
                     {dayLabels[d]}
@@ -170,9 +165,7 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
               <input
                 type="time"
                 value={rule.start}
-                onChange={(e) =>
-                  setRule((r) => ({ ...r, start: e.target.value }))
-                }
+                onChange={(e) => setRule((r) => ({ ...r, start: e.target.value }))}
                 className="rounded-xl border border-slate-200 px-3 py-2"
               />
             </label>
@@ -182,9 +175,7 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
               <input
                 type="time"
                 value={rule.end}
-                onChange={(e) =>
-                  setRule((r) => ({ ...r, end: e.target.value }))
-                }
+                onChange={(e) => setRule((r) => ({ ...r, end: e.target.value }))}
                 className="rounded-xl border border-slate-200 px-3 py-2"
               />
             </label>
@@ -200,7 +191,7 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
                 onChange={(e) =>
                   setRule((r) => ({
                     ...r,
-                    breakStart: e.target.value || undefined
+                    breakStart: e.target.value || undefined,
                   }))
                 }
                 className="rounded-xl border border-slate-200 px-3 py-2"
@@ -215,7 +206,7 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
                 onChange={(e) =>
                   setRule((r) => ({
                     ...r,
-                    breakEnd: e.target.value || undefined
+                    breakEnd: e.target.value || undefined,
                   }))
                 }
                 className="rounded-xl border border-slate-200 px-3 py-2"
@@ -235,7 +226,7 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
                 onChange={(e) =>
                   setRule((r) => ({
                     ...r,
-                    slotStepMin: Number(e.target.value || 30)
+                    slotStepMin: Number(e.target.value || 30),
                   }))
                 }
                 className="rounded-xl border border-slate-200 px-3 py-2"
@@ -252,7 +243,7 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
                 onChange={(e) =>
                   setRule((r) => ({
                     ...r,
-                    bufferMin: Number(e.target.value || 0)
+                    bufferMin: Number(e.target.value || 0),
                   }))
                 }
                 className="rounded-xl border border-slate-200 px-3 py-2"
@@ -264,3 +255,4 @@ export default function AvailabilityEditor({ slug }: { slug: string }) {
     </section>
   );
 }
+
