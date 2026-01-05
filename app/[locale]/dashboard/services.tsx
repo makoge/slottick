@@ -294,7 +294,7 @@ export default function ServicesEditor() {
                       type="number"
                       min={0}
                       step={1}
-                      className="rounded-xl border border-slate-200 px-3 py-2"
+                      className="rounded-xl border border-slate-200 px-3 py-4"
                       value={s.price}
                       onChange={(e) =>
                         updateService(s.id, { price: Math.max(0, Number(e.target.value) || 0) })
@@ -302,7 +302,7 @@ export default function ServicesEditor() {
                       disabled={saving}
                     />
                     <select
-                      className="rounded-xl border border-slate-200 px-3 py-2"
+                      className="rounded-xl border border-slate-200 px-3 py-3"
                       value={s.currency}
                       onChange={(e) =>
                         updateService(s.id, { currency: e.target.value as Currency })
