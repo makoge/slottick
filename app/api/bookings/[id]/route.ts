@@ -1,12 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
 
-// Public read: booking success page only (safe fields)
-export async function GET(_req: Request, ctx: { params: { id: string } }) {
-  const id = String(ctx.params.id || "").trim();
-  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
 
   const booking = await prisma.booking.findUnique({
     where: { id },
@@ -26,23 +24,21 @@ export async function GET(_req: Request, ctx: { params: { id: string } }) {
           category: true,
           city: true,
           country: true,
-          website: true
-        }
-      }
-    }
+          website: true,
+        },
+      },
+    },
   });
 
-  if (!booking) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  // Don’t show cancelled bookings as “success”
-  if (booking.status !== "CONFIRMED") {
+  if (!booking || booking.status !== "CONFIRMED") {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
   return NextResponse.json({
     booking: {
       ...booking,
-      startsAt: booking.startsAt.toISOString()
-    }
+      startsAt: booking.startsAt.toISOString(),
+    },
   });
 }
+
