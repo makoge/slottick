@@ -183,3 +183,24 @@ model EmailVerificationToken {
   @@index([businessId])
   @@index([expiresAt])
 }
+model Customer {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  phone        String?
+
+  sessions CustomerSession[]
+}
+
+model CustomerSession {
+  tokenHash String   @id
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+

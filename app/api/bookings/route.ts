@@ -8,6 +8,8 @@ import {
   type AvailabilityRule
 } from "@/lib/availability";
 
+export const runtime = "nodejs";
+
 function money(price: number, currency: string) {
   const symbols: Record<string, string> = { EUR: "€", USD: "$", FCFA: "FCFA" };
   const s = symbols[currency] ?? currency;
@@ -175,6 +177,7 @@ export async function POST(req: Request) {
     }
   }
 
+  // Create booking (unique constraint: @@unique([businessId, startsAt]))
   let booking;
   try {
     booking = await prisma.booking.create({
@@ -198,33 +201,60 @@ export async function POST(req: Request) {
     );
   }
 
-  // Email (optional) — never fail booking because of email
+  // Build links + shared fields
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "http://localhost:3000";
+
+  const locale = getLocaleFromReferer(req);
+
+  const manageLink = `${baseUrl}/${locale}/book/${business.slug}/success?id=${encodeURIComponent(
+    booking.id
+  )}`;
+
+  const dateText = startsAt.toISOString().slice(0, 10);
+  const priceText = money(price, currency);
+
+  // 1) Customer email (optional)
   if (customerEmail) {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL ??
-      process.env.NEXT_PUBLIC_APP_URL ??
-      "http://localhost:3000";
-
-    const locale = getLocaleFromReferer(req);
-
-    const manageLink = `${baseUrl}/${locale}/book/${business.slug}/success?id=${encodeURIComponent(
-      booking.id
-    )}`;
-
     try {
       await sendBookingConfirmationEmail({
         to: customerEmail,
         businessName: business.name,
         serviceName,
-        date: startsAt.toISOString().slice(0, 10),
+        date: dateText,
         time: requestedTime,
         durationMin,
-        priceText: money(price, currency),
+        priceText,
         manageLink
       });
     } catch (e) {
-      console.error("[booking] confirmation email failed", e);
+      console.error("[booking] customer email failed", e);
     }
+  }
+
+  // 2) ✅ Owner email (always)
+  try {
+    // If you don't want to change your email template yet,
+    // we "pack" customer info into the fields the template already prints.
+    const ownerExtra =
+      `Customer: ${customerName} (${customerPhone})` +
+      (customerEmail ? `, ${customerEmail}` : "") +
+      (notes ? ` • Notes: ${notes}` : "");
+
+    await sendBookingConfirmationEmail({
+      to: business.ownerEmail,
+      businessName: business.name,
+      serviceName: `${serviceName} — ${ownerExtra}`,
+      date: dateText,
+      time: requestedTime,
+      durationMin,
+      priceText,
+      manageLink
+    });
+  } catch (e) {
+    console.error("[booking] owner email failed", e);
   }
 
   return NextResponse.json({ booking });

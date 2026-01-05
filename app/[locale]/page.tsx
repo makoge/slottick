@@ -25,7 +25,7 @@ export default async function Home({
             </h1>
 
             <p className="max-w-xl text-lg text-slate-600">
-              Slotta turns your schedule into a booking link.
+              Slottick turns your schedule into a booking link.
               You set the rules once, clients book themselves.
             </p>
 
@@ -34,7 +34,7 @@ export default async function Home({
                 href={`/${locale}/register`}
                 className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
               >
-                Create your Slotta
+                Create your Slottick
               </a>
 
               <a
@@ -84,7 +84,7 @@ export default async function Home({
               desc: "Working hours, breaks, buffer time, services and durations. You do this once."
             },
             {
-              title: "Share your Slotta",
+              title: "Share your Slottick",
               desc: "One link that always shows your real availability. No back-and-forth."
             },
             {
@@ -119,7 +119,7 @@ export default async function Home({
             Your availability is your business.
           </h2>
           <p className="mt-4 max-w-xl text-slate-300">
-            Slotta helps you control it, and get booked without chaos.
+            Slottick helps you control it, and get booked without chaos.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
@@ -127,7 +127,7 @@ export default async function Home({
               href={`/${locale}/register`}
               className="inline-flex rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100"
             >
-              Create your Slotta
+              Create your Slottick
             </a>
             <a
               href={`/${locale}/explore`}
