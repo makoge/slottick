@@ -1,4 +1,4 @@
-// app/[locale]/layout.tsx
+
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -12,65 +12,54 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params
 }: {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-  const { locale } = params;
+  const { locale } = await params;
 
   const siteName = "Slottick";
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
 
   const canonical = `${baseUrl}/${locale}`;
-
-  const title = {
-    default: "Slottick — Booking management for service businesses",
-    template: `%s | ${siteName}`
-  };
-
-  const description =
-    "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.";
-
   const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}`]));
 
   return {
     metadataBase: new URL(baseUrl),
-    title,
-    description,
+    title: {
+      default: "Slottick — Booking management for service businesses",
+      template: `%s | ${siteName}`
+    },
+    description:
+      "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.",
     alternates: { canonical, languages },
     openGraph: {
       type: "website",
       url: canonical,
       siteName,
-      title: title.default,
-      description,
+      title: "Slottick — Booking management for service businesses",
+      description:
+        "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.",
       locale,
       images: [{ url: "/og.png", width: 1200, height: 630, alt: siteName }]
     },
     twitter: {
       card: "summary_large_image",
-      title: title.default,
-      description,
+      title: "Slottick — Booking management for service businesses",
+      description:
+        "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.",
       images: ["/og.png"]
-    },
-    robots: {
-      index: true,
-      follow: true
-    },
-    icons: {
-      icon: "/favicon.ico",
-      apple: "/apple-touch-icon.png"
     }
   };
 }
 
-export default function LocaleLayout({
+export default async function LocaleLayout({
   children,
   params
 }: {
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = params;
+  const { locale } = await params;
 
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
@@ -94,10 +83,7 @@ export default function LocaleLayout({
 
         <header className="sticky top-0 z-50 w-full bg-slate-900">
           <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-            <Link
-              href={`/${locale}`}
-              className="text-lg font-semibold tracking-tight text-white"
-            >
+            <Link href={`/${locale}`} className="text-lg font-semibold tracking-tight text-white">
               Slottick
             </Link>
 
@@ -114,10 +100,7 @@ export default function LocaleLayout({
 
         <footer className="bg-slate-900">
           <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 md:flex-row md:items-center md:justify-between">
-            <p className="text-sm text-slate-300">
-              © {new Date().getFullYear()} Slottick
-            </p>
-
+            <p className="text-sm text-slate-300">© {new Date().getFullYear()} Slottick</p>
             <nav className="flex gap-4 text-sm">
               <Link className="text-slate-300 hover:text-white" href={`/${locale}/privacy`}>
                 Privacy
@@ -140,4 +123,5 @@ export default function LocaleLayout({
     </html>
   );
 }
+
 
