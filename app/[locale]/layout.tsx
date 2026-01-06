@@ -20,31 +20,23 @@ export async function generateMetadata({
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
 
+  const canonical = `${baseUrl}/${locale}`;
+
   const title = {
-    default: "Slottick — Booking for beauty & wellness",
+    default: "Slottick — Booking management for service businesses",
     template: `%s | ${siteName}`
   };
 
   const description =
-    "Discover and book salons, barbers, lashes, nails, massage, fitness and more. Create a profile and share your booking link.";
+    "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.";
 
-  const languages = Object.fromEntries(
-    locales.map((l) => [l, `${baseUrl}/${l}`])
-  );
-
-  const canonical = `${baseUrl}/${locale}`;
+  const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}`]));
 
   return {
     metadataBase: new URL(baseUrl),
     title,
     description,
-    applicationName: siteName,
-
-    alternates: {
-      canonical,
-      languages
-    },
-
+    alternates: { canonical, languages },
     openGraph: {
       type: "website",
       url: canonical,
@@ -52,35 +44,18 @@ export async function generateMetadata({
       title: title.default,
       description,
       locale,
-      images: [
-        {
-          url: "/og.png",
-          width: 1200,
-          height: 630,
-          alt: siteName
-        }
-      ]
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: siteName }]
     },
-
     twitter: {
       card: "summary_large_image",
       title: title.default,
       description,
       images: ["/og.png"]
     },
-
     robots: {
       index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        "max-image-preview": "large",
-        "max-snippet": -1,
-        "max-video-preview": -1
-      }
+      follow: true
     },
-
     icons: {
       icon: "/favicon.ico",
       apple: "/apple-touch-icon.png"
@@ -117,7 +92,6 @@ export default function LocaleLayout({
       <body className="min-h-dvh bg-white text-slate-900">
         <Analytics />
 
-        {/* HEADER */}
         <header className="sticky top-0 z-50 w-full bg-slate-900">
           <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
             <Link
@@ -136,10 +110,8 @@ export default function LocaleLayout({
           </div>
         </header>
 
-        {/* MAIN */}
         <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
 
-        {/* FOOTER */}
         <footer className="bg-slate-900">
           <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 md:flex-row md:items-center md:justify-between">
             <p className="text-sm text-slate-300">
@@ -160,7 +132,6 @@ export default function LocaleLayout({
           </div>
         </footer>
 
-        {/* Global structured data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -169,3 +140,4 @@ export default function LocaleLayout({
     </html>
   );
 }
+
