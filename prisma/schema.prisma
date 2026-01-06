@@ -50,6 +50,11 @@ model Business {
   resetTokens             PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
 
+  stripeCustomerId      String?  @unique
+  stripeSubscriptionId  String?  @unique
+  subscriptionStatus    String   @default("inactive") // inactive | active | past_due | canceled
+  currentPeriodEnd      DateTime?
+
   @@index([category])
   @@index([city])
   @@index([country])

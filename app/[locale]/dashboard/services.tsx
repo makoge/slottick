@@ -13,6 +13,17 @@ type DbService = {
   currency: string;
 };
 
+function toCurrency(x: unknown): Currency {
+  const s = String(x ?? "EUR").toUpperCase();
+  return s === "EUR" || s === "USD" || s === "FCFA" ? (s as Currency) : "EUR";
+}
+
+function toPositiveInt(x: string, fallback = 0) {
+  const n = Number(x);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.floor(n));
+}
+
 export default function ServicesEditor() {
   const [services, setServices] = useState<Service[]>([]);
   const [saved, setSaved] = useState(false);
@@ -23,7 +34,7 @@ export default function ServicesEditor() {
   // add form
   const [name, setName] = useState("");
   const [durationMin, setDurationMin] = useState<number>(60);
-  const [price, setPrice] = useState<number>(50);
+  const [priceText, setPriceText] = useState<string>("50"); // ✅ text => no spinners
   const [currency, setCurrency] = useState<Currency>("EUR");
 
   async function load() {
@@ -42,10 +53,10 @@ export default function ServicesEditor() {
       const mapped: Service[] = Array.isArray(data.services)
         ? (data.services as DbService[]).map((s) => ({
             id: String(s.id),
-            name: String(s.name),
-            durationMin: Number(s.durationMin),
-            price: Number(s.price),
-            currency: String(s.currency) as Currency
+            name: String(s.name ?? ""),
+            durationMin: Number(s.durationMin ?? 0),
+            price: Number(s.price ?? 0),
+            currency: toCurrency(s.currency),
           }))
         : [];
 
@@ -79,7 +90,7 @@ export default function ServicesEditor() {
       const res = await fetch("/api/services", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ services: next })
+        body: JSON.stringify({ services: next }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -89,14 +100,13 @@ export default function ServicesEditor() {
         return;
       }
 
-      // trust server as source of truth (ids etc)
       if (Array.isArray(data.services)) {
         const mapped: Service[] = (data.services as DbService[]).map((s) => ({
           id: String(s.id),
-          name: String(s.name),
-          durationMin: Number(s.durationMin),
-          price: Number(s.price),
-          currency: String(s.currency) as Currency
+          name: String(s.name ?? ""),
+          durationMin: Number(s.durationMin ?? 0),
+          price: Number(s.price ?? 0),
+          currency: toCurrency(s.currency),
         }));
         setServices(mapped);
       }
@@ -115,26 +125,29 @@ export default function ServicesEditor() {
     const cleanName = name.trim();
     if (!cleanName) return;
 
+    const price = toPositiveInt(priceText, 0);
+
     const next: Service[] = [
       {
-        id: crypto.randomUUID(), // temp client id; server will replace
+        id: crypto.randomUUID(),
         name: cleanName,
         durationMin: Math.max(5, Number(durationMin) || 5),
-        price: Math.max(0, Number(price) || 0),
-        currency
+        price,
+        currency,
       },
-      ...services
+      ...services,
     ];
 
     persist(next);
 
     setName("");
     setDurationMin(60);
-    setPrice(50);
+    setPriceText("50");
     setCurrency("EUR");
   }
 
-  function updateService(id: string, patch: Partial<Service>) {
+  // ✅ Only allow editing name + duration. Price/currency are locked after creation.
+  function updateService(id: string, patch: Pick<Service, "name" | "durationMin">) {
     const next = services.map((s) => (s.id === id ? { ...s, ...patch } : s));
     persist(next);
   }
@@ -154,15 +167,15 @@ export default function ServicesEditor() {
       </div>
 
       <p className="mt-2 text-sm text-slate-600">
-        Add your services with duration and price. Currency can be EUR, USD, or FCFA (for now).
+        Add your services with duration and price. Price + currency are locked after you create the
+        service.
       </p>
 
       {error ? (
-        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
+        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       ) : null}
 
+      {/* Add form */}
       <form onSubmit={addService} className="mt-5 grid gap-3 rounded-2xl bg-slate-50 p-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="grid gap-1 text-sm">
@@ -191,16 +204,17 @@ export default function ServicesEditor() {
           </label>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        {/* ✅ Bigger price + currency, no spinners */}
+        <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
           <label className="grid gap-1 text-sm">
             Price
             <input
-              type="number"
-              min={0}
-              step={1}
-              className="rounded-xl border border-slate-200 px-3 py-2"
-              value={price}
-              onChange={(e) => setPrice(Number(e.target.value))}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              className="rounded-xl border border-slate-200 px-3 py-3 text-lg font-semibold"
+              value={priceText}
+              onChange={(e) => setPriceText(e.target.value.replace(/[^\d]/g, ""))}
               disabled={loading || saving}
             />
           </label>
@@ -208,7 +222,7 @@ export default function ServicesEditor() {
           <label className="grid gap-1 text-sm">
             Currency
             <select
-              className="rounded-xl border border-slate-200 px-3 py-2"
+              className="min-w-[110px] rounded-xl border border-slate-200 px-3 py-3 text-base font-medium"
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
               disabled={loading || saving}
@@ -231,6 +245,7 @@ export default function ServicesEditor() {
         </button>
       </form>
 
+      {/* List */}
       <div className="mt-5 grid gap-3">
         {loading ? (
           <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
@@ -261,13 +276,14 @@ export default function ServicesEditor() {
                 </button>
               </div>
 
+              {/* ✅ Inline edit: name + duration only. Price + currency locked (read-only). */}
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <label className="grid gap-1 text-sm">
                   Name
                   <input
                     className="rounded-xl border border-slate-200 px-3 py-2"
                     value={s.name}
-                    onChange={(e) => updateService(s.id, { name: e.target.value })}
+                    onChange={(e) => updateService(s.id, { name: e.target.value, durationMin: s.durationMin })}
                     disabled={saving}
                   />
                 </label>
@@ -281,42 +297,22 @@ export default function ServicesEditor() {
                     className="rounded-xl border border-slate-200 px-3 py-2"
                     value={s.durationMin}
                     onChange={(e) =>
-                      updateService(s.id, { durationMin: Math.max(5, Number(e.target.value) || 5) })
+                      updateService(s.id, {
+                        name: s.name,
+                        durationMin: Math.max(5, Number(e.target.value) || 5),
+                      })
                     }
                     disabled={saving}
                   />
                 </label>
 
-                <label className="grid gap-1 text-sm">
-                  Price
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="number"
-                      min={0}
-                      step={1}
-                      className="rounded-xl border border-slate-200 px-3 py-4"
-                      value={s.price}
-                      onChange={(e) =>
-                        updateService(s.id, { price: Math.max(0, Number(e.target.value) || 0) })
-                      }
-                      disabled={saving}
-                    />
-                    <select
-                      className="rounded-xl border border-slate-200 px-3 py-3"
-                      value={s.currency}
-                      onChange={(e) =>
-                        updateService(s.id, { currency: e.target.value as Currency })
-                      }
-                      disabled={saving}
-                    >
-                      {currencyOptions.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
+                <div className="grid gap-1 text-sm">
+                  <div>Price</div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-lg font-semibold">
+                    {formatMoney(s.price, s.currency)}
                   </div>
-                </label>
+                  
+                </div>
               </div>
             </div>
           ))
