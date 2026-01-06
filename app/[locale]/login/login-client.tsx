@@ -2,6 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false }
+};
+
 
 type BusinessDTO = {
   name: string;

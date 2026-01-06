@@ -1,4 +1,10 @@
 import VerifyEmailClient from "./verify-email-client";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false }
+};
+
 
 export default async function VerifyEmailPage({
   params,
