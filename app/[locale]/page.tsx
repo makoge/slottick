@@ -1,4 +1,4 @@
-// app/[locale]/page.tsx
+
 import type { Metadata } from "next";
 import { getMessages, locales } from "@/lib/i18n";
 
@@ -18,9 +18,7 @@ export async function generateMetadata({
   const description =
     "Manage services, staff availability and online bookings in one place. Share one link that always shows your real schedule—built for salons, barbers, beauty and wellness.";
 
-  const languages = Object.fromEntries(
-    locales.map((l) => [l, `${baseUrl}/${l}`])
-  );
+  const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}`]));
 
   return {
     title,
@@ -47,9 +45,9 @@ export async function generateMetadata({
 export default async function Home({
   params
 }: {
-  params: Promise<{ locale: string }>;
+  params: { locale: string };
 }) {
-  const { locale } = await params;
+  const { locale } = params;
   await getMessages(locale);
 
   const baseUrl =
@@ -196,7 +194,7 @@ export default async function Home({
           ))}
         </section>
 
-        {/* WHO IT'S FOR (extra SEO section) */}
+        {/* WHO IT'S FOR */}
         <section className="mt-32 max-w-4xl">
           <h2 className="text-3xl font-bold tracking-tight">
             Built for appointment-based businesses
@@ -233,7 +231,6 @@ export default async function Home({
         </section>
       </div>
 
-      {/* Structured data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
@@ -245,3 +242,4 @@ export default async function Home({
     </main>
   );
 }
+
