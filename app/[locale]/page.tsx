@@ -1,13 +1,15 @@
-
+// app/[locale]/page.tsx
 import type { Metadata } from "next";
 import { getMessages, locales } from "@/lib/i18n";
+
+type Params = { locale: string };
 
 export async function generateMetadata({
   params
 }: {
-  params: { locale: string };
+  params: Promise<Params>;
 }): Promise<Metadata> {
-  const { locale } = params;
+  const { locale } = await params;
 
   const brand = "Slottick";
   const baseUrl =
@@ -21,6 +23,7 @@ export async function generateMetadata({
   const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}`]));
 
   return {
+    metadataBase: new URL(baseUrl),
     title,
     description,
     alternates: { canonical, languages },
@@ -45,9 +48,9 @@ export async function generateMetadata({
 export default async function Home({
   params
 }: {
-  params: { locale: string };
+  params: Promise<Params>;
 }) {
-  const { locale } = params;
+  const { locale } = await params;
   await getMessages(locale);
 
   const baseUrl =
@@ -242,4 +245,3 @@ export default async function Home({
     </main>
   );
 }
-

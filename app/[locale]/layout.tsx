@@ -1,4 +1,4 @@
-
+// app/[locale]/layout.tsx
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -64,7 +64,7 @@ export default async function LocaleLayout({
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
 
-  const jsonLd = {
+  const webSiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Slottick",
@@ -77,51 +77,59 @@ export default async function LocaleLayout({
   };
 
   return (
-    <html lang={locale}>
-      <body className="min-h-dvh bg-white text-slate-900">
-        <Analytics />
+    <div className="min-h-dvh bg-white text-slate-900">
+      <Analytics />
 
-        <header className="sticky top-0 z-50 w-full bg-slate-900">
-          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-            <Link href={`/${locale}`} className="text-lg font-semibold tracking-tight text-white">
-              Slottick
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 w-full bg-slate-900">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+          <Link
+            href={`/${locale}`}
+            className="text-lg font-semibold tracking-tight text-white"
+          >
+            Slottick
+          </Link>
+
+          <Link
+            href={`/${locale}/login`}
+            className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Login
+          </Link>
+        </div>
+      </header>
+
+      {/* MAIN (layout only wraps pages) */}
+      <main className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-16">{children}</div>
+      </main>
+
+      {/* FOOTER */}
+      <footer className="bg-slate-900">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 md:flex-row md:items-center md:justify-between">
+          <p className="text-sm text-slate-300">
+            © {new Date().getFullYear()} Slottick
+          </p>
+
+          <nav className="flex gap-4 text-sm">
+            <Link className="text-slate-300 hover:text-white" href={`/${locale}/privacy`}>
+              Privacy
             </Link>
-
-            <Link
-              href={`/${locale}/login`}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-            >
-              Login
+            <Link className="text-slate-300 hover:text-white" href={`/${locale}/terms`}>
+              Terms
             </Link>
-          </div>
-        </header>
+            <Link className="text-slate-300 hover:text-white" href={`/${locale}/contact`}>
+              Contact us
+            </Link>
+          </nav>
+        </div>
+      </footer>
 
-        <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
-
-        <footer className="bg-slate-900">
-          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 md:flex-row md:items-center md:justify-between">
-            <p className="text-sm text-slate-300">© {new Date().getFullYear()} Slottick</p>
-            <nav className="flex gap-4 text-sm">
-              <Link className="text-slate-300 hover:text-white" href={`/${locale}/privacy`}>
-                Privacy
-              </Link>
-              <Link className="text-slate-300 hover:text-white" href={`/${locale}/terms`}>
-                Terms
-              </Link>
-              <Link className="text-slate-300 hover:text-white" href={`/${locale}/contact`}>
-                Contact us
-              </Link>
-            </nav>
-          </div>
-        </footer>
-
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </body>
-    </html>
+      {/* Site-wide structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd) }}
+      />
+    </div>
   );
 }
-
-

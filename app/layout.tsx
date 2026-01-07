@@ -1,21 +1,22 @@
+// app/layout.tsx
 import type { ReactNode } from "react";
-import "./globals.css";
 import { Inter } from "next/font/google";
-
+import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter"
+  variable: "--font-inter",
+  display: "swap"
 });
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${inter.variable} font-sans min-h-screen`}>
+    <html lang="en" className="bg-white" suppressHydrationWarning>
+      <body
+        className={`${inter.variable} font-sans min-h-dvh bg-white text-slate-900 antialiased`}
+      >
         {children}
       </body>
     </html>
   );
 }
-
