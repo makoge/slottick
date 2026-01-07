@@ -2,7 +2,7 @@ export default function ContactPage() {
   return (
     <section className="mx-auto max-w-5xl px-6 py-20">
       <div className="grid gap-14 md:grid-cols-2">
-        {/* LEFT: INFO */}
+        
         <div>
           <h1 className="text-4xl font-bold tracking-tight">
             Contact Slottick
@@ -10,7 +10,7 @@ export default function ContactPage() {
 
           <p className="mt-4 max-w-md text-lg text-slate-600">
             Questions, feedback, or business inquiries?  
-            Reach out — we usually reply within 1–2 business days.
+            Reach out, we usually reply within 1–2 business days.
           </p>
 
           <div className="mt-10 space-y-6 text-slate-700">
@@ -59,7 +59,7 @@ export default function ContactPage() {
               <label className="text-sm font-medium">Email</label>
               <input
                 type="email"
-                placeholder="you@email.com"
+                placeholder="your@email.com"
                 className="rounded-xl border border-slate-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-900"
               />
             </div>

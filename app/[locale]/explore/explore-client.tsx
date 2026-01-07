@@ -90,6 +90,16 @@ export default function ExploreClient({
           </a>
         </header>
 
+        {/* SEO intro copy */}
+<section className="mt-6 max-w-3xl text-slate-600">
+  <p>
+    Explore local services and book instantly, lash extensions, nail salons,
+    brow studios, barbers, massage,tattoo, beauty and wellness. Filter by city and
+    category to find the right place near you.
+  </p>
+</section>
+
+
         {/* Filters */}
         <section className="mt-8 rounded-2xl border border-slate-200 p-5 shadow-sm">
           <div className="grid gap-3 md:grid-cols-3">
