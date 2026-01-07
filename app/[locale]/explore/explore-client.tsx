@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState } from "react";
@@ -18,10 +19,7 @@ function Stars({ value }: { value: number }) {
         return (
           <span
             key={i}
-            className={[
-              "text-sm",
-              filled ? "text-slate-900" : "text-slate-300"
-            ].join(" ")}
+            className={["text-sm", filled ? "text-slate-900" : "text-slate-300"].join(" ")}
             aria-hidden
           >
             {isHalf ? "★" : "★"}
@@ -36,18 +34,24 @@ function Stars({ value }: { value: number }) {
 export default function ExploreClient({
   locale,
   businesses,
-  categories
+  categories,
+  heading = "Book trusted businesses",
+  intro = "Find services near you and book instantly.",
+  defaultCity = ""
 }: {
   locale: string;
   businesses: BusinessDirectoryItem[];
   categories: BusinessCategory[];
+  heading?: string;
+  intro?: string;
+  defaultCity?: string; // "" = All cities
 }) {
   const [q, setQ] = useState("");
-  const [city, setCity] = useState("Tallinn");
+  const [city, setCity] = useState(defaultCity);
   const [cat, setCat] = useState<BusinessCategory | "All">("All");
 
   const cities = useMemo(() => {
-    const set = new Set(businesses.map((b) => b.city));
+    const set = new Set(businesses.map((b) => b.city).filter(Boolean));
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [businesses]);
 
@@ -62,7 +66,8 @@ export default function ExploreClient({
         return (
           b.name.toLowerCase().includes(query) ||
           b.category.toLowerCase().includes(query) ||
-          b.city.toLowerCase().includes(query)
+          b.city.toLowerCase().includes(query) ||
+          b.country.toLowerCase().includes(query)
         );
       })
       .sort((a, b) => b.ratingAvg - a.ratingAvg);
@@ -74,11 +79,13 @@ export default function ExploreClient({
         <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-medium text-slate-600">Slottick • Services</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">
-              Book trusted businesses
-            </h1>
-            <p className="mt-2 text-slate-600">
-              Find services near you and book instantly.
+            <h1 className="mt-2 text-3xl font-bold tracking-tight">{heading}</h1>
+            <p className="mt-2 text-slate-600">{intro}</p>
+
+            {/* SEO paragraph (indexable text) */}
+            <p className="mt-4 max-w-3xl text-sm text-slate-600">
+              Search and book popular services like barbering, hair salons, nail salons, lash extensions,
+              brow studios, massage, skincare and more. Filter by city and category to find the best local option.
             </p>
           </div>
 
@@ -90,16 +97,6 @@ export default function ExploreClient({
           </a>
         </header>
 
-        {/* SEO intro copy */}
-<section className="mt-6 max-w-3xl text-slate-600">
-  <p>
-    Explore local services and book instantly, lash extensions, nail salons,
-    brow studios, barbers, massage,tattoo, beauty and wellness. Filter by city and
-    category to find the right place near you.
-  </p>
-</section>
-
-
         {/* Filters */}
         <section className="mt-8 rounded-2xl border border-slate-200 p-5 shadow-sm">
           <div className="grid gap-3 md:grid-cols-3">
@@ -107,19 +104,20 @@ export default function ExploreClient({
               Search
               <input
                 className="rounded-xl border border-slate-200 px-3 py-2"
-                placeholder="e.g. lashes, nails, Tallinn..."
+                placeholder="e.g. nails, barber, Berlin..."
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
               />
             </label>
 
             <label className="grid gap-1 text-sm">
-              Near you (city)
+              City
               <select
                 className="rounded-xl border border-slate-200 px-3 py-2"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
               >
+                <option value="">All cities</option>
                 {cities.map((c) => (
                   <option key={c} value={c}>
                     {c}
@@ -182,9 +180,7 @@ export default function ExploreClient({
                   <div className="mt-4 flex items-center justify-between">
                     <div>
                       <Stars value={b.ratingAvg} />
-                      <div className="mt-1 text-xs text-slate-500">
-                        {b.ratingCount} reviews
-                      </div>
+                      <div className="mt-1 text-xs text-slate-500">{b.ratingCount} reviews</div>
                     </div>
 
                     <span className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold group-hover:bg-white">
@@ -200,3 +196,4 @@ export default function ExploreClient({
     </main>
   );
 }
+

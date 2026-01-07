@@ -12,7 +12,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   // Static pages you want indexed
-  const staticPaths = ["", "/explore", "/pricing", "/privacy", "/terms", "/contact"];
+  const staticPaths = ["", "/explore", "/book", "/privacy", "/terms", "/contact"];
 
   const urls: MetadataRoute.Sitemap = [];
 
