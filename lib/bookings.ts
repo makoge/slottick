@@ -14,6 +14,7 @@ export type Booking = {
 
   customerName: string;
   customerPhone: string;
+  customerCountry: string;
   notes?: string;
 
   createdAt: string;

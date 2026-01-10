@@ -13,6 +13,7 @@ type DbBooking = {
   currency: string;
   customerName: string;
   customerPhone: string;
+  customerCountry?: string | null;
   notes?: string | null;
   status: "CONFIRMED" | "CANCELLED";
 };

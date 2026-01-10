@@ -116,6 +116,7 @@ model Booking {
   customerName  String
   customerPhone String
   customerEmail String?
+  customerCountry String?
   notes         String?
 
   status      BookingStatus @default(CONFIRMED)

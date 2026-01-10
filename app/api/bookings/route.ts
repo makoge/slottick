@@ -87,6 +87,7 @@ export async function GET(req: Request) {
       currency: true,
       customerName: true,
       customerPhone: true,
+      customerCountry: true,
       notes: true,
       status: true
     }
@@ -120,6 +121,10 @@ export async function POST(req: Request) {
   const customerEmail = body.customerEmail
     ? String(body.customerEmail).trim().toLowerCase()
     : null;
+    const customerCountry = body.customerCountry
+  ? String(body.customerCountry).trim()
+  : null;
+
   const notes = body.notes ? String(body.notes).trim() : null;
 
   if (!businessSlug || !serviceName || !customerName || !customerPhone || !startsAt) {
@@ -191,6 +196,7 @@ export async function POST(req: Request) {
         customerName,
         customerPhone,
         customerEmail: customerEmail || undefined,
+        customerCountry: customerCountry || undefined,
         notes: notes || undefined
       }
     });
