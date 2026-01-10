@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatMoney } from "@/lib/services";
 
 import AvailabilityEditor from "./availability";
 import ServicesEditor from "./services";
@@ -20,6 +21,19 @@ type Props = {
     city?: string | null;
     country?: string | null;
   };
+};
+
+type DbBooking = {
+  id: string;
+  startsAt: string; // ISO
+  durationMin: number;
+  serviceName: string;
+  price: number;
+  currency: string;
+  customerName: string;
+  customerPhone: string;
+  notes?: string | null;
+  status: "CONFIRMED" | "CANCELLED";
 };
 
 function StatCard({
@@ -45,6 +59,10 @@ function StatCard({
 export default function DashboardClient({ locale, business }: Props) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
+
+  // ✅ stats data
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [bookings, setBookings] = useState<DbBooking[]>([]);
 
   const bookingPath = useMemo(
     () => `/${locale}/book/${business.slug}`,
@@ -72,10 +90,80 @@ export default function DashboardClient({ locale, business }: Props) {
     router.replace(`/${locale}/login`);
   }
 
-  // ✅ placeholders (wire these to real data later without changing layout)
-  const totalBookings = "—"; // e.g. "28"
-  const revenueGenerated = "—"; // e.g. "€1,240"
-  const customerData = "—"; // e.g. "19 customers"
+  async function refreshStats(signal?: AbortSignal) {
+    setStatsLoading(true);
+    try {
+      const res = await fetch("/api/bookings?scope=owner", {
+        cache: "no-store",
+        signal,
+      });
+      const data = await res.json().catch(() => ({}));
+      setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
+    } finally {
+      setStatsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    const ac = new AbortController();
+    refreshStats(ac.signal);
+    return () => ac.abort();
+  }, []);
+
+  // ✅ compute stats from bookings
+  const {
+    totalBookings,
+    customerCount,
+    revenueLabel,
+    revenueSub,
+    totalSub,
+    customerSub,
+  } = useMemo(() => {
+    const active = bookings.filter((b) => b.status !== "CANCELLED");
+
+    // total bookings (all time)
+    const total = active.length;
+
+    // unique customers (phone is best key)
+    const customers = new Set<string>();
+    for (const b of active) {
+      const key = (b.customerPhone || "").trim() || `${b.customerName}`.trim();
+      if (key) customers.add(key);
+    }
+
+    // revenue (only past confirmed, since you don't have "COMPLETED" yet)
+    const now = Date.now();
+    const revenueBookings = active.filter(
+      (b) => b.status === "CONFIRMED" && new Date(b.startsAt).getTime() <= now
+    );
+
+    // handle currency: show value only if single currency; otherwise show "Mixed"
+    const currencies = new Set(revenueBookings.map((b) => String(b.currency || "").toUpperCase()));
+    const singleCurrency = currencies.size === 1 ? [...currencies][0] : null;
+
+    const revenue = revenueBookings.reduce((sum, b) => sum + Number(b.price || 0), 0);
+
+    const revenueValue =
+      revenueBookings.length === 0
+        ? "0"
+        : singleCurrency
+          ? formatMoney(revenue, singleCurrency as any)
+          : "Mixed";
+
+    return {
+      totalBookings: statsLoading ? "—" : String(total),
+      customerCount: statsLoading ? "—" : String(customers.size),
+      revenueLabel: statsLoading ? "—" : revenueValue,
+
+      totalSub: statsLoading ? "Loading…" : "All time (not cancelled)",
+      revenueSub: statsLoading
+        ? "Loading…"
+        : singleCurrency
+          ? "Confirmed in the past"
+          : "Revenue in multiple currencies",
+      customerSub: statsLoading ? "Loading…" : "Unique customers",
+    };
+  }, [bookings, statsLoading]);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
@@ -84,9 +172,7 @@ export default function DashboardClient({ locale, business }: Props) {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-medium text-slate-600">Dashboard</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">
-              {business.name}
-            </h1>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight">{business.name}</h1>
             <p className="mt-1 text-sm text-slate-600">
               <span className="font-semibold text-slate-900">
                 {business.category ?? "Service"}
@@ -95,9 +181,7 @@ export default function DashboardClient({ locale, business }: Props) {
               {business.country ? `, ${business.country}` : ""}
               {" • "}
               <span className="text-slate-500">slug:</span>{" "}
-              <span className="font-semibold text-slate-900">
-                {business.slug}
-              </span>
+              <span className="font-semibold text-slate-900">{business.slug}</span>
             </p>
           </div>
 
@@ -112,6 +196,14 @@ export default function DashboardClient({ locale, business }: Props) {
             </a>
 
             <button
+              type="button"
+              onClick={() => refreshStats()}
+              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+            >
+              Refresh stats
+            </button>
+
+            <button
               onClick={logout}
               className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
               type="button"
@@ -123,36 +215,20 @@ export default function DashboardClient({ locale, business }: Props) {
 
         {/* Stats row */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard
-            title="Total bookings"
-            value={totalBookings}
-            sub="All time"
-          />
-          <StatCard
-            title="Revenue generated"
-            value={revenueGenerated}
-            sub="Based on completed bookings"
-          />
-          <StatCard
-            title="Customer data"
-            value={customerData}
-            sub="Unique customers"
-          />
+          <StatCard title="Total bookings" value={totalBookings} sub={totalSub} />
+          <StatCard title="Revenue generated" value={revenueLabel} sub={revenueSub} />
+          <StatCard title="Customer data" value={customerCount} sub={customerSub} />
         </div>
 
         {/* Share link card */}
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-600">
-                Your shareable booking link
-              </div>
+              <div className="text-sm font-medium text-slate-600">Your shareable booking link</div>
 
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="min-w-0 flex-1 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 ring-1 ring-slate-200">
-                  <div className="truncate">
-                    {bookingUrl || bookingPath}
-                  </div>
+                  <div className="truncate">{bookingUrl || bookingPath}</div>
                 </div>
 
                 <button
@@ -177,14 +253,11 @@ export default function DashboardClient({ locale, business }: Props) {
 
         {/* Main content layout */}
         <div className="mt-8 grid gap-6 lg:grid-cols-12">
-          {/* Left column */}
           <div className="lg:col-span-7">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
                 <h2 className="text-base font-semibold">Schedule overview</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  See your timeline and upcoming slots.
-                </p>
+                <p className="mt-1 text-sm text-slate-500">See your timeline and upcoming slots.</p>
               </div>
               <SchedulePanel />
             </div>
@@ -200,14 +273,11 @@ export default function DashboardClient({ locale, business }: Props) {
             </div>
           </div>
 
-          {/* Right column */}
           <div className="lg:col-span-5 space-y-6">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
                 <h2 className="text-base font-semibold">Availability</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Set your working hours and breaks.
-                </p>
+                <p className="mt-1 text-sm text-slate-500">Set your working hours and breaks.</p>
               </div>
               <AvailabilityEditor />
             </div>
@@ -215,9 +285,7 @@ export default function DashboardClient({ locale, business }: Props) {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
                 <h2 className="text-base font-semibold">Services & pricing</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Add services, duration, and price.
-                </p>
+                <p className="mt-1 text-sm text-slate-500">Add services, duration, and price.</p>
               </div>
               <ServicesEditor />
             </div>
@@ -227,4 +295,3 @@ export default function DashboardClient({ locale, business }: Props) {
     </main>
   );
 }
-
