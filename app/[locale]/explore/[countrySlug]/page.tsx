@@ -98,7 +98,7 @@ export default async function Page({
   return (
     <>
       <ExploreClient
-        locale={locale}
+        
         businesses={businesses}
         categories={["Lash", "Nails", "Brows", "Barber", "Massage", "Other"] as any}
         heading={`Book services in ${c.name}`}

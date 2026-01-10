@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatMoney, type Currency } from "@/lib/services";
+import { useLocale } from "@/lib/use-locale";
 
 type BookingDTO = {
   id: string;
@@ -33,7 +34,6 @@ type BusinessCard = {
 
 function prettyDateTime(iso: string) {
   const dt = new Date(iso);
-  // booking uses UTC in your MVP
   const yyyy = dt.getUTCFullYear();
   const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(dt.getUTCDate()).padStart(2, "0");
@@ -43,12 +43,12 @@ function prettyDateTime(iso: string) {
 }
 
 export default function SuccessClient({
-  locale,
   businessSlug
 }: {
-  locale: string;
   businessSlug: string;
 }) {
+  const locale = useLocale("en"); // ✅ always defined
+
   const sp = useSearchParams();
   const id = sp.get("id") ?? "";
 
@@ -71,8 +71,9 @@ export default function SuccessClient({
         return;
       }
 
-      // 1) fetch booking
-      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}`, { cache: "no-store" });
+      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}`, {
+        cache: "no-store"
+      });
       const data = await res.json().catch(() => ({}));
 
       if (cancelled) return;
@@ -85,7 +86,6 @@ export default function SuccessClient({
       const b: BookingDTO = data.booking;
       setBooking(b);
 
-      // 2) marketplace (simple): show other businesses in same city (if you have /api/businesses)
       const city = b.business?.city?.trim();
       if (city) {
         const r2 = await fetch(`/api/businesses?city=${encodeURIComponent(city)}`, {
@@ -158,7 +158,6 @@ export default function SuccessClient({
             </div>
           ) : (
             <>
-              {/* Booking details */}
               <div className="mt-6 rounded-2xl bg-slate-50 p-5">
                 <div className="text-sm font-medium text-slate-600">Booking details</div>
 
@@ -204,7 +203,6 @@ export default function SuccessClient({
                 </div>
               </div>
 
-              {/* Marketplace */}
               <div className="mt-8">
                 <div className="flex items-end justify-between gap-3">
                   <div>
@@ -214,10 +212,7 @@ export default function SuccessClient({
                     </p>
                   </div>
 
-                  <a
-                    className="text-sm font-semibold underline"
-                    href={`/${locale}/explore`}
-                  >
+                  <a className="text-sm font-semibold underline" href={`/${locale}/explore`}>
                     Open marketplace
                   </a>
                 </div>
@@ -236,8 +231,8 @@ export default function SuccessClient({
                       >
                         <div className="font-semibold">{b.name}</div>
                         <div className="mt-1 text-sm text-slate-600">
-                          {b.category ?? "Service"}{" "}
-                          {b.city ? `• ${b.city}` : ""} {b.country ? `• ${b.country}` : ""}
+                          {b.category ?? "Service"} {b.city ? `• ${b.city}` : ""}{" "}
+                          {b.country ? `• ${b.country}` : ""}
                         </div>
                       </a>
                     ))}

@@ -5,5 +5,5 @@ export default async function BookingSuccessPage({
 }: {
   params: { locale: string; businessSlug: string };
 }) {
-  return <SuccessClient locale={params.locale} businessSlug={params.businessSlug} />;
+  return <SuccessClient  businessSlug={params.businessSlug} />;
 }

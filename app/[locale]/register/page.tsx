@@ -6,12 +6,6 @@ export const metadata: Metadata = {
 };
 
 
-export default async function RegisterPage({
-  params
-}: {
-  params: Promise<{ locale: string }>;
-}) {
-  const { locale } = await params;
-  return <RegisterClient locale={locale} />;
+export default async function RegisterPage() {
+  return <RegisterClient />;
 }
-

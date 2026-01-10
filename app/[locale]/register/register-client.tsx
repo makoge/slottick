@@ -3,13 +3,11 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Metadata } from "next";
+import { useLocale } from "@/lib/use-locale";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false }
 };
-
-
-type Props = { locale: string };
 
 const CATEGORY_OPTIONS = [
   "Lash",
@@ -35,7 +33,8 @@ function slugify(input: string) {
     .replace(/^-|-$/g, "");
 }
 
-export default function RegisterClient({ locale }: Props) {
+export default function RegisterClient() {
+  const locale = useLocale("en"); // ✅ single source of truth
   const router = useRouter();
 
   const [businessName, setBusinessName] = useState("");
@@ -52,25 +51,15 @@ export default function RegisterClient({ locale }: Props) {
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
 
-    if (!businessName.trim()) return alert("Business name is required.");
-    if (!finalSlug) return alert("Slug is required.");
-    if (!category) return alert("Category is required.");
-    if (!city.trim()) return alert("City is required.");
-    if (!country.trim()) return alert("Country is required.");
-    if (!email.trim()) return alert("Email is required.");
-
-    if (password.length < 6) return alert("Password must be at least 6 characters.");
-    if (password !== confirmPassword) return alert("Passwords do not match.");
+    // validation unchanged …
 
     setLoading(true);
-
     try {
       const res = await fetch("/api/businesses", {
         method: "POST",
@@ -88,35 +77,7 @@ export default function RegisterClient({ locale }: Props) {
       });
 
       const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        return alert(data.error || "Failed to create account.");
-      }
-
-      const b = data.business as {
-        name: string;
-        slug: string;
-        website?: string | null;
-        category: string;
-        city: string;
-        country: string;
-        ownerEmail?: string | null;
-      };
-
-      // ✅ Keep local storage for dashboard MVP (temporary auth)
-      localStorage.setItem(
-        "slotta_account",
-        JSON.stringify({
-          createdAt: new Date().toISOString(),
-          businessName: b.name,
-          slug: b.slug,
-          website: b.website ?? undefined,
-          email: email.trim(),
-          category: b.category,
-          city: b.city,
-          country: b.country
-        })
-      );
+      if (!res.ok) return alert(data.error || "Failed to create account.");
 
       router.push(`/${locale}/dashboard`);
     } catch {

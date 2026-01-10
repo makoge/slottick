@@ -121,7 +121,7 @@ export default async function Home({
 
             <p className="max-w-xl text-lg text-slate-600">
               Slottick turns your availability into a shareable booking page.
-              Clients book your real schedule—no back-and-forth, no double booking.
+              Clients book your real schedule, no back-and-forth, no double booking.
             </p>
 
             <div className="flex flex-wrap gap-4">

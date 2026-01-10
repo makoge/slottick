@@ -45,7 +45,7 @@ function toLocalParts(iso: string) {
   const dt = new Date(iso);
   return {
     date: toISODateLocal(dt),
-    time: `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`
+    time: `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`,
   };
 }
 
@@ -59,7 +59,6 @@ export default function SchedulePanel() {
   const [selectedDate, setSelectedDate] = useState<string>(today);
 
   async function refresh() {
-    // ✅ you must implement this GET on your backend (session-auth)
     const res = await fetch("/api/bookings?scope=owner", { cache: "no-store" });
     const data = await res.json().catch(() => ({}));
     setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
@@ -74,14 +73,6 @@ export default function SchedulePanel() {
     if (mode === "upcoming" && selectedDate < today) setSelectedDate(today);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, today]);
-
-  const week = useMemo(() => {
-    const monday = startOfWeekMonday(new Date());
-    return Array.from({ length: 7 }).map((_, i) => {
-      const d = addDays(monday, i);
-      return { label: weekdayLabel[i], iso: toISODateLocal(d) };
-    });
-  }, []);
 
   const filtered = useMemo(() => {
     const sorted = [...bookings]
@@ -98,10 +89,7 @@ export default function SchedulePanel() {
     return sorted.filter((b) => toLocalParts(b.startsAt).date >= today);
   }, [bookings, mode, today]);
 
-  const dayBookings = useMemo(() => {
-    return filtered.filter((b) => toLocalParts(b.startsAt).date === selectedDate);
-  }, [filtered, selectedDate]);
-
+  // ✅ counts map
   const countsByDate = useMemo(() => {
     const map = new Map<string, number>();
     for (const b of filtered) {
@@ -110,6 +98,31 @@ export default function SchedulePanel() {
     }
     return map;
   }, [filtered]);
+
+  // ✅ AUTO-SELECT next date with bookings (so Upcoming shows something)
+  useEffect(() => {
+    if (mode !== "upcoming") return;
+
+    const hasSelected = (countsByDate.get(selectedDate) ?? 0) > 0;
+    if (hasSelected) return;
+
+    const nextDate = [...countsByDate.keys()].sort()[0]; // earliest upcoming date
+    if (nextDate) setSelectedDate(nextDate);
+  }, [mode, countsByDate, selectedDate]);
+
+  // ✅ week should follow selectedDate (not always "this week")
+  const week = useMemo(() => {
+    const anchor = new Date(`${selectedDate}T00:00:00`);
+    const monday = startOfWeekMonday(anchor);
+    return Array.from({ length: 7 }).map((_, i) => {
+      const d = addDays(monday, i);
+      return { label: weekdayLabel[i], iso: toISODateLocal(d) };
+    });
+  }, [selectedDate]);
+
+  const dayBookings = useMemo(() => {
+    return filtered.filter((b) => toLocalParts(b.startsAt).date === selectedDate);
+  }, [filtered, selectedDate]);
 
   const title = mode === "today" ? "Today" : mode === "upcoming" ? "Upcoming" : "All";
 
@@ -126,7 +139,7 @@ export default function SchedulePanel() {
             [
               { id: "today", label: "Today" },
               { id: "upcoming", label: "Upcoming" },
-              { id: "all", label: "All" }
+              { id: "all", label: "All" },
             ] as const
           ).map((x) => {
             const active = mode === x.id;
@@ -137,9 +150,7 @@ export default function SchedulePanel() {
                 onClick={() => setMode(x.id)}
                 className={[
                   "rounded-xl border px-4 py-2 text-sm font-semibold",
-                  active
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 hover:bg-slate-50"
+                  active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 hover:bg-slate-50",
                 ].join(" ")}
               >
                 {x.label}
@@ -164,23 +175,19 @@ export default function SchedulePanel() {
               className={[
                 "relative rounded-xl border px-3 py-2 text-sm font-semibold",
                 disabled ? "opacity-40 cursor-not-allowed" : "",
-                active
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-200 hover:bg-slate-50"
+                active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 hover:bg-slate-50",
               ].join(" ")}
             >
               <div className="flex items-center gap-2">
                 <span>{d.label}</span>
-                <span className={active ? "text-white/80" : "text-slate-500"}>
-                  {d.iso.slice(8, 10)}
-                </span>
+                <span className={active ? "text-white/80" : "text-slate-500"}>{d.iso.slice(8, 10)}</span>
               </div>
 
               {count > 0 ? (
                 <span
                   className={[
                     "absolute -right-1 -top-1 rounded-full px-2 py-0.5 text-xs font-bold",
-                    active ? "bg-white text-slate-900" : "bg-slate-900 text-white"
+                    active ? "bg-white text-slate-900" : "bg-slate-900 text-white",
                   ].join(" ")}
                 >
                   {count}
@@ -210,8 +217,7 @@ export default function SchedulePanel() {
                         {time} • {b.customerName}
                       </div>
                       <div className="mt-1 text-sm text-slate-600">
-                        {b.serviceName} • {b.durationMin} min •{" "}
-                        {formatMoney(b.price, b.currency as any)}
+                        {b.serviceName} • {b.durationMin} min • {formatMoney(b.price, b.currency as any)}
                       </div>
                       <div className="mt-1 text-sm text-slate-600">
                         {b.customerPhone}

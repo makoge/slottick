@@ -177,73 +177,72 @@ export default function ServicesEditor() {
 
       {/* Add form */}
       <form onSubmit={addService} className="mt-5 grid gap-3 rounded-2xl bg-slate-50 p-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1 text-sm">
-            Service name
-            <input
-              className="rounded-xl border border-slate-200 px-3 py-2"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Haircut"
-              required
-              disabled={loading || saving}
-            />
-          </label>
+  <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+    <label className="grid min-w-0 gap-1 text-sm">
+      Service name
+      <input
+        className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Haircut"
+        required
+        disabled={loading || saving}
+      />
+    </label>
 
-          <label className="grid gap-1 text-sm">
-            Duration (minutes)
-            <input
-              type="number"
-              min={5}
-              step={5}
-              className="rounded-xl border border-slate-200 px-3 py-2"
-              value={durationMin}
-              onChange={(e) => setDurationMin(Number(e.target.value))}
-              disabled={loading || saving}
-            />
-          </label>
-        </div>
+    <label className="grid min-w-0 gap-1 text-sm">
+      Duration (minutes)
+      <input
+        type="number"
+        min={5}
+        step={5}
+        className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+        value={durationMin}
+        onChange={(e) => setDurationMin(Number(e.target.value))}
+        disabled={loading || saving}
+      />
+    </label>
+  </div>
 
-        {/* ✅ Bigger price + currency, no spinners */}
-        <div className="grid gap-3 sm:grid-cols-[2fr_1fr]">
-          <label className="grid gap-1 text-sm">
-            Price
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              className="rounded-xl border border-slate-200 px-3 py-3 text-lg font-semibold"
-              value={priceText}
-              onChange={(e) => setPriceText(e.target.value.replace(/[^\d]/g, ""))}
-              disabled={loading || saving}
-            />
-          </label>
+  <div className="grid min-w-0 gap-3 sm:grid-cols-[2fr_1fr]">
+    <label className="grid min-w-0 gap-1 text-sm">
+      Price
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-3 text-lg font-semibold"
+        value={priceText}
+        onChange={(e) => setPriceText(e.target.value.replace(/[^\d]/g, ""))}
+        disabled={loading || saving}
+      />
+    </label>
 
-          <label className="grid gap-1 text-sm">
-            Currency
-            <select
-              className="min-w-[110px] rounded-xl border border-slate-200 px-3 py-3 text-base font-medium"
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value as Currency)}
-              disabled={loading || saving}
-            >
-              {currencyOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+    <label className="grid min-w-0 gap-1 text-sm">
+      Currency
+      <select
+        className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-3 text-base font-medium"
+        value={currency}
+        onChange={(e) => setCurrency(e.target.value as Currency)}
+        disabled={loading || saving}
+      >
+        {currencyOptions.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+    </label>
+  </div>
 
-        <button
-          type="submit"
-          disabled={loading || saving}
-          className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-        >
-          Add service
-        </button>
-      </form>
+  <button
+    type="submit"
+    disabled={loading || saving}
+    className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 sm:w-fit"
+  >
+    Add service
+  </button>
+</form>
 
       {/* List */}
       <div className="mt-5 grid gap-3">
@@ -277,11 +276,12 @@ export default function ServicesEditor() {
               </div>
 
               {/* ✅ Inline edit: name + duration only. Price + currency locked (read-only). */}
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-3">
+
                 <label className="grid gap-1 text-sm">
                   Name
                   <input
-                    className="rounded-xl border border-slate-200 px-3 py-2"
+                    className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
                     value={s.name}
                     onChange={(e) => updateService(s.id, { name: e.target.value, durationMin: s.durationMin })}
                     disabled={saving}
@@ -294,7 +294,7 @@ export default function ServicesEditor() {
                     type="number"
                     min={5}
                     step={5}
-                    className="rounded-xl border border-slate-200 px-3 py-2"
+                    className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
                     value={s.durationMin}
                     onChange={(e) =>
                       updateService(s.id, {
@@ -308,9 +308,10 @@ export default function ServicesEditor() {
 
                 <div className="grid gap-1 text-sm">
                   <div>Price</div>
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-lg font-semibold">
-                    {formatMoney(s.price, s.currency)}
-                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-lg font-semibold break-words">
+                  {formatMoney(s.price, s.currency)}
+                       </div>
+
                   
                 </div>
               </div>

@@ -3,11 +3,11 @@ import { getAuthedBusiness } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage({
-  params
+  params,
 }: {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = params;
+  const { locale } = await params;
 
   const business = await getAuthedBusiness();
   if (!business) redirect(`/${locale}/login`);
@@ -23,7 +23,7 @@ export default async function DashboardPage({
         category: business.category,
         city: business.city,
         country: business.country,
-        createdAt: business.createdAt.toISOString()
+        createdAt: business.createdAt.toISOString(),
       }}
     />
   );

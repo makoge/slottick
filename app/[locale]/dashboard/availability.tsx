@@ -216,40 +216,40 @@ export default function AvailabilityEditor() {
 
           {/* Slot step + buffer */}
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1 text-sm">
-              Slot step (minutes)
-              <input
-                type="number"
-                min={5}
-                step={5}
-                value={rule.slotStepMin}
-                onChange={(e) =>
-                  setRule((r) => ({
-                    ...r,
-                    slotStepMin: Number(e.target.value || 30),
-                  }))
-                }
-                className="rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
+         <label className="grid gap-1 text-sm">
+         Slot step (minutes)
+        <input
+          type="number"
+           min={5}
+          step={5}
+          value={rule.slotStepMin}
+           onChange={(e) =>
+             setRule((r) => ({
+          ...r,
+          slotStepMin: Number(e.target.value || 30),
+        }))
+        }
+      className="w-full max-w-[220px] rounded-xl border border-slate-200 px-3 py-2"
+       />
+     </label>
 
-            <label className="grid gap-1 text-sm">
-              Buffer between bookings (minutes)
-              <input
-                type="number"
-                min={0}
-                step={5}
-                value={rule.bufferMin}
-                onChange={(e) =>
-                  setRule((r) => ({
-                    ...r,
-                    bufferMin: Number(e.target.value || 0),
-                  }))
-                }
-                className="rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
-          </div>
+  <label className="grid gap-1 text-sm">
+    Buffer between bookings (minutes)
+    <input
+      type="number"
+      min={0}
+      step={5}
+      value={rule.bufferMin}
+      onChange={(e) =>
+        setRule((r) => ({
+          ...r,
+          bufferMin: Number(e.target.value || 0),
+        }))
+      }
+      className="w-full max-w-[220px] rounded-xl border border-slate-200 px-3 py-2"
+    />
+  </label>
+</div>
         </div>
       )}
     </section>

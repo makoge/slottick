@@ -3,6 +3,7 @@
 
 import { useMemo, useState } from "react";
 import type { BusinessCategory, BusinessDirectoryItem } from "@/lib/business-directory";
+import { useLocale } from "@/lib/use-locale";
 
 function Stars({ value }: { value: number }) {
   const full = Math.floor(value);
@@ -32,20 +33,20 @@ function Stars({ value }: { value: number }) {
 }
 
 export default function ExploreClient({
-  locale,
   businesses,
   categories,
   heading = "Book trusted businesses",
   intro = "Find services near you and book instantly.",
   defaultCity = ""
 }: {
-  locale: string;
   businesses: BusinessDirectoryItem[];
   categories: BusinessCategory[];
   heading?: string;
   intro?: string;
   defaultCity?: string; // "" = All cities
 }) {
+  const locale = useLocale("en"); // ✅ always defined
+
   const [q, setQ] = useState("");
   const [city, setCity] = useState(defaultCity);
   const [cat, setCat] = useState<BusinessCategory | "All">("All");
@@ -82,7 +83,6 @@ export default function ExploreClient({
             <h1 className="mt-2 text-3xl font-bold tracking-tight">{heading}</h1>
             <p className="mt-2 text-slate-600">{intro}</p>
 
-            {/* SEO paragraph (indexable text) */}
             <p className="mt-4 max-w-3xl text-sm text-slate-600">
               Search and book popular services like barbering, hair salons, nail salons, lash extensions,
               brow studios, massage, skincare and more. Filter by city and category to find the best local option.
@@ -196,4 +196,3 @@ export default function ExploreClient({
     </main>
   );
 }
-

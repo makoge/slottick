@@ -274,9 +274,13 @@ export default function BookingClient({
     if (!phone.trim()) return setError("Enter your phone.");
 
     const emailTrim = customerEmail.trim();
-    if (emailTrim && !isValidEmail(emailTrim)) {
-      return setError("Enter a valid email (or leave it empty).");
-    }
+          if (!emailTrim) {
+         return setError("Email is required.");
+         }
+         if (!isValidEmail(emailTrim)) {
+        return setError("Enter a valid email.");
+        }
+
 
     // last-second collision check (client-side cache)
     const needed = slotRangeForService(time, rule, selectedService.durationMin);
@@ -305,7 +309,7 @@ export default function BookingClient({
           startsAt,
           customerName: fullName.trim(),
           customerPhone: phone.trim(),
-          customerEmail: emailTrim || null,
+          customerEmail: emailTrim,
           notes: notes.trim() || null,
         }),
       });
@@ -374,9 +378,7 @@ export default function BookingClient({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold">
-                Continue as guest
-              </span>
+             
               <a
                 className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
                 href={createAccountHref}
@@ -562,13 +564,14 @@ export default function BookingClient({
                 </label>
 
                 <label className="grid gap-1 text-sm">
-                  Email (optional)
+                  Email*
                   <input
                     type="email"
+                    required
                     className="rounded-xl border border-slate-200 px-3 py-2"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="you@email.com"
+                    placeholder="your@email.com"
                   />
                 </label>
 

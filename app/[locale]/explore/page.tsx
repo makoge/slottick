@@ -82,10 +82,9 @@ export default async function Page({
   return (
     <>
       <ExploreClient
-        locale={locale}
-        businesses={businesses}
-        categories={["Lash", "Nails", "Brows", "Barber", "Massage", "Other"] as any}
-      />
+  businesses={businesses}
+  categories={["Lash", "Nails", "Brows", "Barber", "Massage", "Other"] as any}
+/>
 
       <script
         type="application/ld+json"
