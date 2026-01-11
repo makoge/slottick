@@ -1,9 +1,10 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { BusinessCategory, BusinessDirectoryItem } from "@/lib/business-directory";
 import { useLocale } from "@/lib/use-locale";
+import { useSearchParams } from "next/navigation"; // ✅ ADD
 
 function Stars({ value }: { value: number }) {
   const full = Math.floor(value);
@@ -46,10 +47,42 @@ export default function ExploreClient({
   defaultCity?: string; // "" = All cities
 }) {
   const locale = useLocale("en"); // ✅ always defined
+  const sp = useSearchParams(); // ✅ ADD
 
   const [q, setQ] = useState("");
   const [city, setCity] = useState(defaultCity);
   const [cat, setCat] = useState<BusinessCategory | "All">("All");
+
+  // ✅ NEW: Initialize filters from URL query (?q=&city=&category=)
+  useEffect(() => {
+    const q0 = (sp.get("q") ?? "").trim();
+    const city0 = (sp.get("city") ?? "").trim();
+    const cat0 = (sp.get("category") ?? "").trim();
+
+    if (q0) setQ(q0);
+
+    // city: allow only if it exists in businesses
+    if (city0) {
+      const exists = businesses.some((b) => String(b.city).toLowerCase() === city0.toLowerCase());
+      if (exists) {
+        const actual = businesses.find(
+          (b) => String(b.city).toLowerCase() === city0.toLowerCase()
+        )?.city;
+        setCity(actual || city0);
+      }
+    } else if (defaultCity) {
+      setCity(defaultCity);
+    }
+
+    // category: allow only if it's valid
+    if (cat0) {
+      const isAll = cat0.toLowerCase() === "all";
+      const valid = categories.includes(cat0 as any);
+      if (isAll) setCat("All");
+      else if (valid) setCat(cat0 as any);
+    }
+    // only run when businesses/categories are ready or URL changes
+  }, [sp, businesses, categories, defaultCity]);
 
   const cities = useMemo(() => {
     const set = new Set(businesses.map((b) => b.city).filter(Boolean));
