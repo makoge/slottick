@@ -11,17 +11,18 @@ type Params = {
 };
 
 function findCountry(countrySlug: string) {
-  return TARGET_COUNTRIES.find((c) => c.slug === countrySlug) || null;
+  return TARGET_COUNTRIES.find((c) => c.slug === countrySlug) ?? null;
 }
 
-function findCity(country: NonNullable<ReturnType<typeof findCountry>>, citySlug: string) {
-  return country.cities.find((c) => slugify(c) === citySlug) || null;
+function findCity(
+  country: NonNullable<ReturnType<typeof findCountry>>,
+  citySlug: string
+) {
+  return country.cities.find((c) => slugify(c) === citySlug) ?? null;
 }
 
 function findCategory(categorySlug: string) {
-  return (
-    TARGET_CATEGORIES.find((c) => slugify(c) === categorySlug) || null
-  );
+  return TARGET_CATEGORIES.find((c) => c.slug === categorySlug) ?? null;
 }
 
 export async function generateStaticParams() {
@@ -33,7 +34,7 @@ export async function generateStaticParams() {
         params.push({
           countrySlug: country.slug,
           citySlug: slugify(city),
-          categorySlug: slugify(category),
+          categorySlug: category.slug, // ✅ already a slug
         });
       }
     }
@@ -61,8 +62,10 @@ export async function generateMetadata({
     return { robots: { index: false, follow: false } };
   }
 
-  const title = `${category} in ${city} | Book services on Slottick`;
-  const description = `Find and book ${category.toLowerCase()} in ${city}, ${country.name}. Compare businesses and book instantly through Slottick.`;
+  const categoryLabel = category.label;
+
+  const title = `${categoryLabel} in ${city} | Book services on Slottick`;
+  const description = `Find and book ${categoryLabel.toLowerCase()} in ${city}, ${country.name}. Compare businesses and book instantly through Slottick.`;
 
   const canonical = `${baseUrl}/${locale}/seo/${countrySlug}/${citySlug}/${categorySlug}`;
 
@@ -110,26 +113,31 @@ export default async function SeoLandingPage({
     );
   }
 
-  // ✅ This is the MONEY link (passes intent into Explore)
-  const exploreHref = `/${locale}/explore?city=${encodeURIComponent(city)}&category=${encodeURIComponent(
-    category
-  )}`;
+  const categoryLabel = category.label;
+
+  // ✅ MONEY link: send intent into Explore
+  const exploreHref = `/${locale}/explore?city=${encodeURIComponent(
+    city
+  )}&category=${encodeURIComponent(categoryLabel)}`;
 
   // ✅ Auto-link blocks
-  const siblingCategories = TARGET_CATEGORIES.filter((c) => c !== category).slice(0, 8);
+  const siblingCategories = TARGET_CATEGORIES.filter(
+    (c) => c.slug !== category.slug
+  ).slice(0, 8);
+
   const siblingCities = country.cities.filter((c) => c !== city).slice(0, 8);
 
-  // ✅ FAQ schema (indexable)
+  // ✅ FAQ schema
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: [
       {
         "@type": "Question",
-        name: `How do I book ${category.toLowerCase()} in ${city}?`,
+        name: `How do I book ${categoryLabel.toLowerCase()} in ${city}?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Use the Slottick marketplace to filter by ${city} and ${category}. Choose a business, pick a time, and confirm your booking.`,
+          text: `Use the Slottick marketplace to filter by ${city} and ${categoryLabel}. Choose a business, pick a time, and confirm your booking.`,
         },
       },
       {
@@ -154,15 +162,18 @@ export default async function SeoLandingPage({
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-4xl px-6 py-12">
-        <p className="text-sm font-medium text-slate-600">Slottick • Local services</p>
+        <p className="text-sm font-medium text-slate-600">
+          Slottick • Local services
+        </p>
 
         <h1 className="mt-2 text-3xl font-bold tracking-tight">
-          {category} in {city}
+          {categoryLabel} in {city}
         </h1>
 
         <p className="mt-4 text-slate-600">
-          Looking for {category.toLowerCase()} in {city}, {country.name}? Browse businesses,
-          check availability, and book instantly—no DMs, no back-and-forth.
+          Looking for {categoryLabel.toLowerCase()} in {city}, {country.name}?
+          Browse businesses, check availability, and book instantly—no DMs, no
+          back-and-forth.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
@@ -170,7 +181,7 @@ export default async function SeoLandingPage({
             href={exploreHref}
             className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
           >
-            View {category} in {city}
+            View {categoryLabel} in {city}
           </Link>
 
           <Link
@@ -186,10 +197,14 @@ export default async function SeoLandingPage({
           <h2 className="text-lg font-semibold">Popular in {city}</h2>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {siblingCategories.map((c) => {
-              const href = `/${locale}/seo/${countrySlug}/${citySlug}/${slugify(c)}`;
+              const href = `/${locale}/seo/${countrySlug}/${citySlug}/${c.slug}`;
               return (
-                <Link key={c} href={href} className="text-sm underline text-slate-700 hover:text-slate-900">
-                  {c} in {city}
+                <Link
+                  key={c.slug}
+                  href={href}
+                  className="text-sm underline text-slate-700 hover:text-slate-900"
+                >
+                  {c.label} in {city}
                 </Link>
               );
             })}
@@ -197,13 +212,17 @@ export default async function SeoLandingPage({
         </section>
 
         <section className="mt-8 rounded-2xl border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold">{category} in other cities</h2>
+          <h2 className="text-lg font-semibold">{categoryLabel} in other cities</h2>
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
             {siblingCities.map((ct) => {
               const href = `/${locale}/seo/${countrySlug}/${slugify(ct)}/${categorySlug}`;
               return (
-                <Link key={ct} href={href} className="text-sm underline text-slate-700 hover:text-slate-900">
-                  {category} in {ct}
+                <Link
+                  key={ct}
+                  href={href}
+                  className="text-sm underline text-slate-700 hover:text-slate-900"
+                >
+                  {categoryLabel} in {ct}
                 </Link>
               );
             })}
