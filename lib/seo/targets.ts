@@ -6,12 +6,12 @@ export type CountryTarget = {
 };
 
 export const TARGET_CATEGORIES = [
-  "Beauty salons",
-  "Lash techs",
-  "Hair braiders",
-  "Barbers",
-  "Nail salons",
-  "Massage",
+  { slug: "beauty-salons", label: "Beauty salons" },
+  { slug: "lash-techs", label: "Lash techs" },
+  { slug: "hair-braiders", label: "Hair braiders" },
+  { slug: "barbers", label: "Barbers" },
+  { slug: "nail-salons", label: "Nail salons" },
+  { slug: "massage", label: "Massage" },
 ] as const;
 
 export const TARGET_COUNTRIES: CountryTarget[] = [
@@ -32,5 +32,17 @@ export const TARGET_COUNTRIES: CountryTarget[] = [
     slug: "germany",
     name: "Germany",
     cities: ["Berlin", "Hamburg", "Munich", "Cologne", "Frankfurt", "Stuttgart"],
+  },
+  {
+    code: "EE",
+    slug: "estonia",
+    name: "Estonia",
+    cities: ["Tallinn", "Tartu"],
+  },
+  {
+    code: "FI",
+    slug: "finland",
+    name: "Finland",
+    cities: ["Helsinki", "Espoo", "Tampere", "Turku"],
   },
 ];
