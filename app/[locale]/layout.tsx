@@ -24,7 +24,7 @@ export async function generateMetadata({
   const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}`]));
 
   return {
-    metadataBase: new URL(baseUrl),
+    metadataBase: new URL("https://slottick.com"),
     title: {
       default: "Slottick — Booking management for service businesses",
       template: `%s | ${siteName}`
