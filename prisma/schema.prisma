@@ -74,6 +74,11 @@ model Service {
   price       Int
   currency    String // "EUR" | "USD" | "FCFA"
 
+  // NEW: deposit (optional)
+  depositEnabled Boolean @default(false)
+  depositType    String  @default("PERCENT") // "PERCENT" | "AMOUNT"
+  depositValue   Int?    // percent (1-100) OR fixed amount in currency units
+
   @@index([businessId])
 }
 
