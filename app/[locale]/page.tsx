@@ -93,13 +93,15 @@ export default async function Home({
         }
       },
       {
-        "@type": "Question",
-        name: "Does availability update automatically?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Yes. The booking link always reflects your latest availability and services."
-        }
-      }
+            "@type": "Question",
+            name: "Why not just take bookings in Instagram DMs?",
+            acceptedAnswer: { "@type": "Answer", text: "DMs don’t understand your availability. A booking system only shows slots that actually fit your schedule, breaks, and buffer." }
+          },
+      {
+            "@type": "Question",
+            name: "What problems does a booking system solve?",
+            acceptedAnswer: { "@type": "Answer", text: "It stops back-and-forth messages, prevents double booking, and keeps your schedule accurate in real time." }
+          }
     ]
   };
 
@@ -132,18 +134,13 @@ export default async function Home({
                 Create your booking page
               </a>
 
-              <a
-                href={`/${locale}/book/demo-lash-studio`}
-                className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-50"
-              >
-                View demo booking flow
-              </a>
+              
 
               <a
                 href={`/${locale}/explore`}
                 className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-50"
               >
-                Explore marketplace
+                Explore Services
               </a>
             </div>
           </div>
@@ -162,51 +159,65 @@ export default async function Home({
 
         {/* DASHBOARD PREVIEW */}
 <section className="mt-20 grid gap-8 lg:grid-cols-12 lg:items-start">
-  {/* Left copy */}
-  <div className="lg:col-span-5">
-    <span className="inline-flex w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium">
-      What you get instantly
-    </span>
+ {/* Left FAQ */}
+<div className="lg:col-span-5">
+  <span className="inline-flex w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium">
+    FAQ
+  </span>
 
-    <h2 className="mt-4 text-3xl font-bold tracking-tight">
-      Your business dashboard without the chaos
-    </h2>
+  <h2 className="mt-4 text-3xl font-bold tracking-tight">
+    Why do service businesses need a booking system?
+  </h2>
 
-    <p className="mt-4 text-lg text-slate-600">
-      Set services + availability once. Slottick turns it into a booking page clients can use
-      immediately, while you track bookings and revenue in one place.
-    </p>
+  <p className="mt-4 text-lg text-slate-600">
+    Short answers to the questions your customers (and you) feel every week.
+  </p>
 
-    <div className="mt-6 flex flex-wrap gap-3">
-      <a
-        href={`/${locale}/register`}
-        className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+  <div className="mt-8 grid gap-3">
+    {[
+      {
+        q: "What problems does a booking system solve?",
+        a: "It stops back-and-forth messages, prevents double booking, and keeps your schedule accurate in real time."
+      },
+      {
+        q: "Can it reduce no-shows?",
+        a: "Yes. Confirmations and reminders make clients show up more often, and your time stays protected."
+      },
+      {
+        q: "Why not just take bookings in Instagram DMs?",
+        a: "DMs do not understand your availability. A booking system only shows slots that actually fit your schedule, breaks, and buffer."
+      },
+      {
+        q: "Do I need a website to use Slottick?",
+        a: "No. You get one shareable booking link you can put on Instagram bio, WhatsApp, Google Business Profile, or anywhere."
+      },
+      {
+        q: "What if I change my schedule later?",
+        a: "Your booking page updates automatically, clients always see your latest availability."
+      },
+      {
+        q: "Is it good for salons, barbers, beauty and wellness?",
+        a: "Yes. Any business that sells time (appointments) benefits: hair, nails, lash, massage, fitness, clinics, and more."
+      }
+    ].map((item) => (
+      <details
+        key={item.q}
+        className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
       >
-        Create your booking page
-      </a>
-      <a
-        href={`/${locale}/book/demo-lash-studio`}
-        className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-50"
-      >
-        See demo
-      </a>
-    </div>
-
-    <div className="mt-8 grid gap-3 text-sm text-slate-600">
-      <div className="flex items-start gap-3">
-        <span className="mt-1 inline-block h-2 w-2 rounded-full bg-slate-900" />
-        <p>One booking link that always reflects your real schedule</p>
-      </div>
-      <div className="flex items-start gap-3">
-        <span className="mt-1 inline-block h-2 w-2 rounded-full bg-slate-900" />
-        <p>Automatic slot generation, breaks, and buffer time</p>
-      </div>
-      <div className="flex items-start gap-3">
-        <span className="mt-1 inline-block h-2 w-2 rounded-full bg-slate-900" />
-        <p>Track bookings, revenue, and customers (all in one screen)</p>
-      </div>
-    </div>
+        <summary className="cursor-pointer list-none font-semibold text-slate-900">
+          <div className="flex items-start justify-between gap-4">
+            <span>{item.q}</span>
+            <span className="mt-1 text-slate-500 group-open:rotate-45 transition">
+              +
+            </span>
+          </div>
+        </summary>
+        <p className="mt-3 text-sm text-slate-600">{item.a}</p>
+      </details>
+    ))}
   </div>
+</div>
+
 
   {/* Right preview */}
   <div className="lg:col-span-7">
@@ -293,16 +304,69 @@ export default async function Home({
 </section>
 
 
-        {/* PROBLEM */}
+        {/* why slottick */}
         <section className="mt-32 max-w-3xl">
-          <h2 className="text-3xl font-bold tracking-tight">
-            Stop losing time to messages and manual confirmations
-          </h2>
-          <p className="mt-4 text-lg text-slate-600">
-            If bookings live in DMs, your day gets messy fast. Slottick keeps your
-            schedule clean with real availability and confirmed appointments.
-          </p>
-        </section>
+  <h2 className="text-3xl font-bold tracking-tight">
+    Why choose Slottick as your booking system?
+  </h2>
+
+  <p className="mt-4 text-lg text-slate-600">
+    Slottick is not just about taking bookings. It protects your time, replaces messy DMs, and helps clients find and book you faster.
+  </p>
+
+  <div className="mt-8 grid gap-6">
+    <div>
+      <h3 className="text-lg font-semibold">
+        It manages your time automatically
+      </h3>
+      <p className="mt-2 text-slate-600">
+        You set your working hours, breaks, buffer time, and services once.
+        Slottick only shows time slots that actually fit your schedule, no double bookings, no back-and-forth.
+      </p>
+    </div>
+
+    <div>
+      <h3 className="text-lg font-semibold">
+        It helps market your business
+      </h3>
+      <p className="mt-2 text-slate-600">
+        Your booking page is shareable anywhere: Instagram bio, WhatsApp,
+        Google Business Profile, or ads. Clients can book instantly without messaging you first.
+      </p>
+    </div>
+
+    <div>
+      <h3 className="text-lg font-semibold">
+        You can get new clients through Slottick
+      </h3>
+      <p className="mt-2 text-slate-600">
+        Businesses using Slottick can appear in the explore marketplace,
+        helping new customers discover and book you, even if they have never heard of you before.
+      </p>
+    </div>
+
+    <div>
+      <h3 className="text-lg font-semibold">
+        No website? No problem.
+      </h3>
+      <p className="mt-2 text-slate-600">
+        Slottick acts as your booking website. One clean link shows your
+        services, availability, and prices, always up to date.
+      </p>
+    </div>
+
+    <div>
+      <h3 className="text-lg font-semibold">
+        Simple, fast, and easy to use
+      </h3>
+      <p className="mt-2 text-slate-600">
+        Clients book in seconds. You manage everything from one dashboard.
+        No complicated setup, no tech knowledge required.
+      </p>
+    </div>
+  </div>
+</section>
+
 
         {/* HOW IT WORKS */}
         <section className="mt-20 grid gap-8 md:grid-cols-3">
