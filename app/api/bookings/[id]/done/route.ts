@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
-import { getOwnerOr401 } from "@/lib/auth"; // whatever you use
-import { db } from "@/lib/db"; // your prisma/db
+import { getAuthedBusiness } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 
 export async function POST(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const owner = await getOwnerOr401();
-  if (!owner) return NextResponse.json({}, { status: 401 });
+  const { id } = await params;
 
-  await db.booking.update({
-    where: { id: params.id, ownerId: owner.id },
+  const business = await getAuthedBusiness();
+  if (!business) return NextResponse.json({}, { status: 401 });
+
+  await prisma.booking.update({
+    where: { id, businessId: business.id },
     data: { status: "DONE" }
   });
 
   return NextResponse.json({ ok: true });
 }
+
