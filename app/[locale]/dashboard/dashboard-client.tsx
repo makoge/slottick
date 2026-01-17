@@ -63,31 +63,46 @@ function startOfYear(d: Date) {
   x.setHours(0, 0, 0, 0);
   return x;
 }
-
-function StatCard({
-  title,
-  value,
-  sub,
-  children,
-}: {
+ type StatCardProps = {
   title: string;
   value?: string;
   sub?: string;
+  tone?: "blue" | "green" | "purple";
   children?: React.ReactNode;
-}) {
+};
+
+const tones = {
+  blue: "bg-blue-50 border-blue-200",
+  green: "bg-emerald-50 border-emerald-200",
+  purple: "bg-purple-50 border-purple-200"
+};
+
+ function StatCard({
+  title,
+  value,
+  sub,
+  tone = "blue",
+  children
+}: StatCardProps) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div
+      className={`rounded-2xl border p-5 shadow-sm ${tones[tone]}`}
+    >
       <div className="text-sm font-medium text-slate-600">{title}</div>
-      {value ? (
+
+      {value && (
         <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
           {value}
         </div>
-      ) : null}
-      {sub ? <div className="mt-1 text-sm text-slate-500">{sub}</div> : null}
-      {children ? <div className="mt-3">{children}</div> : null}
+      )}
+
+      {sub && <div className="mt-1 text-sm text-slate-500">{sub}</div>}
+
+      {children && <div className="mt-3">{children}</div>}
     </div>
   );
 }
+
 
 export default function DashboardClient({ locale, business }: Props) {
   const router = useRouter();
@@ -232,7 +247,7 @@ export default function DashboardClient({ locale, business }: Props) {
               {business.city ? ` • ${business.city}` : ""}
               {business.country ? `, ${business.country}` : ""}
               {" • "}
-              <span className="text-slate-500">slug:</span>{" "}
+              <span className="text-slate-500"></span>{" "}
               <span className="font-semibold text-slate-900">{business.slug}</span>
             </p>
           </div>
@@ -272,24 +287,26 @@ export default function DashboardClient({ locale, business }: Props) {
             title="Total bookings"
             value={statsLoading ? "—" : String(stats.totalBookings)}
             sub={statsLoading ? "Loading…" : "All time (not cancelled)"}
+            tone="blue"
           />
 
-          <StatCard title="Revenue generated" sub={statsLoading ? "Loading…" : "Confirmed in the past"}>
+          <StatCard title="Revenue generated" sub={statsLoading ? "Loading…" : "Confirmed in the past" }
+          tone="green">
             <div className="grid gap-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-slate-600">Weekly</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Weekly</span>
                 <span className="font-semibold text-slate-900">
                   {statsLoading ? "—" : stats.weeklyRevenue}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-600">Monthly</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Monthly</span>
                 <span className="font-semibold text-slate-900">
                   {statsLoading ? "—" : stats.monthlyRevenue}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-600">Yearly</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Yearly</span>
                 <span className="font-semibold text-slate-900">
                   {statsLoading ? "—" : stats.yearlyRevenue}
                 </span>
@@ -301,45 +318,62 @@ export default function DashboardClient({ locale, business }: Props) {
             title="Customers"
             value={statsLoading ? "—" : String(stats.uniqueCustomers)}
             sub={statsLoading ? "Loading…" : "Unique customers"}
+            tone="purple"
           />
         </div>
 
         {/* Recent customers */}
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold">Recent customers</h2>
-              <p className="mt-1 text-sm text-slate-500">Name and country from recent bookings</p>
+        <section className="mt-6 rounded-2xl border border-purple-200 bg-purple-50 p-6 shadow-sm">
+  <div className="flex items-start justify-between gap-3">
+    <div>
+      <h2 className="text-base font-semibold text-purple-900">
+        Recent customers
+      </h2>
+      <p className="mt-1 text-sm text-purple-700">
+        Latest bookings activity
+      </p>
+    </div>
+
+    <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+      {statsLoading ? "Loading…" : `${stats.recentCustomers.length} new`}
+    </span>
+  </div>
+
+  {statsLoading ? (
+    <div className="mt-4 rounded-xl border border-purple-200 bg-white p-4 text-sm text-purple-700">
+      Loading…
+    </div>
+  ) : stats.recentCustomers.length === 0 ? (
+    <div className="mt-4 rounded-xl border border-purple-200 bg-white p-4 text-sm text-purple-700">
+      No customers yet.
+    </div>
+  ) : (
+    <ul className="mt-4 divide-y divide-purple-100">
+      {stats.recentCustomers.map((c, i) => (
+        <li
+          key={`${c.name}-${i}`}
+          className="flex items-center justify-between py-3"
+        >
+          <div className="flex items-center gap-3">
+            {/* Avatar dot */}
+            <div className="h-9 w-9 rounded-full bg-purple-200 text-sm font-semibold text-purple-800 flex items-center justify-center">
+              {c.name.charAt(0).toUpperCase()}
             </div>
-            <div className="text-xs font-medium text-slate-500">
-              {statsLoading ? "Loading…" : `${stats.recentCustomers.length} shown`}
-            </div>
+
+            <span className="font-medium text-slate-900">
+              {c.name}
+            </span>
           </div>
 
-          {statsLoading ? (
-            <div className="mt-4 rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
-              Loading…
-            </div>
-          ) : stats.recentCustomers.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
-              No customers yet.
-            </div>
-          ) : (
-            <ul className="mt-4 divide-y divide-slate-100">
-              {stats.recentCustomers.map((c, i) => (
-                <li key={`${c.name}-${i}`} className="flex items-center justify-between py-3">
-                  <span className="font-medium text-slate-900">{c.name}</span>
-                  <span className="text-sm text-slate-500">{c.country}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <span className="text-sm text-purple-700">
+            {c.country}
+          </span>
+        </li>
+      ))}
+    </ul>
+  )}
+</section>
 
-          <div className="mt-4 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-            Tip: if country always shows “Unknown”, add <span className="font-semibold">customerCountry</span>{" "}
-            to your bookings API response.
-          </div>
-        </section>
 
         {/* Share link card */}
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

@@ -32,6 +32,16 @@ export async function generateMetadata({
     description:
       "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.",
     alternates: { canonical, languages },
+    
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" }
+    ],
+    apple: "/apple-touch-icon.png"
+  },
     openGraph: {
       type: "website",
       url: canonical,
