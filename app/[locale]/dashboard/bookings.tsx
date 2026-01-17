@@ -15,7 +15,7 @@ type DbBooking = {
   customerPhone: string;
   customerCountry?: string | null;
   notes?: string | null;
-  status: "CONFIRMED" | "CANCELLED";
+  status: "CONFIRMED" | "CANCELLED" | "DONE";
 };
 
 function pad2(n: number) {
@@ -27,6 +27,10 @@ function toLocalDateTimeParts(iso: string) {
   const date = `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
   const time = `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`;
   return { date, time };
+}
+
+function endsAtMs(b: DbBooking) {
+  return new Date(b.startsAt).getTime() + b.durationMin * 60_000;
 }
 
 export default function BookingsPanel() {
@@ -59,8 +63,10 @@ export default function BookingsPanel() {
   }, []);
 
   const sorted = useMemo(() => {
+    const now = Date.now();
     return [...bookings]
-      .filter((b) => b.status !== "CANCELLED")
+      .filter((b) => b.status !== "CANCELLED" && b.status !== "DONE")
+      .filter((b) => endsAtMs(b) >= now) // hide finished
       .sort((a, b) => String(a.startsAt).localeCompare(String(b.startsAt)));
   }, [bookings]);
 
@@ -86,6 +92,28 @@ export default function BookingsPanel() {
     }
   }
 
+  async function done(id: string) {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/done`, {
+        method: "POST"
+      });
+
+      if (res.status === 401) {
+        router.replace(`/${locale}/login`);
+        return;
+      }
+
+      if (res.ok) {
+        setBookings((prev) =>
+          prev.map((b) => (b.id === id ? { ...b, status: "DONE" } : b))
+        );
+      }
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <section className="mt-6 rounded-2xl border border-slate-200 p-6 shadow-sm">
       <div className="flex items-center justify-between">
@@ -99,12 +127,14 @@ export default function BookingsPanel() {
         <p className="mt-3 text-sm text-slate-600">Loading bookings...</p>
       ) : sorted.length === 0 ? (
         <p className="mt-3 text-sm text-slate-600">
-          No bookings yet — share your link and the first one will appear here.
+          No bookings yet, share your link and the first one will appear here.
         </p>
       ) : (
         <div className="mt-4 grid gap-3">
           {sorted.map((b) => {
             const { date, time } = toLocalDateTimeParts(b.startsAt);
+            const busy = busyId === b.id;
+
             return (
               <div key={b.id} className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -122,14 +152,25 @@ export default function BookingsPanel() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => cancel(b.id)}
-                    disabled={busyId === b.id}
-                    className="w-fit rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
-                  >
-                    {busyId === b.id ? "Cancelling..." : "Cancel"}
-                  </button>
+                  <div className="flex w-fit gap-2">
+                    <button
+                      type="button"
+                      onClick={() => done(b.id)}
+                      disabled={busy}
+                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      {busy ? "Saving..." : "Done"}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => cancel(b.id)}
+                      disabled={busy}
+                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      {busy ? "Cancelling..." : "Cancel"}
+                    </button>
+                  </div>
                 </div>
               </div>
             );
