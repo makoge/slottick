@@ -196,11 +196,11 @@ export default function BookingClient({
               depositEnabled: Boolean(s.depositEnabled),
               depositType: s.depositType === "AMOUNT" ? "AMOUNT" : "PERCENT",
               depositValue:
-                s.depositEnabled && Number.isFinite(Number(s.depositValue))
-                  ? Number(s.depositValue)
-                  : null,
-            }))
-          : [];
+            s.depositEnabled && Number.isFinite(Number(s.depositValue))
+          ? Number(s.depositValue)
+              : undefined,
+              }))
+              : [];
 
         setServices(mapped);
       } catch {
