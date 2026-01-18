@@ -30,39 +30,35 @@ function normalizeServices(raw: unknown) {
   return arr
     .map((s: any) => {
       const currency = toCurrency(s?.currency);
+
       const depositEnabled = toBool(s?.depositEnabled);
-      const depositType = toDepositType(s?.depositType);
+      const depositType: DepositType = depositEnabled ? toDepositType(s?.depositType) : "PERCENT";
 
       let depositValue: number | null = null;
 
       if (depositEnabled) {
-        const v = toPositiveNumber(s?.depositValue, 0);
+        const v = Math.floor(toPositiveNumber(s?.depositValue, 0));
 
-        if (depositType === "PERCENT") {
-          // 1..100
-          depositValue = Math.max(1, Math.min(100, Math.floor(v)));
-        } else {
-          // AMOUNT >= 1 (currency units)
-          depositValue = Math.max(1, Math.floor(v));
-        }
-
-        if (!depositValue) depositValue = null;
+        depositValue =
+          depositType === "PERCENT"
+            ? Math.max(1, Math.min(100, v))
+            : Math.max(1, Math.min(1_000_000, v));
       }
 
       return {
         name: String(s?.name ?? "").trim(),
         durationMin: Math.max(5, Number(s?.durationMin ?? 0) || 0),
-        price: Math.max(0, Number(s?.price ?? 0) || 0),
+        price: Math.max(0, Math.floor(Number(s?.price ?? 0) || 0)),
         currency,
 
-        // NEW
         depositEnabled,
         depositType,
-        depositValue, // null when disabled
+        depositValue,
       };
     })
     .filter((s) => s.name && s.durationMin > 0);
 }
+
 
 // ✅ GET supports:
 // - Public:   /api/services?businessSlug=abc
