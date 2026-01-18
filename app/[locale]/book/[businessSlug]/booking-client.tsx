@@ -30,12 +30,18 @@ type DbDayBooking = {
   durationMin: number;
 };
 
+type DepositType = "PERCENT" | "AMOUNT";
+
 type DbService = {
   id: string;
   name: string;
   durationMin: number;
   price: number;
   currency: string;
+
+  depositEnabled?: boolean;
+  depositType?: DepositType;
+  depositValue?: number | null;
 };
 
 type CustomerMe = {
@@ -62,6 +68,17 @@ function hhmmFromISO(iso: string) {
 // MVP: build startsAt as UTC from date+time.
 function startsAtISOFromDateTime(date: string, time: string) {
   return new Date(`${date}T${time}:00.000Z`).toISOString();
+}
+
+// ✅ FIX: helper must be outside effects/components
+function depositLabel(s: Service) {
+  if (!s.depositEnabled) return null;
+  const v = Number(s.depositValue || 0);
+  if (!v) return null;
+
+  return s.depositType === "AMOUNT"
+    ? `Deposit required: ${formatMoney(v, s.currency)}`
+    : `Deposit required: ${v}%`;
 }
 
 export default function BookingClient({
@@ -153,7 +170,7 @@ export default function BookingClient({
     };
   }, [businessSlug]);
 
-  // ✅ Public: load services
+  // ✅ Public: load services (includes deposit fields)
   useEffect(() => {
     let cancelled = false;
 
@@ -174,6 +191,14 @@ export default function BookingClient({
               durationMin: Number(s.durationMin ?? 0),
               price: Number(s.price ?? 0),
               currency: toCurrency(s.currency),
+
+              // ✅ NEW
+              depositEnabled: Boolean(s.depositEnabled),
+              depositType: s.depositType === "AMOUNT" ? "AMOUNT" : "PERCENT",
+              depositValue:
+                s.depositEnabled && Number.isFinite(Number(s.depositValue))
+                  ? Number(s.depositValue)
+                  : null,
             }))
           : [];
 
@@ -274,13 +299,8 @@ export default function BookingClient({
     if (!phone.trim()) return setError("Enter your phone.");
 
     const emailTrim = customerEmail.trim();
-          if (!emailTrim) {
-         return setError("Email is required.");
-         }
-         if (!isValidEmail(emailTrim)) {
-        return setError("Enter a valid email.");
-        }
-
+    if (!emailTrim) return setError("Email is required.");
+    if (!isValidEmail(emailTrim)) return setError("Enter a valid email.");
 
     // last-second collision check (client-side cache)
     const needed = slotRangeForService(time, rule, selectedService.durationMin);
@@ -378,7 +398,6 @@ export default function BookingClient({
             </div>
 
             <div className="flex flex-wrap gap-2">
-             
               <a
                 className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
                 href={createAccountHref}
@@ -433,6 +452,8 @@ export default function BookingClient({
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {services.map((s) => {
                   const active = s.id === serviceId;
+                  const d = depositLabel(s);
+
                   return (
                     <button
                       key={s.id}
@@ -454,7 +475,15 @@ export default function BookingClient({
                           <div className="mt-1 text-sm text-slate-600">
                             {s.durationMin} min • {formatMoney(s.price, s.currency)}
                           </div>
+
+                          {/* ✅ NEW: deposit badge */}
+                          {d ? (
+                            <div className="mt-2 inline-flex w-fit rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                              {d}
+                            </div>
+                          ) : null}
                         </div>
+
                         {active ? (
                           <span className="rounded-full bg-slate-900 px-2 py-1 text-xs font-semibold text-white">
                             Selected
@@ -541,6 +570,16 @@ export default function BookingClient({
                     {date} • {time} • {selectedService.durationMin} min •{" "}
                     {formatMoney(selectedService.price, selectedService.currency)}
                   </div>
+
+                  {/* ✅ NEW: clear deposit note before confirm */}
+                  {selectedService.depositEnabled ? (
+                    <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                      <div className="font-semibold">Deposit required</div>
+                      <div className="mt-1">{depositLabel(selectedService)}</div>
+                    </div>
+                  ) : (
+                    <div className="mt-3 text-xs text-slate-500">No deposit required.</div>
+                  )}
                 </div>
 
                 <label className="grid gap-1 text-sm">
