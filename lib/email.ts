@@ -10,19 +10,20 @@ const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 const FROM_FALLBACK = process.env.RESEND_FROM || "onboarding@resend.dev";
 const FROM = process.env.SLOTTA_FROM || `Slotta <${FROM_FALLBACK}>`;
 
-// Optional: where replies should go (owner email etc.)
+// Optional: default reply-to (owner inbox etc.)
 const REPLY_TO = process.env.SLOTTA_REPLY_TO || undefined;
 
-// Where YOU receive signup notifications
+// Where YOU receive notifications (signup + contact)
 const OWNER_NOTIFY_EMAIL = process.env.OWNER_NOTIFY_EMAIL || "";
 
 type SendArgs = {
   to: string;
   subject: string;
   html: string;
+  replyTo?: string; // per-email override
 };
 
-async function safeSend({ to, subject, html }: SendArgs) {
+async function safeSend({ to, subject, html, replyTo }: SendArgs) {
   // Never crash the app/build if key is missing
   if (!resend) {
     console.warn("[email] RESEND_API_KEY missing; skipping email:", { to, subject });
@@ -35,7 +36,7 @@ async function safeSend({ to, subject, html }: SendArgs) {
       to,
       subject,
       html,
-      ...(REPLY_TO ? { replyTo: REPLY_TO } : {}),
+      replyTo: replyTo ?? REPLY_TO,
     });
   } catch (err) {
     console.error("[email] send failed:", err);
@@ -46,11 +47,20 @@ async function safeSend({ to, subject, html }: SendArgs) {
 /**
  * Template helpers
  */
+function escapeHtml(s: string) {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 function btn(href: string, text: string) {
   return `
     <a href="${href}"
        style="display:inline-block;padding:12px 18px;background:#0f172a;color:#fff;text-decoration:none;border-radius:10px">
-      ${text}
+      ${escapeHtml(text)}
     </a>
   `;
 }
@@ -58,9 +68,9 @@ function btn(href: string, text: string) {
 function wrap(title: string, bodyHtml: string, footer = "Powered by Slottick") {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <h2 style="margin:0 0 12px 0">${title}</h2>
+      <h2 style="margin:0 0 12px 0">${escapeHtml(title)}</h2>
       ${bodyHtml}
-      <p style="color:#64748b;font-size:13px;margin-top:22px">${footer}</p>
+      <p style="color:#64748b;font-size:13px;margin-top:22px">${escapeHtml(footer)}</p>
     </div>
   `;
 }
@@ -122,14 +132,14 @@ export async function sendBookingConfirmationEmail(args: {
   const html = wrap(
     "Appointment confirmed ✅",
     `
-      <p><strong>${args.businessName}</strong></p>
+      <p><strong>${escapeHtml(args.businessName)}</strong></p>
 
       <p>
-        <strong>Service:</strong> ${args.serviceName}<br/>
-        <strong>Date:</strong> ${args.date}<br/>
-        <strong>Time:</strong> ${args.time}<br/>
+        <strong>Service:</strong> ${escapeHtml(args.serviceName)}<br/>
+        <strong>Date:</strong> ${escapeHtml(args.date)}<br/>
+        <strong>Time:</strong> ${escapeHtml(args.time)}<br/>
         <strong>Duration:</strong> ${args.durationMin} min<br/>
-        <strong>Price:</strong> ${args.priceText}
+        <strong>Price:</strong> ${escapeHtml(args.priceText)}
       </p>
 
       <p>${btn(args.manageLink, "View booking")}</p>
@@ -157,10 +167,10 @@ export async function sendReviewRequestEmail(args: {
   const html = wrap(
     "How was your appointment?",
     `
-      <p>Hope it went great with <strong>${args.businessName}</strong>.</p>
+      <p>Hope it went great with <strong>${escapeHtml(args.businessName)}</strong>.</p>
       <p>
-        <strong>Service:</strong> ${args.serviceName}<br/>
-        <strong>When:</strong> ${args.date} at ${args.time}
+        <strong>Service:</strong> ${escapeHtml(args.serviceName)}<br/>
+        <strong>When:</strong> ${escapeHtml(args.date)} at ${escapeHtml(args.time)}
       </p>
       <p>${btn(args.reviewLink, "Leave a review")}</p>
       <p style="color:#64748b;font-size:14px">It takes 10 seconds and helps others find great services.</p>
@@ -183,9 +193,9 @@ export async function sendWelcomeOwnerEmail(args: {
   dashboardLink: string;
 }) {
   const html = wrap(
-    "Your Slottick account has been created succesfully 👋",
+    "Your Slottick account has been created successfully 👋",
     `
-      <p>Welcome, and congrats on setting up <strong>${args.businessName}</strong>.</p>
+      <p>Welcome, and congrats on setting up <strong>${escapeHtml(args.businessName)}</strong>.</p>
       <p>Next steps:</p>
       <ul>
         <li>Add your services</li>
@@ -221,10 +231,10 @@ export async function notifyOwnerNewSignup(args: {
   const html = wrap(
     "New business signup 🎉",
     `
-      <p><strong>Business:</strong> ${args.businessName}</p>
-      <p><strong>Owner email:</strong> ${args.ownerEmail}</p>
-      <p><strong>Slug:</strong> ${args.slug}</p>
-      ${args.createdAt ? `<p><strong>Created:</strong> ${args.createdAt}</p>` : ""}
+      <p><strong>Business:</strong> ${escapeHtml(args.businessName)}</p>
+      <p><strong>Owner email:</strong> ${escapeHtml(args.ownerEmail)}</p>
+      <p><strong>Slug:</strong> ${escapeHtml(args.slug)}</p>
+      ${args.createdAt ? `<p><strong>Created:</strong> ${escapeHtml(args.createdAt)}</p>` : ""}
     `
   );
 
@@ -232,5 +242,49 @@ export async function notifyOwnerNewSignup(args: {
     to: OWNER_NOTIFY_EMAIL,
     subject: `New signup: ${args.businessName}`,
     html,
+  });
+}
+
+/* -----------------------------
+   7) Notify you about contact form message
+------------------------------ */
+export async function notifyOwnerContactMessage(args: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  meta?: { ip?: string; userAgent?: string; sentAt?: string };
+}) {
+  if (!OWNER_NOTIFY_EMAIL) {
+    console.warn("[email] OWNER_NOTIFY_EMAIL missing; skipping contact notify");
+    return { skipped: true };
+  }
+
+  const html = wrap(
+    "New contact message ✉️",
+    `
+      <p><strong>Name:</strong> ${escapeHtml(args.name)}</p>
+      <p><strong>Email:</strong> ${escapeHtml(args.email)}</p>
+      <p><strong>Subject:</strong> ${escapeHtml(args.subject)}</p>
+      <p><strong>Message:</strong></p>
+      <pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;background:#f8fafc;padding:12px;border-radius:10px;border:1px solid #e2e8f0">${escapeHtml(args.message)}</pre>
+
+      ${
+        args.meta
+          ? `<p style="color:#64748b;font-size:13px">
+              ${args.meta.sentAt ? `Sent: ${escapeHtml(args.meta.sentAt)}<br/>` : ""}
+              ${args.meta.ip ? `IP: ${escapeHtml(args.meta.ip)}<br/>` : ""}
+              ${args.meta.userAgent ? `UA: ${escapeHtml(args.meta.userAgent)}` : ""}
+            </p>`
+          : ""
+      }
+    `
+  );
+
+  return safeSend({
+    to: OWNER_NOTIFY_EMAIL,
+    subject: `Contact: ${args.subject}`,
+    html,
+    replyTo: args.email, // IMPORTANT: reply goes to the sender
   });
 }

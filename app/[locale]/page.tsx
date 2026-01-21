@@ -539,7 +539,7 @@ export default async function Home({
               className="rounded-2xl bg-slate-900 text-white ring-1 ring-white/10 border border-slate-200 p-6 shadow-lg"
             >
               <h3 className="text-lg font-semibold">{item.title}</h3>
-              <p className="mt-2 text-slate-600">{item.desc}</p>
+              <p className="mt-2 text-slate-200">{item.desc}</p>
             </div>
           ))}
         </section>
@@ -556,7 +556,7 @@ export default async function Home({
         </section>
 
         {/* CTA */}
-        <section className="mt-26 rounded-3xl bg-slate-900 px-8 py-14 text-white">
+        <section className="mt-24 rounded-3xl bg-slate-900 px-8 py-14 text-white">
           <h2 className="text-3xl font-bold tracking-tight">
             Your availability is your business.
           </h2>
