@@ -33,7 +33,7 @@ export const BUSINESS_DIRECTORY: BusinessDirectoryItem[] = [
     country: "Estonia",
     ratingAvg: 4.8,
     ratingCount: 124,
-    heroTag: "Top rated"
+    heroTag: "Top rated",
     logoUrl: "/demo-logos/lash.png"
   },
   {
