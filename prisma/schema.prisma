@@ -31,6 +31,9 @@ model Business {
   country  String
   website  String?
 
+  logoUrl String?
+
+
   // auth
   ownerEmail       String   @unique
   passwordHash     String

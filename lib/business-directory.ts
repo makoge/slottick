@@ -1,4 +1,16 @@
-export type BusinessCategory = "Lash" | "Nails" | "Brows" | "Barber" | "Massage" | "Other";
+export type BusinessCategory =
+  | "Lash"
+  | "Nails"
+  | "Brows"
+  | "Hair"
+  | "Barber"
+  | "Massage"
+  | "Makeup"
+  | "Skincare"
+  | "Tattoo"
+  | "Fitness"
+  | "Other";
+
 
 export type BusinessDirectoryItem = {
   slug: string;
@@ -9,6 +21,7 @@ export type BusinessDirectoryItem = {
   ratingAvg: number; // 0..5
   ratingCount: number;
   heroTag?: string; // e.g. "Top rated", "New"
+  logoUrl?: string;
 };
 
 export const BUSINESS_DIRECTORY: BusinessDirectoryItem[] = [
@@ -21,6 +34,7 @@ export const BUSINESS_DIRECTORY: BusinessDirectoryItem[] = [
     ratingAvg: 4.8,
     ratingCount: 124,
     heroTag: "Top rated"
+    logoUrl: "/demo-logos/lash.png"
   },
   {
     slug: "nails-by-lina",
@@ -52,4 +66,4 @@ export const BUSINESS_DIRECTORY: BusinessDirectoryItem[] = [
   }
 ];
 
-export const ALL_CATEGORIES: BusinessCategory[] = ["Lash", "Nails", "Brows", "Barber", "Massage", "Other"];
+export const ALL_CATEGORIES: BusinessCategory[] = ["Lash", "Nails", "Brows", "Barber", "Massage","Makeup","Fitness","Skincare","Tattoo", "Other"];

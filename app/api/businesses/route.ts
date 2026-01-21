@@ -35,6 +35,9 @@ function normalizeWebsite(website: string | null) {
   return w;
 }
 
+
+
+
 function getLocaleFromReferer(req: Request) {
   const ref = req.headers.get("referer");
   if (!ref) return "en";
@@ -48,6 +51,11 @@ function getLocaleFromReferer(req: Request) {
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
+
+  const logoUrl = body.logoUrl ? String(body.logoUrl).trim() : "";
+const safeLogoUrl =
+  logoUrl && /^https?:\/\//i.test(logoUrl) ? logoUrl : undefined;
+
 
   const name = String(body.name ?? "").trim();
   const category = String(body.category ?? "Other").trim();
@@ -112,7 +120,9 @@ export async function POST(req: Request) {
       country,
       website: website || undefined,
       ownerEmail,
-      passwordHash
+      passwordHash,
+      logoUrl: safeLogoUrl
+
     },
     select: {
       id: true,
@@ -123,7 +133,9 @@ export async function POST(req: Request) {
       country: true,
       website: true,
       ownerEmail: true,
-      createdAt: true
+      createdAt: true,
+      logoUrl: true
+
     }
   });
 
@@ -181,7 +193,9 @@ export async function POST(req: Request) {
       country: business.country,
       website: business.website,
       ownerEmail: business.ownerEmail,
-      createdAt: business.createdAt
+      createdAt: business.createdAt,
+      logoUrl: business.logoUrl
+
     }
   });
 }
@@ -205,7 +219,9 @@ export async function GET() {
       country: b.country,
       website: b.website,
       ratingAvg: avg,
-      ratingCount: count
+      ratingCount: count,
+      logoUrl: b.logoUrl
+
     };
   });
 

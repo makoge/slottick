@@ -2,12 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Metadata } from "next";
 import { useLocale } from "@/lib/use-locale";
-
-export const metadata: Metadata = {
-  robots: { index: false, follow: false }
-};
 
 const CATEGORY_OPTIONS = [
   "Lash",
@@ -33,8 +28,12 @@ function slugify(input: string) {
     .replace(/^-|-$/g, "");
 }
 
+function isValidEmail(v: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+}
+
 export default function RegisterClient() {
-  const locale = useLocale("en"); // ✅ single source of truth
+  const locale = useLocale("en");
   const router = useRouter();
 
   const [businessName, setBusinessName] = useState("");
@@ -51,16 +50,82 @@ export default function RegisterClient() {
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // ✅ logo upload (optional)
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>("");
+
   const [loading, setLoading] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+
+  async function uploadLogoIfAny(): Promise<string | undefined> {
+    if (!logoFile) return undefined;
+
+    setLogoUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", logoFile);
+
+      const res = await fetch("/api/uploads/logo", {
+        method: "POST",
+        body: form
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Logo upload failed.");
+
+      return data.url as string;
+    } finally {
+      setLogoUploading(false);
+    }
+  }
+
+  function validate() {
+    const bn = businessName.trim();
+    const ct = city.trim();
+    const cc = country.trim();
+
+    if (!bn) return "Business name is required.";
+    if (!finalSlug) return "Booking slug is required.";
+    if (!ct) return "City is required.";
+    if (!cc || cc.length < 2) return "Country code is required (e.g. EE).";
+
+    const em = email.trim();
+    if (!em || !isValidEmail(em)) return "Please enter a valid email.";
+
+    if (password.length < 8) return "Password must be at least 8 characters.";
+    if (password !== confirmPassword) return "Passwords do not match.";
+
+    // optional logo checks
+    if (logoFile) {
+      const maxBytes = 2 * 1024 * 1024; // 2MB
+      if (logoFile.size > maxBytes) return "Logo too large (max 2MB).";
+
+      const allowed = new Set([
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "image/svg+xml"
+      ]);
+      if (!allowed.has(logoFile.type)) return "Unsupported logo file type.";
+    }
+
+    return null;
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (loading) return;
+    if (loading || logoUploading) return;
 
-    // validation unchanged …
+    const err = validate();
+    if (err) return alert(err);
 
     setLoading(true);
     try {
+      // 1) upload logo (if any)
+      const logoUrl = await uploadLogoIfAny();
+
+      // 2) create business
       const res = await fetch("/api/businesses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,7 +137,8 @@ export default function RegisterClient() {
           country: country.trim(),
           website: website.trim() || undefined,
           ownerEmail: email.trim(),
-          ownerPassword: password
+          ownerPassword: password,
+          logoUrl // ✅ optional
         })
       });
 
@@ -80,8 +146,8 @@ export default function RegisterClient() {
       if (!res.ok) return alert(data.error || "Failed to create account.");
 
       router.push(`/${locale}/dashboard`);
-    } catch {
-      alert("Network error. Try again.");
+    } catch (e: any) {
+      alert(e?.message || "Network error. Try again.");
     } finally {
       setLoading(false);
     }
@@ -161,7 +227,7 @@ export default function RegisterClient() {
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
                   value={country}
-                  onChange={(e) => setCountry(e.target.value)}
+                  onChange={(e) => setCountry(e.target.value.toUpperCase())}
                   placeholder="EE"
                   required
                 />
@@ -190,6 +256,54 @@ export default function RegisterClient() {
                   required
                 />
               </label>
+            </div>
+
+            {/* ✅ Logo upload (optional) */}
+            <div className="grid gap-2">
+              <label className="grid gap-1 text-sm">
+                Logo (optional)
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0] ?? null;
+                    setLogoFile(f);
+
+                    if (!f) {
+                      setLogoPreview("");
+                      return;
+                    }
+
+                    const url = URL.createObjectURL(f);
+                    setLogoPreview(url);
+                  }}
+                />
+              </label>
+
+              {logoPreview ? (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={logoPreview}
+                    alt="Logo preview"
+                    className="h-14 w-14 rounded-2xl border border-slate-200 object-cover"
+                  />
+                  <button
+                    type="button"
+                    className="text-sm underline text-slate-600"
+                    onClick={() => {
+                      setLogoFile(null);
+                      setLogoPreview("");
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">
+                  Shows on Explore after listing. Best: square, ≤ 2MB.
+                </p>
+              )}
             </div>
 
             <div className="grid gap-1 text-sm">
@@ -238,10 +352,14 @@ export default function RegisterClient() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || logoUploading}
               className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
             >
-              {loading ? "Creating..." : "Create account"}
+              {logoUploading
+                ? "Uploading logo..."
+                : loading
+                  ? "Creating..."
+                  : "Create account"}
             </button>
 
             <p className="text-xs text-slate-500">
@@ -253,3 +371,4 @@ export default function RegisterClient() {
     </main>
   );
 }
+

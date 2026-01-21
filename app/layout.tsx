@@ -33,6 +33,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         className={`${inter.variable} font-sans min-h-dvh bg-white text-slate-900 antialiased`}
       >
         {children}
+        
       </body>
     </html>
   );
