@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Service" ADD COLUMN     "imageUrls" TEXT[] DEFAULT ARRAY[]::TEXT[];

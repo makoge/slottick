@@ -18,51 +18,85 @@ function toBool(x: unknown) {
   return x === true || x === "true" || x === 1 || x === "1";
 }
 
-function toPositiveNumber(x: unknown, fallback = 0) {
+function toPositiveInt(x: unknown, fallback = 0) {
   const n = Number(x);
   if (!Number.isFinite(n)) return fallback;
-  return Math.max(0, n);
+  return Math.max(0, Math.floor(n));
 }
 
-function normalizeServices(raw: unknown) {
+function isSafeImageUrl(u: string) {
+  const url = u.trim();
+  if (!url) return false;
+  if (url.startsWith("/")) return true;
+  return /^https?:\/\//i.test(url);
+}
+
+function normalizeImageUrls(raw: unknown) {
+  const arr = Array.isArray(raw) ? raw : [];
+  const cleaned = arr
+    .map((x) => String(x ?? "").trim())
+    .filter(isSafeImageUrl);
+
+  return Array.from(new Set(cleaned)).slice(0, 12);
+}
+
+type NormalizedService = {
+  id: string;
+  name: string;
+  durationMin: number;
+  price: number;
+  currency: string;
+  depositEnabled: boolean;
+  depositType: DepositType;
+  depositValue: number | null;
+  imageUrls: string[];
+};
+
+function normalizeServices(raw: unknown): NormalizedService[] {
   const arr = Array.isArray(raw) ? raw : [];
 
   return arr
     .map((s: any) => {
+      const id = String(s?.id ?? "").trim();
+      const name = String(s?.name ?? "").trim();
+
+      const durationMin = Math.max(5, toPositiveInt(s?.durationMin, 0));
+      const price = Math.max(0, toPositiveInt(s?.price, 0));
       const currency = toCurrency(s?.currency);
 
       const depositEnabled = toBool(s?.depositEnabled);
-      const depositType: DepositType = depositEnabled ? toDepositType(s?.depositType) : "PERCENT";
+      const depositType: DepositType = depositEnabled
+        ? toDepositType(s?.depositType)
+        : "PERCENT";
 
       let depositValue: number | null = null;
-
       if (depositEnabled) {
-        const v = Math.floor(toPositiveNumber(s?.depositValue, 0));
-
+        const v = toPositiveInt(s?.depositValue, 0);
         depositValue =
           depositType === "PERCENT"
             ? Math.max(1, Math.min(100, v))
             : Math.max(1, Math.min(1_000_000, v));
       }
 
-      return {
-        name: String(s?.name ?? "").trim(),
-        durationMin: Math.max(5, Number(s?.durationMin ?? 0) || 0),
-        price: Math.max(0, Math.floor(Number(s?.price ?? 0) || 0)),
-        currency,
+      // accept either `images` or `imageUrls` from client
+      const imageUrls = normalizeImageUrls(s?.images ?? s?.imageUrls);
 
+      return {
+        id,
+        name,
+        durationMin,
+        price,
+        currency,
         depositEnabled,
         depositType,
         depositValue,
+        imageUrls
       };
     })
-    .filter((s) => s.name && s.durationMin > 0);
+    .filter((s) => s.id && s.name && s.durationMin > 0);
 }
 
-
-// ✅ GET supports:
-// - Public:   /api/services?businessSlug=abc
-// - Owner:    /api/services  (cookie session)
+// GET: public by slug OR owner by session
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const businessSlug = searchParams.get("businessSlug");
@@ -72,13 +106,14 @@ export async function GET(req: Request) {
   if (businessSlug) {
     const biz = await prisma.business.findUnique({
       where: { slug: businessSlug },
-      select: { id: true },
+      select: { id: true }
     });
     if (!biz) return NextResponse.json({ services: [] });
     businessId = biz.id;
   } else {
     const authed = await getAuthedBusiness();
-    if (!authed) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!authed)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     businessId = authed.id;
   }
 
@@ -91,38 +126,69 @@ export async function GET(req: Request) {
       durationMin: true,
       price: true,
       currency: true,
-
-      // NEW
       depositEnabled: true,
       depositType: true,
       depositValue: true,
-    },
+      images: { select: { url: true }, orderBy: { sort: "asc" } }
+    }
   });
 
-  return NextResponse.json({ services });
+  const mapped = services.map((s) => ({
+    id: s.id,
+    name: s.name,
+    durationMin: s.durationMin,
+    price: s.price,
+    currency: s.currency,
+    depositEnabled: s.depositEnabled,
+    depositType: s.depositType,
+    depositValue: s.depositValue,
+    images: s.images.map((i) => i.url) // ✅ UI gets string[]
+  }));
+
+  return NextResponse.json({ services: mapped });
 }
 
-// ✅ PUT is owner-only (cookie session) and replaces all services
+// PUT: owner-only, replaces all services + images
 export async function PUT(req: Request) {
   const business = await getAuthedBusiness();
-  if (!business) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!business)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
   const next = normalizeServices(body.services);
 
-  const created = await prisma.$transaction(async (tx) => {
+  const saved = await prisma.$transaction(async (tx) => {
+    // delete images then services (avoid FK issues)
+    await tx.serviceImage.deleteMany({
+      where: { service: { businessId: business.id } }
+    });
     await tx.service.deleteMany({ where: { businessId: business.id } });
 
     if (next.length === 0) return [];
 
-    await tx.service.createMany({
-      data: next.map((s) => ({
-        ...s,
-        businessId: business.id,
-      })),
-    });
+    for (const s of next) {
+      await tx.service.create({
+        data: {
+          id: s.id,
+          businessId: business.id,
+          name: s.name,
+          durationMin: s.durationMin,
+          price: s.price,
+          currency: s.currency,
+          depositEnabled: s.depositEnabled,
+          depositType: s.depositType,
+          depositValue: s.depositValue ?? undefined,
+          images: {
+            create: s.imageUrls.map((url, idx) => ({
+              url,
+              sort: idx
+            }))
+          }
+        }
+      });
+    }
 
-    return tx.service.findMany({
+    const services = await tx.service.findMany({
       where: { businessId: business.id },
       orderBy: { createdAt: "desc" },
       select: {
@@ -131,14 +197,25 @@ export async function PUT(req: Request) {
         durationMin: true,
         price: true,
         currency: true,
-
-        // NEW
         depositEnabled: true,
         depositType: true,
         depositValue: true,
-      },
+        images: { select: { url: true }, orderBy: { sort: "asc" } }
+      }
     });
+
+    return services.map((s) => ({
+      id: s.id,
+      name: s.name,
+      durationMin: s.durationMin,
+      price: s.price,
+      currency: s.currency,
+      depositEnabled: s.depositEnabled,
+      depositType: s.depositType,
+      depositValue: s.depositValue,
+      images: s.images.map((i) => i.url)
+    }));
   });
 
-  return NextResponse.json({ services: created });
+  return NextResponse.json({ services: saved });
 }

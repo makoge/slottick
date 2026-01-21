@@ -8,7 +8,7 @@ import {
   generateTimeSlots,
   canFitServiceAt,
   overlapsBreak,
-  slotRangeForService,
+  slotRangeForService
 } from "@/lib/availability";
 import { Currency, Service, formatMoney } from "@/lib/services";
 
@@ -42,6 +42,8 @@ type DbService = {
   depositEnabled?: boolean;
   depositType?: DepositType;
   depositValue?: number | null;
+
+  images?: string[]; // ✅ NEW
 };
 
 type CustomerMe = {
@@ -70,7 +72,6 @@ function startsAtISOFromDateTime(date: string, time: string) {
   return new Date(`${date}T${time}:00.000Z`).toISOString();
 }
 
-// ✅ FIX: helper must be outside effects/components
 function depositLabel(s: Service) {
   if (!s.depositEnabled) return null;
   const v = Number(s.depositValue || 0);
@@ -83,7 +84,7 @@ function depositLabel(s: Service) {
 
 export default function BookingClient({
   locale,
-  businessSlug,
+  businessSlug
 }: {
   locale: string;
   businessSlug: string;
@@ -113,6 +114,19 @@ export default function BookingClient({
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // ✅ Lightbox
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!lightboxUrl) return;
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setLightboxUrl(null);
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [lightboxUrl]);
 
   // ✅ Check if customer logged in (cookie session)
   useEffect(() => {
@@ -170,7 +184,7 @@ export default function BookingClient({
     };
   }, [businessSlug]);
 
-  // ✅ Public: load services (includes deposit fields)
+  // ✅ Public: load services (includes deposit + images)
   useEffect(() => {
     let cancelled = false;
 
@@ -192,15 +206,16 @@ export default function BookingClient({
               price: Number(s.price ?? 0),
               currency: toCurrency(s.currency),
 
-              // ✅ NEW
               depositEnabled: Boolean(s.depositEnabled),
               depositType: s.depositType === "AMOUNT" ? "AMOUNT" : "PERCENT",
               depositValue:
-            s.depositEnabled && Number.isFinite(Number(s.depositValue))
-          ? Number(s.depositValue)
-              : undefined,
-              }))
-              : [];
+                s.depositEnabled && Number.isFinite(Number(s.depositValue))
+                  ? Number(s.depositValue)
+                  : undefined,
+
+              images: Array.isArray(s.images) ? s.images.map(String) : []
+            }))
+          : [];
 
         setServices(mapped);
       } catch {
@@ -227,7 +242,7 @@ export default function BookingClient({
       try {
         const qs = new URLSearchParams({ businessSlug, date });
         const res = await fetch(`/api/bookings/availability?${qs.toString()}`, {
-          cache: "no-store",
+          cache: "no-store"
         });
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
@@ -237,7 +252,7 @@ export default function BookingClient({
             data.bookings
               .map((b: any) => ({
                 startsAt: String(b.startsAt ?? ""),
-                durationMin: Number(b.durationMin ?? 0),
+                durationMin: Number(b.durationMin ?? 0)
               }))
               .filter((b: DbDayBooking) => b.startsAt && b.durationMin > 0)
           );
@@ -302,7 +317,6 @@ export default function BookingClient({
     if (!emailTrim) return setError("Email is required.");
     if (!isValidEmail(emailTrim)) return setError("Enter a valid email.");
 
-    // last-second collision check (client-side cache)
     const needed = slotRangeForService(time, rule, selectedService.durationMin);
     for (const b of dayBookings) {
       const blocked = new Set(
@@ -330,8 +344,8 @@ export default function BookingClient({
           customerName: fullName.trim(),
           customerPhone: phone.trim(),
           customerEmail: emailTrim,
-          notes: notes.trim() || null,
-        }),
+          notes: notes.trim() || null
+        })
       });
 
       const data = await res.json().catch(() => ({}));
@@ -365,6 +379,34 @@ export default function BookingClient({
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
+      {/* ✅ Lightbox */}
+      {lightboxUrl ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+          onClick={() => setLightboxUrl(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="relative max-h-[90vh] max-w-[92vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setLightboxUrl(null)}
+              className="absolute -top-12 right-0 rounded-xl bg-white/90 px-3 py-2 text-sm font-semibold"
+            >
+              Close
+            </button>
+            <img
+              src={lightboxUrl}
+              alt="Work photo"
+              className="max-h-[90vh] max-w-[92vw] rounded-2xl bg-white object-contain"
+            />
+          </div>
+        </div>
+      ) : null}
+
       <div className="mx-auto max-w-3xl px-6 py-12">
         <header className="flex items-start justify-between gap-4">
           <div>
@@ -378,16 +420,22 @@ export default function BookingClient({
           </div>
 
           <nav className="flex gap-2 text-sm">
-            <a className="rounded-lg border px-3 py-1 hover:bg-slate-50" href={`/en/book/${businessSlug}`}>
+            <a
+              className="rounded-lg border px-3 py-1 hover:bg-slate-50"
+              href={`/en/book/${businessSlug}`}
+            >
               EN
             </a>
-            <a className="rounded-lg border px-3 py-1 hover:bg-slate-50" href={`/fr/book/${businessSlug}`}>
+            <a
+              className="rounded-lg border px-3 py-1 hover:bg-slate-50"
+              href={`/fr/book/${businessSlug}`}
+            >
               FR
             </a>
           </nav>
         </header>
 
-        {/* ✅ Guest vs Account */}
+        {/* Guest vs Account */}
         <section className="mt-6 rounded-2xl border border-slate-200 p-5 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -453,6 +501,7 @@ export default function BookingClient({
                 {services.map((s) => {
                   const active = s.id === serviceId;
                   const d = depositLabel(s);
+                  const imgs = s.images ?? [];
 
                   return (
                     <button
@@ -466,26 +515,45 @@ export default function BookingClient({
                       }}
                       className={[
                         "text-left rounded-xl border p-4 transition hover:bg-slate-50",
-                        active ? "border-slate-900" : "border-slate-200",
+                        active ? "border-slate-900" : "border-slate-200"
                       ].join(" ")}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div>
+                        <div className="min-w-0">
                           <div className="font-semibold">{s.name}</div>
                           <div className="mt-1 text-sm text-slate-600">
                             {s.durationMin} min • {formatMoney(s.price, s.currency)}
                           </div>
 
-                          {/* ✅ NEW: deposit badge */}
+                          {/* ✅ thumbnails */}
+                          {imgs.length ? (
+                            <div className="mt-3 flex gap-2 overflow-x-auto">
+                              {imgs.slice(0, 6).map((url) => (
+                                <img
+                                  key={url}
+                                  src={url}
+                                  alt={`${s.name} work`}
+                                  className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
+                                  loading="lazy"
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // don’t select service
+                                    setLightboxUrl(url);
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          ) : null}
+
+                          {/* deposit badge */}
                           {d ? (
-                            <div className="mt-2 inline-flex w-fit rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                            <div className="mt-3 inline-flex w-fit rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
                               {d}
                             </div>
                           ) : null}
                         </div>
 
                         {active ? (
-                          <span className="rounded-full bg-slate-900 px-2 py-1 text-xs font-semibold text-white">
+                          <span className="shrink-0 rounded-full bg-slate-900 px-2 py-1 text-xs font-semibold text-white">
                             Selected
                           </span>
                         ) : null}
@@ -545,7 +613,7 @@ export default function BookingClient({
                       }}
                       className={[
                         "rounded-xl border px-4 py-3 text-center text-sm font-semibold hover:bg-slate-50",
-                        active ? "border-slate-900" : "border-slate-200",
+                        active ? "border-slate-900" : "border-slate-200"
                       ].join(" ")}
                     >
                       {tm}
@@ -571,7 +639,22 @@ export default function BookingClient({
                     {formatMoney(selectedService.price, selectedService.currency)}
                   </div>
 
-                  {/* ✅ NEW: clear deposit note before confirm */}
+                  {/* show images also here */}
+                  {selectedService.images?.length ? (
+                    <div className="mt-3 flex gap-2 overflow-x-auto">
+                      {selectedService.images.slice(0, 8).map((url) => (
+                        <img
+                          key={url}
+                          src={url}
+                          alt={`${selectedService.name} work`}
+                          className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
+                          loading="lazy"
+                          onClick={() => setLightboxUrl(url)}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+
                   {selectedService.depositEnabled ? (
                     <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
                       <div className="font-semibold">Deposit required</div>

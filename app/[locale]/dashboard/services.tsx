@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Currency, Service, formatMoney } from "@/lib/services";
 
 const currencyOptions: Currency[] = ["EUR", "USD", "FCFA"];
-
 type DepositType = "PERCENT" | "AMOUNT";
 
 type DbService = {
@@ -14,10 +13,12 @@ type DbService = {
   price: number;
   currency: string;
 
-  // NEW
   depositEnabled?: boolean;
   depositType?: DepositType;
   depositValue?: number;
+
+  // ✅ NEW
+  images?: string[];
 };
 
 function toCurrency(x: unknown): Currency {
@@ -35,11 +36,12 @@ function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
 
-// If your Service type doesn't include these yet, add them in "@/lib/services"
 type ServiceWithDeposit = Service & {
   depositEnabled?: boolean;
   depositType?: DepositType;
-  depositValue?: number; // percent (1-100) OR amount in currency units
+  depositValue?: number;
+  // ✅ NEW
+  images?: string[];
 };
 
 function depositLabel(s: ServiceWithDeposit) {
@@ -49,6 +51,22 @@ function depositLabel(s: ServiceWithDeposit) {
   return s.depositType === "PERCENT"
     ? `Deposit: ${clamp(v, 1, 100)}%`
     : `Deposit: ${formatMoney(clamp(v, 1, 1_000_000), s.currency)}`;
+}
+
+async function uploadServiceImage(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("file", file);
+
+  const res = await fetch("/api/uploads/service-image", {
+    method: "POST",
+    body: form
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Image upload failed.");
+  if (!data.url) throw new Error("Upload failed: missing url.");
+
+  return String(data.url);
 }
 
 export default function ServicesEditor() {
@@ -64,10 +82,14 @@ export default function ServicesEditor() {
   const [priceText, setPriceText] = useState<string>("50");
   const [currency, setCurrency] = useState<Currency>("EUR");
 
-  // NEW: deposit form
+  // deposit form
   const [depositEnabled, setDepositEnabled] = useState(false);
   const [depositType, setDepositType] = useState<DepositType>("PERCENT");
   const [depositValueText, setDepositValueText] = useState<string>("20");
+
+  // ✅ NEW: images for new service
+  const [newImages, setNewImages] = useState<string[]>([]);
+  const [uploadingNewImage, setUploadingNewImage] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -96,6 +118,8 @@ export default function ServicesEditor() {
               s.depositEnabled && Number.isFinite(Number(s.depositValue))
                 ? Number(s.depositValue)
                 : undefined,
+
+            images: Array.isArray(s.images) ? s.images.map(String) : []
           }))
         : [];
 
@@ -129,11 +153,10 @@ export default function ServicesEditor() {
       const res = await fetch("/api/services", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ services: next }),
+        body: JSON.stringify({ services: next })
       });
 
       const data = await res.json().catch(() => ({}));
-
       if (!res.ok) {
         setError(data.error || "Failed to save services");
         return;
@@ -153,6 +176,8 @@ export default function ServicesEditor() {
             s.depositEnabled && Number.isFinite(Number(s.depositValue))
               ? Number(s.depositValue)
               : undefined,
+
+          images: Array.isArray(s.images) ? s.images.map(String) : []
         }));
         setServices(mapped);
       }
@@ -166,6 +191,40 @@ export default function ServicesEditor() {
     }
   }
 
+  function updateServiceImages(id: string, images: string[]) {
+    const next = services.map((s) => (s.id === id ? { ...s, images } : s));
+    persist(next);
+  }
+
+  function updateService(
+    id: string,
+    patch: Pick<
+      ServiceWithDeposit,
+      "name" | "durationMin" | "depositEnabled" | "depositType" | "depositValue" | "images"
+    >
+  ) {
+    const next = services.map((s) => (s.id === id ? { ...s, ...patch } : s));
+    persist(next);
+  }
+
+  function deleteService(id: string) {
+    const next = services.filter((s) => s.id !== id);
+    persist(next);
+  }
+
+  async function addNewImageFromFile(file: File) {
+    setUploadingNewImage(true);
+    setError(null);
+    try {
+      const url = await uploadServiceImage(file);
+      setNewImages((prev) => Array.from(new Set([...prev, url])).slice(0, 12));
+    } catch (e: any) {
+      setError(e?.message || "Upload failed");
+    } finally {
+      setUploadingNewImage(false);
+    }
+  }
+
   function addService(e: React.FormEvent) {
     e.preventDefault();
     const cleanName = name.trim();
@@ -173,16 +232,12 @@ export default function ServicesEditor() {
 
     const price = toPositiveInt(priceText, 0);
 
-    // deposit validation
     let depositValue: number | undefined = undefined;
     if (depositEnabled) {
       const raw = toPositiveInt(depositValueText, 0);
-      if (depositType === "PERCENT") {
-        depositValue = clamp(raw, 1, 100);
-      } else {
-        depositValue = clamp(raw, 1, 1_000_000);
-      }
-      if (!depositValue) return; // keep it strict + simple
+      depositValue =
+        depositType === "PERCENT" ? clamp(raw, 1, 100) : clamp(raw, 1, 1_000_000);
+      if (!depositValue) return;
     }
 
     const next: ServiceWithDeposit[] = [
@@ -192,12 +247,14 @@ export default function ServicesEditor() {
         durationMin: Math.max(5, Number(durationMin) || 5),
         price,
         currency,
-
         depositEnabled,
         depositType,
         depositValue,
+
+        // ✅ NEW
+        images: newImages
       },
-      ...services,
+      ...services
     ];
 
     persist(next);
@@ -210,20 +267,9 @@ export default function ServicesEditor() {
     setDepositEnabled(false);
     setDepositType("PERCENT");
     setDepositValueText("20");
-  }
 
-  // allow editing: name + duration + deposit (price/currency still locked)
-  function updateService(
-    id: string,
-    patch: Pick<ServiceWithDeposit, "name" | "durationMin" | "depositEnabled" | "depositType" | "depositValue">
-  ) {
-    const next = services.map((s) => (s.id === id ? { ...s, ...patch } : s));
-    persist(next);
-  }
-
-  function deleteService(id: string) {
-    const next = services.filter((s) => s.id !== id);
-    persist(next);
+    // reset images
+    setNewImages([]);
   }
 
   return (
@@ -236,12 +282,14 @@ export default function ServicesEditor() {
       </div>
 
       <p className="mt-2 text-sm text-slate-600">
-        Add your services with duration and price. Price + currency are locked after you create the service.
-        Optional: require a deposit so clients see it on Explore.
+        Add your services with duration and price. Price + currency are locked after you
+        create the service. Optional: require a deposit. Add photos so customers see your work.
       </p>
 
       {error ? (
-        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
       ) : null}
 
       {/* Add form */}
@@ -304,7 +352,55 @@ export default function ServicesEditor() {
           </label>
         </div>
 
-        {/* NEW: Deposit controls */}
+        {/* ✅ NEW: Work photos for new service */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium">Work photos (optional)</div>
+
+            <label className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">
+              {uploadingNewImage ? "Uploading..." : "Add photo"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                disabled={loading || saving || uploadingNewImage}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  await addNewImageFromFile(file);
+                  e.currentTarget.value = "";
+                }}
+              />
+            </label>
+          </div>
+
+          {newImages.length === 0 ? (
+            <p className="mt-2 text-xs text-slate-600">
+              My opinion: add 3–6 real photos per service — it boosts trust fast.
+            </p>
+          ) : (
+            <div className="mt-3 grid grid-cols-3 gap-3">
+              {newImages.map((url) => (
+                <div key={url} className="relative">
+                  <img
+                    src={url}
+                    alt="Work photo"
+                    className="h-24 w-full rounded-xl border border-slate-200 object-cover"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-2 rounded-lg bg-white/90 px-2 py-1 text-xs font-semibold"
+                    onClick={() => setNewImages((prev) => prev.filter((x) => x !== url))}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Deposit controls */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <label className="flex items-center gap-3 text-sm font-medium">
             <input
@@ -351,20 +447,19 @@ export default function ServicesEditor() {
                 {depositEnabled
                   ? depositType === "PERCENT"
                     ? `Deposit: ${clamp(toPositiveInt(depositValueText, 0), 1, 100)}%`
-                    : `Deposit: ${formatMoney(clamp(toPositiveInt(depositValueText, 0), 1, 1_000_000), currency)}`
+                    : `Deposit: ${formatMoney(
+                        clamp(toPositiveInt(depositValueText, 0), 1, 1_000_000),
+                        currency
+                      )}`
                   : "No deposit"}
               </div>
             </div>
           </div>
-
-          <p className="mt-2 text-xs text-slate-600">
-            My opinion: percent is best for salons (simple + fair). Fixed amount is good for cheap services.
-          </p>
         </div>
 
         <button
           type="submit"
-          disabled={loading || saving}
+          disabled={loading || saving || uploadingNewImage}
           className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 sm:w-fit"
         >
           Add service
@@ -384,6 +479,8 @@ export default function ServicesEditor() {
         ) : (
           services.map((s) => {
             const badge = depositLabel(s);
+            const imgs = s.images ?? [];
+
             return (
               <div key={s.id} className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -411,7 +508,63 @@ export default function ServicesEditor() {
                   </button>
                 </div>
 
-                {/* Inline edit */}
+                {/* ✅ Images per service */}
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-medium">Work photos</div>
+
+                    <label className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">
+                      Add photo
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        disabled={saving}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          try {
+                            setError(null);
+                            const url = await uploadServiceImage(file);
+                            updateServiceImages(s.id, Array.from(new Set([...(s.images ?? []), url])).slice(0, 12));
+                          } catch (err: any) {
+                            setError(err?.message || "Upload failed");
+                          } finally {
+                            e.currentTarget.value = "";
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {imgs.length === 0 ? (
+                    <p className="mt-2 text-xs text-slate-600">
+                      No photos yet.
+                    </p>
+                  ) : (
+                    <div className="mt-3 grid grid-cols-3 gap-3">
+                      {imgs.map((url) => (
+                        <div key={url} className="relative">
+                          <img
+                            src={url}
+                            alt={`${s.name} work`}
+                            className="h-24 w-full rounded-xl border border-slate-200 object-cover"
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-2 top-2 rounded-lg bg-white/90 px-2 py-1 text-xs font-semibold"
+                            onClick={() => updateServiceImages(s.id, imgs.filter((x) => x !== url))}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Inline edit (name/duration) */}
                 <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-3">
                   <label className="grid gap-1 text-sm">
                     Name
@@ -425,6 +578,7 @@ export default function ServicesEditor() {
                           depositEnabled: s.depositEnabled,
                           depositType: s.depositType,
                           depositValue: s.depositValue,
+                          images: s.images
                         })
                       }
                       disabled={saving}
@@ -446,6 +600,7 @@ export default function ServicesEditor() {
                           depositEnabled: s.depositEnabled,
                           depositType: s.depositType,
                           depositValue: s.depositValue,
+                          images: s.images
                         })
                       }
                       disabled={saving}
@@ -460,7 +615,7 @@ export default function ServicesEditor() {
                   </div>
                 </div>
 
-                {/* NEW: Deposit edit */}
+                {/* Deposit edit (kept same behavior) */}
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   <label className="flex items-center gap-3 text-sm font-medium">
                     <input
@@ -473,6 +628,7 @@ export default function ServicesEditor() {
                           depositEnabled: e.target.checked,
                           depositType: s.depositType ?? "PERCENT",
                           depositValue: e.target.checked ? (s.depositValue ?? 20) : undefined,
+                          images: s.images
                         })
                       }
                       disabled={saving}
@@ -496,6 +652,7 @@ export default function ServicesEditor() {
                             (e.target.value as DepositType) === "PERCENT"
                               ? clamp(Number(s.depositValue ?? 20), 1, 100)
                               : clamp(Number(s.depositValue ?? 10), 1, 1_000_000),
+                          images: s.images
                         })
                       }
                       disabled={saving || !s.depositEnabled}
@@ -512,17 +669,24 @@ export default function ServicesEditor() {
                       min={1}
                       max={(s.depositType ?? "PERCENT") === "PERCENT" ? 100 : 1_000_000}
                       className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                      value={Number(s.depositValue ?? ((s.depositType ?? "PERCENT") === "PERCENT" ? 20 : 10))}
+                      value={Number(
+                        s.depositValue ??
+                          ((s.depositType ?? "PERCENT") === "PERCENT" ? 20 : 10)
+                      )}
                       onChange={(e) => {
                         const raw = Number(e.target.value || 0);
                         const nextVal =
-                          (s.depositType ?? "PERCENT") === "PERCENT" ? clamp(raw, 1, 100) : clamp(raw, 1, 1_000_000);
+                          (s.depositType ?? "PERCENT") === "PERCENT"
+                            ? clamp(raw, 1, 100)
+                            : clamp(raw, 1, 1_000_000);
+
                         updateService(s.id, {
                           name: s.name,
                           durationMin: s.durationMin,
                           depositEnabled: Boolean(s.depositEnabled),
                           depositType: s.depositType ?? "PERCENT",
                           depositValue: nextVal,
+                          images: s.images
                         });
                       }}
                       disabled={saving || !s.depositEnabled}

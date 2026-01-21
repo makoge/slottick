@@ -76,6 +76,8 @@ model Service {
   durationMin Int
   price       Int
   currency    String // "EUR" | "USD" | "FCFA"
+  images       ServiceImage[]
+
 
 
   depositEnabled Boolean @default(false)
@@ -104,6 +106,18 @@ model AvailabilityRule {
   slotStepMin Int
 
   @@index([businessId])
+}
+
+model ServiceImage {
+  id        String   @id @default(cuid())
+  serviceId String
+  url       String
+  sort      Int      @default(0)
+  createdAt DateTime @default(now())
+
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
 }
 
 model Booking {

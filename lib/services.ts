@@ -8,6 +8,8 @@ export type Service = {
   price: number;
   currency: Currency;
 
+  images?: string[];
+
   // NEW (optional)
   depositEnabled?: boolean;
   depositType?: DepositType; // "PERCENT" | "AMOUNT"
@@ -76,5 +78,6 @@ export function depositLabel(s: Service) {
 }
 
 export function makeId() {
-  return Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID();
 }
+
