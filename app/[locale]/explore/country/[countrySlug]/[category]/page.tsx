@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import ExploreClient from "../../explore-client";
+import ExploreClient from "../../../explore-client";
+
 import { locales } from "@/lib/i18n";
 
 const COUNTRY_LANDINGS = [
