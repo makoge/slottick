@@ -1,19 +1,15 @@
+// app/sitemap.ts
 import type { MetadataRoute } from "next";
 import { locales } from "@/lib/i18n";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/db";
 
 import { KEYWORD_PAGES } from "@/lib/seo/keywords";
 import { TARGET_COUNTRIES, TARGET_CATEGORIES } from "@/lib/seo/targets";
 import { slugify } from "@/lib/seo/slug";
 
-const prisma = new PrismaClient();
-
-function catSlugFromBusinessCategory(cat: string) {
-  return slugify(String(cat ?? ""));
-}
-
-function citySlug(city: string) {
-  return slugify(String(city ?? ""));
+function safeSlug(v: unknown) {
+  const s = String(v ?? "").trim();
+  return s ? slugify(s) : "";
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -23,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const urls: MetadataRoute.Sitemap = [];
 
-  // ✅ Static pages you want indexed
+  // ✅ Static pages
   const staticPaths = ["", "/explore", "/privacy", "/terms", "/contact"];
 
   for (const locale of locales) {
@@ -38,27 +34,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // ✅ SEO: Keyword pages (/seo/keyword/[slug])
-  for (const locale of locales) {
-    for (const p of KEYWORD_PAGES) {
-      urls.push({
-        url: `${baseUrl}/${locale}/seo/keyword/${p.slug}`,
-        lastModified: now,
-        changeFrequency: "monthly",
-        priority: 0.6
-      });
-    }
-  }
-
-  // ✅ SEO: Country/City/Category pages (/seo/[countrySlug]/[citySlug]/[categorySlug])
-  // Assumes TARGET_CATEGORIES items have `.slug` and `.label`
+  // ✅ SEO GEO pages: /seo/geo/[categorySlug]/[city]
   for (const locale of locales) {
     for (const country of TARGET_COUNTRIES) {
       for (const city of country.cities) {
-        const cSlug = slugify(city);
-        for (const category of TARGET_CATEGORIES) {
+        const cSlug = safeSlug(city);
+        if (!cSlug) continue;
+
+        for (const cat of TARGET_CATEGORIES) {
+          const catSlug = safeSlug(cat.slug ?? cat.label ?? "");
+          if (!catSlug) continue;
+
           urls.push({
-            url: `${baseUrl}/${locale}/seo/${country.slug}/${cSlug}/${category.slug}`,
+            url: `${baseUrl}/${locale}/seo/geo/${catSlug}/${cSlug}`,
             lastModified: now,
             changeFrequency: "monthly",
             priority: 0.65
@@ -68,35 +56,59 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // ✅ Optional: Explore landings (/explore/[countrySlug]/[category])
-  
+  // ✅ SEO INTENT pages: /seo/intent/[intent]/[city]
+  // Supports either { intent, city } or fallback to { slug } if that’s what you stored.
   for (const locale of locales) {
-    for (const country of TARGET_COUNTRIES) {
-      for (const category of TARGET_CATEGORIES) {
+    for (const p of KEYWORD_PAGES as any[]) {
+      const intent = safeSlug(p.intent ?? "");
+      const city = safeSlug(p.city ?? "");
+      const fallback = safeSlug(p.slug ?? "");
+
+      if (intent && city) {
         urls.push({
-          url: `${baseUrl}/${locale}/explore/${country.slug}/${category.slug}`,
+          url: `${baseUrl}/${locale}/seo/intent/${intent}/${city}`,
           lastModified: now,
-          changeFrequency: "weekly",
-          priority: 0.75
+          changeFrequency: "monthly",
+          priority: 0.6
+        });
+      } else if (fallback) {
+        urls.push({
+          url: `${baseUrl}/${locale}/seo/intent/${fallback}`,
+          lastModified: now,
+          changeFrequency: "monthly",
+          priority: 0.55
         });
       }
     }
   }
 
+  // ✅ Explore country landings:
+  // /explore/country/[countrySlug]
+  // /explore/country/[countrySlug]/[category]
   for (const locale of locales) {
     for (const country of TARGET_COUNTRIES) {
-      
+      urls.push({
+        url: `${baseUrl}/${locale}/explore/country/${country.slug}`,
+        lastModified: now,
+        changeFrequency: "weekly",
+        priority: 0.75
+      });
+
+      for (const category of TARGET_CATEGORIES) {
+        const catSlug = safeSlug(category.slug ?? category.label ?? "");
+        if (!catSlug) continue;
+
         urls.push({
-          url: `${baseUrl}/${locale}/explore/${country.slug}`,
+          url: `${baseUrl}/${locale}/explore/country/${country.slug}/${catSlug}`,
           lastModified: now,
           changeFrequency: "weekly",
-          priority: 0.75
+          priority: 0.78
         });
       }
     }
-  
+  }
 
-  // ✅ Dynamic business URLs from DB (pretty URLs)
+  // ✅ Dynamic business URLs (match folder: /explore/business/[category]/[city]/[slug])
   try {
     const businesses = await prisma.business.findMany({
       where: { marketplaceEligibleAt: { not: null } },
@@ -110,14 +122,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const locale of locales) {
       for (const b of businesses) {
-        const category = catSlugFromBusinessCategory(b.category);
-        const city = citySlug(b.city);
+        const cat = safeSlug(b.category);
+        const city = safeSlug(b.city);
+        const slug = String(b.slug ?? "").trim();
 
-        // Skip broken records instead of generating trash URLs
-        if (!b.slug || !category || !city) continue;
+        if (!cat || !city || !slug) continue;
 
         urls.push({
-          url: `${baseUrl}/${locale}/${category}/${city}/${b.slug}`,
+          url: `${baseUrl}/${locale}/explore/business/${cat}/${city}/${encodeURIComponent(slug)}`,
           lastModified: b.updatedAt ?? now,
           changeFrequency: "weekly",
           priority: 0.9
@@ -125,9 +137,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
   } catch {
-    // keep static urls if DB fails
-  } finally {
-    await prisma.$disconnect().catch(() => {});
+    // keep sitemap working even if DB fails
   }
 
   return urls;

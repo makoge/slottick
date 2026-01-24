@@ -2,6 +2,20 @@
 import type { Metadata } from "next";
 import ExploreClient from "./explore-client";
 import { locales } from "@/lib/i18n";
+import { prisma } from "@/lib/db";
+
+export const revalidate = 0; // always fresh
+
+function envBaseUrl() {
+  // For SEO canonical + OG urls, use env only (avoid headers() async issues)
+  // Make sure NEXT_PUBLIC_SITE_URL is set in .env.local for dev.
+  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+}
+
+function toPathPart(v: unknown, fallback: string) {
+  const s = String(v ?? "").trim().toLowerCase();
+  return s ? encodeURIComponent(s) : fallback;
+}
 
 export async function generateMetadata({
   params
@@ -11,16 +25,12 @@ export async function generateMetadata({
   const { locale } = await params;
 
   const siteName = "Slottick";
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+  const baseUrl = envBaseUrl();
 
   const canonical = `${baseUrl}/${locale}/explore`;
-  const languages = Object.fromEntries(
-    locales.map((l) => [l, `${baseUrl}/${l}/explore`])
-  );
+  const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}/explore`]));
 
-  const title =
-    "Explore services near you — salons, barbers, nails, lashes, massage";
+  const title = "Explore services near you — salons, barbers, nails, lashes, massage";
   const description =
     "Explore and book trusted service businesses near you. Find salons, barbers, nails, lashes, brows, massage and more — filter by city and category.";
 
@@ -55,56 +65,49 @@ export default async function Page({
 }) {
   const { locale } = await params;
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/businesses`,
-    { cache: "no-store" }
-  );
+  // ✅ FIX: DB direct, no isPublished field
+  // If you want only verified/eligible businesses, filter using fields you actually have.
+  const businesses = await prisma.business.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 500,
+    select: {
+      name: true,
+      slug: true,
+      city: true,
+      category: true
+    }
+  });
 
-  const data = await res.json().catch(() => ({}));
-  const businesses = Array.isArray(data.businesses) ? data.businesses : [];
+  const baseUrl = envBaseUrl();
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
-
-  // ✅ Structured data: ItemList (directory)
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "Service businesses directory",
-    itemListElement: businesses.slice(0, 200).map((b: any, i: number) => ({
+    itemListElement: businesses.slice(0, 200).map((b, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `${baseUrl}/${locale}/${String(b.category ?? "other").toLowerCase()}/${encodeURIComponent(
-        String(b.city ?? "").toLowerCase()
-      )}/${String(b.slug ?? "")}`,
+      url: `${baseUrl}/${locale}/${toPathPart(b.category, "other")}/${toPathPart(
+        b.city,
+        "city"
+      )}/${encodeURIComponent(String(b.slug ?? ""))}`,
       name: String(b.name ?? "")
     }))
   };
 
-  // ✅ Breadcrumbs
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: `${baseUrl}/${locale}`
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Explore",
-        item: `${baseUrl}/${locale}/explore`
-      }
+      { "@type": "ListItem", position: 1, name: "Home", item: `${baseUrl}/${locale}` },
+      { "@type": "ListItem", position: 2, name: "Explore", item: `${baseUrl}/${locale}/explore` }
     ]
   };
 
   return (
     <>
       <ExploreClient
-        businesses={businesses}
+        businesses={businesses as any}
         categories={["Lash", "Nails", "Brows", "Barber", "Massage", "Other"] as any}
       />
 

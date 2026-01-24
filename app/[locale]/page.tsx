@@ -1,6 +1,7 @@
 // app/[locale]/page.tsx
 import type { Metadata } from "next";
 import { getMessages, locales } from "@/lib/i18n";
+import Link from "next/link";
 
 type Params = { locale: string };
 
@@ -132,21 +133,21 @@ export default async function Home({
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <a
-                href={`/${locale}/register`}
-                className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-              >
-                Create your booking page
-              </a>
+              <Link
+  href={`/${locale}/register`}
+  prefetch
+  className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+>
+  Create your booking page
+</Link>
 
-              
-
-              <a
-                href={`/${locale}/explore`}
-                className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-50"
-              >
-                Explore Services
-              </a>
+<Link
+  href={`/${locale}/explore`}
+  prefetch
+  className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-50"
+>
+  Explore Services
+</Link>
             </div>
           </div>
 
@@ -570,18 +571,21 @@ export default async function Home({
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <a
-              href={`/${locale}/register`}
-              className="inline-flex rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100"
-            >
-              Create your booking page
-            </a>
-            <a
-              href={`/${locale}/explore`}
-              className="inline-flex rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
-            >
-              Explore marketplace
-            </a>
+            <Link
+  href={`/${locale}/register`}
+  prefetch
+  className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+>
+  Create your booking page
+</Link>
+
+<Link
+  href={`/${locale}/explore`}
+  prefetch
+  className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-50"
+>
+  Explore Services
+</Link>
           </div>
         </section>
       </div>
