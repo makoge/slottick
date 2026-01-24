@@ -12,6 +12,17 @@ function safeSlug(v: unknown) {
   return s ? slugify(s) : "";
 }
 
+// ✅ Avoid TS "never/label" issues by treating categories safely
+function categorySlug(cat: unknown) {
+  if (typeof cat === "string") return safeSlug(cat);
+  if (cat && typeof cat === "object") {
+    const c = cat as Record<string, unknown>;
+    const raw = (c.slug ?? c.name ?? c.label) as unknown;
+    if (typeof raw === "string") return safeSlug(raw);
+  }
+  return "";
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
@@ -19,7 +30,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const urls: MetadataRoute.Sitemap = [];
 
-  // ✅ Static pages
+  // ✅ Static pages you said exist:
+  // app/[locale]/page.tsx
+  // app/[locale]/explore/page.tsx
   const staticPaths = ["", "/explore", "/privacy", "/terms", "/contact"];
 
   for (const locale of locales) {
@@ -34,15 +47,50 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // ✅ SEO GEO pages: /seo/geo/[categorySlug]/[city]
+  // ✅ Guides pages you listed (folder names = route segment)
+  const guideSlugs = [
+    "bristol-beauty-salons",
+    "bristol-hair-braiders",
+    "lash-techs-bristol"
+  ];
+
+  for (const locale of locales) {
+    for (const g of guideSlugs) {
+      urls.push({
+        url: `${baseUrl}/${locale}/guides/${g}`,
+        lastModified: now,
+        changeFrequency: "monthly",
+        priority: 0.7
+      });
+    }
+  }
+
+  // ✅ SEO keyword pages:
+  // app/[locale]/seo/keyword/[slug]/page.tsx
+  for (const locale of locales) {
+    for (const p of KEYWORD_PAGES) {
+      const slug = safeSlug((p as any).slug);
+      if (!slug) continue;
+
+      urls.push({
+        url: `${baseUrl}/${locale}/seo/keyword/${slug}`,
+        lastModified: now,
+        changeFrequency: "monthly",
+        priority: 0.6
+      });
+    }
+  }
+
+  // ✅ SEO geo pages:
+  // app/[locale]/seo/geo/[categorySlug]/[citySlug]/page.tsx
   for (const locale of locales) {
     for (const country of TARGET_COUNTRIES) {
       for (const city of country.cities) {
         const cSlug = safeSlug(city);
         if (!cSlug) continue;
 
-        for (const cat of TARGET_CATEGORIES) {
-          const catSlug = safeSlug(cat.slug ?? cat.label ?? "");
+        for (const cat of TARGET_CATEGORIES as readonly unknown[]) {
+          const catSlug = categorySlug(cat);
           if (!catSlug) continue;
 
           urls.push({
@@ -56,46 +104,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // ✅ SEO INTENT pages: /seo/intent/[intent]/[city]
-  // Supports either { intent, city } or fallback to { slug } if that’s what you stored.
+  // ✅ SEO intent pages:
+  // app/[locale]/seo/intent/[intent]/[city]/page.tsx
   for (const locale of locales) {
-    for (const p of KEYWORD_PAGES as any[]) {
-      const intent = safeSlug(p.intent ?? "");
-      const city = safeSlug(p.city ?? "");
-      const fallback = safeSlug(p.slug ?? "");
+    for (const p of KEYWORD_PAGES) {
+      const intent = safeSlug((p as any).intent);
+      const city = safeSlug((p as any).city);
 
-      if (intent && city) {
-        urls.push({
-          url: `${baseUrl}/${locale}/seo/intent/${intent}/${city}`,
-          lastModified: now,
-          changeFrequency: "monthly",
-          priority: 0.6
-        });
-      } else if (fallback) {
-        urls.push({
-          url: `${baseUrl}/${locale}/seo/intent/${fallback}`,
-          lastModified: now,
-          changeFrequency: "monthly",
-          priority: 0.55
-        });
-      }
+      if (!intent || !city) continue;
+
+      urls.push({
+        url: `${baseUrl}/${locale}/seo/intent/${intent}/${city}`,
+        lastModified: now,
+        changeFrequency: "monthly",
+        priority: 0.6
+      });
     }
   }
 
-  // ✅ Explore country landings:
-  // /explore/country/[countrySlug]
-  // /explore/country/[countrySlug]/[category]
+  // ✅ Explore country/category landings:
+  // app/[locale]/explore/country/[countrySlug]/[category]/page.tsx
   for (const locale of locales) {
     for (const country of TARGET_COUNTRIES) {
-      urls.push({
-        url: `${baseUrl}/${locale}/explore/country/${country.slug}`,
-        lastModified: now,
-        changeFrequency: "weekly",
-        priority: 0.75
-      });
-
-      for (const category of TARGET_CATEGORIES) {
-        const catSlug = safeSlug(category.slug ?? category.label ?? "");
+      for (const cat of TARGET_CATEGORIES as readonly unknown[]) {
+        const catSlug = categorySlug(cat);
         if (!catSlug) continue;
 
         urls.push({
@@ -108,7 +140,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // ✅ Dynamic business URLs (match folder: /explore/business/[category]/[city]/[slug])
+  // ✅ Dynamic business URLs:
+  // app/[locale]/explore/business/[category]/[city]/[slug]/page.tsx
   try {
     const businesses = await prisma.business.findMany({
       where: { marketplaceEligibleAt: { not: null } },
@@ -129,7 +162,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         if (!cat || !city || !slug) continue;
 
         urls.push({
-          url: `${baseUrl}/${locale}/explore/business/${cat}/${city}/${encodeURIComponent(slug)}`,
+          url: `${baseUrl}/${locale}/explore/business/${cat}/${city}/${encodeURIComponent(
+            slug
+          )}`,
           lastModified: b.updatedAt ?? now,
           changeFrequency: "weekly",
           priority: 0.9
