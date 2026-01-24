@@ -1,6 +1,8 @@
 // app/sitemap.ts
 import type { MetadataRoute } from "next";
 import { locales } from "@/lib/i18n";
+
+
 import { prisma } from "@/lib/db";
 
 import { KEYWORD_PAGES } from "@/lib/seo/keywords";
