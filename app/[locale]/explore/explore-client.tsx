@@ -17,10 +17,7 @@ function Stars({ value }: { value: number }) {
         return (
           <span
             key={i}
-            className={[
-              "text-sm",
-              filled ? "text-slate-900" : "text-slate-300"
-            ].join(" ")}
+            className={["text-sm", filled ? "text-slate-900" : "text-slate-300"].join(" ")}
             aria-hidden
           >
             ★
@@ -50,36 +47,56 @@ export default function ExploreClient({
   const locale = useLocale("en");
   const sp = useSearchParams();
 
+  // URL params (deep-link support)
   const qParam = (sp.get("q") ?? "").trim();
   const cityParam = (sp.get("city") ?? "").trim();
   const catParam = (sp.get("category") ?? "").trim();
 
+  // State
   const [q, setQ] = useState("");
   const [city, setCity] = useState(defaultCity);
   const [cat, setCat] = useState<BusinessCategory | "All">("All");
 
-  // Initialize from URL once params/data are available
+  // ✅ prevents overwriting user input when businesses/categories change
+  const [didInit, setDidInit] = useState(false);
+
+  function normalizeCategoryParam(x: string): BusinessCategory | "All" | null {
+    const s = x.trim().toLowerCase();
+    if (!s) return null;
+    if (s === "all") return "All";
+
+    // support "lash" -> "Lash", etc.
+    const match = categories.find((c) => c.toLowerCase() === s);
+    return match ?? null;
+  }
+
+  function normalizeCityParam(x: string): string | null {
+    const s = x.trim().toLowerCase();
+    if (!s) return null;
+
+    const found = (businesses ?? []).find(
+      (b) => String(b.city || "").toLowerCase() === s
+    );
+    return found?.city ?? null;
+  }
+
+  // ✅ Initialize from URL once (good for SEO content pages linking into explore)
   useEffect(() => {
-    // q
+    if (didInit) return;
+
     if (qParam) setQ(qParam);
 
-    // city: only accept if it exists in businesses (case-insensitive)
-    if (cityParam) {
-      const found = businesses.find(
-        (b) => String(b.city || "").toLowerCase() === cityParam.toLowerCase()
-      );
-      if (found?.city) setCity(found.city);
-    } else if (defaultCity) {
-      setCity(defaultCity);
-    }
+    const normalizedCity = cityParam ? normalizeCityParam(cityParam) : null;
+    if (normalizedCity) setCity(normalizedCity);
+    else if (defaultCity) setCity(defaultCity);
+    else setCity("");
 
-    // category: allow only All or valid category
-    if (catParam) {
-      const isAll = catParam.toLowerCase() === "all";
-      if (isAll) setCat("All");
-      else if (categories.includes(catParam as any)) setCat(catParam as any);
-    }
-  }, [qParam, cityParam, catParam, businesses, categories, defaultCity]);
+    const normalizedCat = catParam ? normalizeCategoryParam(catParam) : null;
+    if (normalizedCat) setCat(normalizedCat);
+
+    setDidInit(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [didInit, qParam, cityParam, catParam, defaultCity, businesses, categories]);
 
   const cities = useMemo(() => {
     const set = new Set(

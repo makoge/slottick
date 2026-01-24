@@ -14,19 +14,22 @@ export async function generateMetadata({
   const brand = "Slottick";
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+
   const canonical = `${baseUrl}/${locale}`;
+  const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}`]));
 
   const title = "Booking management platform for service businesses";
   const description =
     "Manage services, staff availability and online bookings in one place. Share one link that always shows your real schedule—built for salons, barbers, beauty and wellness.";
 
-  const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}`]));
+  const ogImage = `${baseUrl}/og.png`;
 
   return {
     metadataBase: new URL(baseUrl),
     title,
     description,
     alternates: { canonical, languages },
+    robots: { index: true, follow: true },
     openGraph: {
       type: "website",
       url: canonical,
@@ -34,13 +37,13 @@ export async function generateMetadata({
       title,
       description,
       locale,
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: brand }]
+      images: [{ url: ogImage, width: 1200, height: 630, alt: brand }]
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og.png"]
+      images: [ogImage]
     }
   };
 }
@@ -65,11 +68,7 @@ export default async function Home({
     url: `${baseUrl}/${locale}`,
     description:
       "Booking management platform for service businesses. Set services and availability once and share a booking link that shows real-time availability.",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "EUR"
-    }
+    offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" }
   };
 
   const faqJsonLd = {
@@ -93,15 +92,21 @@ export default async function Home({
         }
       },
       {
-            "@type": "Question",
-            name: "Why not just take bookings in Instagram DMs?",
-            acceptedAnswer: { "@type": "Answer", text: "DMs don’t understand your availability. A booking system only shows slots that actually fit your schedule, breaks, and buffer." }
-          },
+        "@type": "Question",
+        name: "Why not just take bookings in Instagram DMs?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "DMs don’t understand your availability. A booking system only shows slots that actually fit your schedule, breaks, and buffer."
+        }
+      },
       {
-            "@type": "Question",
-            name: "What problems does a booking system solve?",
-            acceptedAnswer: { "@type": "Answer", text: "It stops back-and-forth messages, prevents double booking, and keeps your schedule accurate in real time." }
-          }
+        "@type": "Question",
+        name: "What problems does a booking system solve?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "It stops back-and-forth messages, prevents double booking, and keeps your schedule accurate in real time."
+        }
+      }
     ]
   };
 

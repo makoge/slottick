@@ -60,13 +60,13 @@ export default async function Page({
     { cache: "no-store" }
   );
 
-  const data = await res.json();
-  const businesses = data.businesses ?? [];
+  const data = await res.json().catch(() => ({}));
+  const businesses = Array.isArray(data.businesses) ? data.businesses : [];
 
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
 
-  // ✅ Structured data: ItemList of businesses (good for directory-style pages)
+  // ✅ Structured data: ItemList (directory)
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -74,21 +74,47 @@ export default async function Page({
     itemListElement: businesses.slice(0, 200).map((b: any, i: number) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `${baseUrl}/${locale}/book/${b.slug}`,
-      name: b.name
+      url: `${baseUrl}/${locale}/${String(b.category ?? "other").toLowerCase()}/${encodeURIComponent(
+        String(b.city ?? "").toLowerCase()
+      )}/${String(b.slug ?? "")}`,
+      name: String(b.name ?? "")
     }))
+  };
+
+  // ✅ Breadcrumbs
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${baseUrl}/${locale}`
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Explore",
+        item: `${baseUrl}/${locale}/explore`
+      }
+    ]
   };
 
   return (
     <>
       <ExploreClient
-  businesses={businesses}
-  categories={["Lash", "Nails", "Brows", "Barber", "Massage", "Other"] as any}
-/>
+        businesses={businesses}
+        categories={["Lash", "Nails", "Brows", "Barber", "Massage", "Other"] as any}
+      />
 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
     </>
   );

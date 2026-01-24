@@ -4,9 +4,11 @@ export default function PrivacyPage() {
       <h1 className="text-3xl font-bold tracking-tight">Privacy Policy</h1>
 
       <p className="mt-6 text-slate-600">
-        Slottick respects your privacy. This policy explains how we collect,
-        use, and protect your personal information.
-      </p>
+  Slottick respects your privacy. This policy explains how we collect,
+  use, and protect your personal information.
+  Learn more about how <a href="/en" className="underline font-medium">Slottick helps service businesses manage bookings</a>.
+</p>
+
 
       <h2 className="mt-10 text-xl font-semibold">Information we collect</h2>
       <p className="mt-2 text-slate-600">

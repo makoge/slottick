@@ -46,6 +46,11 @@ export default function TermsPage() {
         We reserve the right to suspend or terminate accounts that violate
         these Terms.
       </p>
+      <p className="mt-8 text-sm text-slate-600">
+  Want to understand Slottick before using it? Visit the
+  <a href="/en" className="underline font-medium"> main Slottick website</a>.
+</p>
+
     </section>
   );
 }

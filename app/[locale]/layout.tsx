@@ -1,9 +1,11 @@
-// app/[locale]/layout.tsx
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
 import { locales } from "@/lib/i18n";
+
+const SITE_NAME = "Slottick";
+const SITE_URL = "https://slottick.com"; // ✅ single source of truth (non-www)
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -16,48 +18,54 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
 
-  const siteName = "Slottick";
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+  const canonical = `${SITE_URL}/${locale}`;
+  const languages = Object.fromEntries(locales.map((l) => [l, `${SITE_URL}/${l}`]));
 
-  const canonical = `${baseUrl}/${locale}`;
-  const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}`]));
+  const titleDefault = "Slottick — Booking management for service businesses";
+  const description =
+    "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.";
 
   return {
-    metadataBase: new URL("https://slottick.com"),
+    metadataBase: new URL(SITE_URL),
     title: {
-      default: "Slottick — Booking management for service businesses",
-      template: `%s | ${siteName}`
+      default: titleDefault,
+      template: `%s | ${SITE_NAME}`
     },
-    description:
-      "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.",
+    description,
     alternates: { canonical, languages },
-    
-  icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" }
-    ],
-    apple: "/apple-touch-icon.png"
-  },
+
+    icons: {
+      icon: [
+        { url: "/favicon.ico" },
+        { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-512.png", sizes: "512x512", type: "image/png" }
+      ],
+      apple: "/apple-touch-icon.png"
+    },
+
     openGraph: {
       type: "website",
       url: canonical,
-      siteName,
-      title: "Slottick — Booking management for service businesses",
-      description:
-        "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.",
+      siteName: SITE_NAME,
+      title: titleDefault,
+      description,
       locale,
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: siteName }]
+      images: [
+        {
+          url: `${SITE_URL}/og.png`, // ✅ absolute
+          width: 1200,
+          height: 630,
+          alt: SITE_NAME
+        }
+      ]
     },
+
     twitter: {
       card: "summary_large_image",
-      title: "Slottick — Booking management for service businesses",
-      description:
-        "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.",
-      images: ["/og.png"]
+      title: titleDefault,
+      description,
+      images: [`${SITE_URL}/og.png`] // ✅ absolute
     }
   };
 }
@@ -71,17 +79,14 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
-
   const webSiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Slottick",
-    url: `${baseUrl}/${locale}`,
+    name: SITE_NAME,
+    url: `${SITE_URL}/${locale}`,
     potentialAction: {
       "@type": "SearchAction",
-      target: `${baseUrl}/${locale}/explore?q={search_term_string}`,
+      target: `${SITE_URL}/${locale}/explore?q={search_term_string}`,
       "query-input": "required name=search_term_string"
     }
   };

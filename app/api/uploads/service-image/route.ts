@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: blob.url });
   } catch (err) {
-    console.error("Upload error:", err);
+    console.error("Blob upload failed:", err);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }
