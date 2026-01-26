@@ -30,22 +30,6 @@ function toDate(d: unknown) {
   return Number.isFinite(x.getTime()) ? x : null;
 }
 
-// for MVP we assume startsAt is UTC (you create it as ...Z on client)
-function dayWindowUTC(startsAt: Date) {
-  const y = startsAt.getUTCFullYear();
-  const m = startsAt.getUTCMonth();
-  const d = startsAt.getUTCDate();
-  const start = new Date(Date.UTC(y, m, d, 0, 0, 0));
-  const end = new Date(Date.UTC(y, m, d + 1, 0, 0, 0));
-  return { start, end };
-}
-
-function hhmmUTC(dt: Date) {
-  const h = String(dt.getUTCHours()).padStart(2, "0");
-  const m = String(dt.getUTCMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
-}
-
 function getLocaleFromReferer(req: Request) {
   const ref = req.headers.get("referer");
   if (!ref) return "en";
@@ -58,10 +42,76 @@ function getLocaleFromReferer(req: Request) {
   }
 }
 
-/**
- * GET /api/bookings?scope=owner
- * Owner dashboard list (auth via cookie session)
- */
+// --- Timezone helpers ---
+
+function ymdInTZ(dt: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(dt);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function addOneDay(date: string) {
+  const [y, m, d] = date.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + 1);
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+// Convert business-local boundary (date + HH:mm) to a UTC instant
+function utcInstantForBusinessLocal(date: string, time: string, timeZone: string) {
+  const [y, mo, d] = date.split("-").map(Number);
+  const [hh, mm] = time.split(":").map(Number);
+
+  const approxUTC = new Date(Date.UTC(y, mo - 1, d, hh, mm, 0));
+
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(approxUTC);
+
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+
+  const asIfUTC = Date.UTC(
+    Number(get("year")),
+    Number(get("month")) - 1,
+    Number(get("day")),
+    Number(get("hour")),
+    Number(get("minute")),
+    Number(get("second"))
+  );
+
+  const offsetMs = asIfUTC - approxUTC.getTime();
+  return new Date(approxUTC.getTime() - offsetMs);
+}
+
+function hhmmInTZ(dt: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).formatToParts(dt);
+  const h = parts.find((p) => p.type === "hour")?.value ?? "00";
+  const m = parts.find((p) => p.type === "minute")?.value ?? "00";
+  return `${h}:${m}`;
+}
+
+// --- Routes ---
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const scope = url.searchParams.get("scope");
@@ -71,9 +121,7 @@ export async function GET(req: Request) {
   }
 
   const business = await getAuthedBusiness();
-  if (!business) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!business) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const bookings = await prisma.booking.findMany({
     where: { businessId: business.id },
@@ -101,10 +149,6 @@ export async function GET(req: Request) {
   });
 }
 
-/**
- * POST /api/bookings
- * Client creates booking
- */
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
 
@@ -114,16 +158,14 @@ export async function POST(req: Request) {
   const price = Number(body.price ?? 0);
   const currency = String(body.currency ?? "EUR").trim();
 
-  const startsAt = toDate(body.startsAt);
+  const startsAt = toDate(body.startsAt); // should already be UTC ISO from client
 
   const customerName = String(body.customerName ?? "").trim();
   const customerPhone = String(body.customerPhone ?? "").trim();
   const customerEmail = body.customerEmail
     ? String(body.customerEmail).trim().toLowerCase()
     : null;
-    const customerCountry = body.customerCountry
-  ? String(body.customerCountry).trim()
-  : null;
+  const customerCountry = body.customerCountry ? String(body.customerCountry).trim() : null;
 
   const notes = body.notes ? String(body.notes).trim() : null;
 
@@ -140,11 +182,8 @@ export async function POST(req: Request) {
     include: { availabilityRule: true }
   });
 
-  if (!business) {
-    return NextResponse.json({ error: "Business not found" }, { status: 404 });
-  }
+  if (!business) return NextResponse.json({ error: "Business not found" }, { status: 404 });
 
-  // Build availability rule from DB (fallback to defaults)
   const ar = business.availabilityRule;
   const rule: AvailabilityRule = {
     ...defaultAvailability,
@@ -158,8 +197,12 @@ export async function POST(req: Request) {
     slotStepMin: ar?.slotStepMin ?? defaultAvailability.slotStepMin
   };
 
-  // collision check (DB truth)
-  const { start, end } = dayWindowUTC(startsAt);
+  const tz = rule.timezone || "UTC";
+
+  // ✅ Business-local day window for collision checks
+  const localDate = ymdInTZ(startsAt, tz);
+  const start = utcInstantForBusinessLocal(localDate, "00:00", tz);
+  const end = utcInstantForBusinessLocal(addOneDay(localDate), "00:00", tz);
 
   const sameDayBookings = await prisma.booking.findMany({
     where: {
@@ -170,11 +213,12 @@ export async function POST(req: Request) {
     select: { startsAt: true, durationMin: true }
   });
 
-  const requestedTime = hhmmUTC(startsAt);
+  // ✅ compare using business-local hh:mm
+  const requestedTime = hhmmInTZ(startsAt, tz);
   const neededSlots = slotRangeForService(requestedTime, rule, durationMin);
 
   for (const b of sameDayBookings) {
-    const bTime = hhmmUTC(b.startsAt);
+    const bTime = hhmmInTZ(b.startsAt, tz);
     const blocked = slotRangeForService(bTime, rule, b.durationMin);
     const blockedSet = new Set(blocked);
     if (neededSlots.some((x) => blockedSet.has(x))) {
@@ -182,7 +226,6 @@ export async function POST(req: Request) {
     }
   }
 
-  // Create booking (unique constraint: @@unique([businessId, startsAt]))
   let booking;
   try {
     booking = await prisma.booking.create({
@@ -207,22 +250,21 @@ export async function POST(req: Request) {
     );
   }
 
-  // Build links + shared fields
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??
     "http://localhost:3000";
 
   const locale = getLocaleFromReferer(req);
-
   const manageLink = `${baseUrl}/${locale}/book/${business.slug}/success?id=${encodeURIComponent(
     booking.id
   )}`;
 
-  const dateText = startsAt.toISOString().slice(0, 10);
+  // ✅ Email date/time in business local
+  const dateText = localDate;
+  const timeText = requestedTime;
   const priceText = money(price, currency);
 
-  // 1) Customer email (optional)
   if (customerEmail) {
     try {
       await sendBookingConfirmationEmail({
@@ -230,7 +272,7 @@ export async function POST(req: Request) {
         businessName: business.name,
         serviceName,
         date: dateText,
-        time: requestedTime,
+        time: timeText,
         durationMin,
         priceText,
         manageLink
@@ -240,10 +282,7 @@ export async function POST(req: Request) {
     }
   }
 
-  // 2) ✅ Owner email (always)
   try {
-    // If you don't want to change your email template yet,
-    // we "pack" customer info into the fields the template already prints.
     const ownerExtra =
       `Customer: ${customerName} (${customerPhone})` +
       (customerEmail ? `, ${customerEmail}` : "") +
@@ -254,7 +293,7 @@ export async function POST(req: Request) {
       businessName: business.name,
       serviceName: `${serviceName} — ${ownerExtra}`,
       date: dateText,
-      time: requestedTime,
+      time: timeText,
       durationMin,
       priceText,
       manageLink

@@ -7,7 +7,7 @@ import { useLocale } from "@/lib/use-locale";
 
 type BookingDTO = {
   id: string;
-  startsAt: string; // ISO
+  startsAt: string; // ISO (stored in UTC is fine)
   durationMin: number;
   serviceName: string;
   price: number;
@@ -32,21 +32,30 @@ type BusinessCard = {
   website?: string | null;
 };
 
-function prettyDateTime(iso: string) {
-  const dt = new Date(iso);
-  const yyyy = dt.getUTCFullYear();
-  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(dt.getUTCDate()).padStart(2, "0");
-  const hh = String(dt.getUTCHours()).padStart(2, "0");
-  const min = String(dt.getUTCMinutes()).padStart(2, "0");
-  return { date: `${yyyy}-${mm}-${dd}`, time: `${hh}:${min}` };
+function formatLocalDateTime(iso: string, locale: string) {
+  const dt = new Date(iso); // Date will render in user's local timezone by default
+
+  const date = new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(dt);
+
+  const time = new Intl.DateTimeFormat(locale, {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).format(dt);
+
+  // Optional: show user's timezone abbreviation (EET/EEST etc.)
+  const tz = Intl.DateTimeFormat(locale, { timeZoneName: "short" })
+    .formatToParts(dt)
+    .find((p) => p.type === "timeZoneName")?.value;
+
+  return { date, time, tz: tz ?? "" };
 }
 
-export default function SuccessClient({
-  businessSlug
-}: {
-  businessSlug: string;
-}) {
+export default function SuccessClient({ businessSlug }: { businessSlug: string }) {
   const locale = useLocale("en"); // ✅ always defined
 
   const sp = useSearchParams();
@@ -88,9 +97,10 @@ export default function SuccessClient({
 
       const city = b.business?.city?.trim();
       if (city) {
-        const r2 = await fetch(`/api/businesses?city=${encodeURIComponent(city)}`, {
-          cache: "no-store"
-        });
+        const r2 = await fetch(
+          `/api/businesses?city=${encodeURIComponent(city)}`,
+          { cache: "no-store" }
+        );
         const d2 = await r2.json().catch(() => ({}));
 
         if (!cancelled && r2.ok && Array.isArray(d2.businesses)) {
@@ -121,9 +131,8 @@ export default function SuccessClient({
 
   const details = useMemo(() => {
     if (!booking) return null;
-    const { date, time } = prettyDateTime(booking.startsAt);
-    return { date, time };
-  }, [booking]);
+    return formatLocalDateTime(booking.startsAt, locale);
+  }, [booking, locale]);
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -136,6 +145,15 @@ export default function SuccessClient({
                 Booked <span aria-hidden>✅</span>
               </h1>
               <p className="mt-2 text-slate-600">Your appointment is confirmed.</p>
+
+              {!loading && booking && (
+                <a
+                  href={`/api/bookings/${booking.id}/calendar`}
+                  className="mt-4 inline-flex items-center rounded-xl px-4 py-2 shadow"
+                >
+                  Add to calendar
+                </a>
+              )}
             </div>
 
             <a className="text-sm underline text-slate-600" href={backHref}>
@@ -181,9 +199,9 @@ export default function SuccessClient({
                   </div>
 
                   <div>
-                    <span className="text-slate-600">When (UTC):</span>{" "}
+                    <span className="text-slate-600">When (your time):</span>{" "}
                     <span className="font-semibold">
-                      {details.date} • {details.time}
+                      {details.date} • {details.time} {details.tz ? `(${details.tz})` : ""}
                     </span>
                   </div>
 

@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
 import { locales } from "@/lib/i18n";
+import InstallPWAButton from "@/app/components/InstallPWAButton";
+
 
 const SITE_NAME = "Slottick";
 const SITE_URL = "https://slottick.com"; // ✅ single source of truth (non-www)
@@ -27,6 +29,11 @@ export async function generateMetadata({
 
   return {
     metadataBase: new URL(SITE_URL),
+
+    
+  manifest: "/manifest.webmanifest", 
+  themeColor: "#0f172a", 
+
     title: {
       default: titleDefault,
       template: `%s | ${SITE_NAME}`
@@ -104,7 +111,7 @@ export default async function LocaleLayout({
           >
             Slottick
           </Link>
-
+            <InstallPWAButton />
           <Link
             href={`/${locale}/login`}
             className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"

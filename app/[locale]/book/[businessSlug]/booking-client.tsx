@@ -26,7 +26,7 @@ function isValidEmail(email: string) {
 }
 
 type DbDayBooking = {
-  startsAt: string; // ISO
+  startsAt: string; // ISO (UTC)
   durationMin: number;
 };
 
@@ -43,7 +43,7 @@ type DbService = {
   depositType?: DepositType;
   depositValue?: number | null;
 
-  images?: string[]; // ✅ NEW
+  images?: string[];
 };
 
 type CustomerMe = {
@@ -60,18 +60,6 @@ function toCurrency(x: unknown): Currency {
   return s === "EUR" || s === "USD" || s === "FCFA" ? (s as Currency) : "EUR";
 }
 
-function hhmmFromISO(iso: string) {
-  const dt = new Date(iso);
-  const h = String(dt.getUTCHours()).padStart(2, "0");
-  const m = String(dt.getUTCMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
-}
-
-// MVP: build startsAt as UTC from date+time.
-function startsAtISOFromDateTime(date: string, time: string) {
-  return new Date(`${date}T${time}:00.000Z`).toISOString();
-}
-
 function depositLabel(s: Service) {
   if (!s.depositEnabled) return null;
   const v = Number(s.depositValue || 0);
@@ -80,6 +68,66 @@ function depositLabel(s: Service) {
   return s.depositType === "AMOUNT"
     ? `Deposit required: ${formatMoney(v, s.currency)}`
     : `Deposit required: ${v}%`;
+}
+
+/**
+ * Convert a UTC ISO instant into HH:mm in the business timezone.
+ */
+function hhmmFromISOInTZ(iso: string, timeZone: string) {
+  const dt = new Date(iso);
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).formatToParts(dt);
+
+  const h = parts.find((p) => p.type === "hour")?.value ?? "00";
+  const m = parts.find((p) => p.type === "minute")?.value ?? "00";
+  return `${h}:${m}`;
+}
+
+/**
+ * Convert a business-local wall time (date + HH:mm in rule.timezone) into a real UTC ISO.
+ * This avoids the bug: new Date(`${date}T${time}Z`) which forces UTC.
+ */
+function startsAtISOFromBusinessLocal(date: string, time: string, timeZone: string) {
+  const [y, mo, d] = date.split("-").map(Number);
+  const [hh, mm] = time.split(":").map(Number);
+
+  // Start with an approximate UTC instant using the same numbers.
+  const approxUTC = new Date(Date.UTC(y, mo - 1, d, hh, mm, 0));
+
+  // Ask: "what wall time would this instant be in the business TZ?"
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(approxUTC);
+
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+
+  // Rebuild the wall time we got, as UTC milliseconds (as-if it were UTC)
+  const asIfUTC = Date.UTC(
+    Number(get("year")),
+    Number(get("month")) - 1,
+    Number(get("day")),
+    Number(get("hour")),
+    Number(get("minute")),
+    Number(get("second"))
+  );
+
+  // Offset between "as if UTC" and the approx instant
+  const offsetMs = asIfUTC - approxUTC.getTime();
+
+  // Subtract offset to get the real UTC instant for the desired business wall time
+  const realUTC = new Date(approxUTC.getTime() - offsetMs);
+  return realUTC.toISOString();
 }
 
 export default function BookingClient({
@@ -96,11 +144,9 @@ export default function BookingClient({
   const [loadingRule, setLoadingRule] = useState(true);
   const [loadingServices, setLoadingServices] = useState(true);
 
-  // customer session (optional)
   const [customer, setCustomer] = useState<CustomerMe["customer"]>(null);
   const [loadingCustomer, setLoadingCustomer] = useState(true);
 
-  // DB-truth bookings for selected date (for UI blocking)
   const [dayBookings, setDayBookings] = useState<DbDayBooking[]>([]);
 
   const [serviceId, setServiceId] = useState("");
@@ -115,20 +161,17 @@ export default function BookingClient({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Lightbox
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!lightboxUrl) return;
-
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setLightboxUrl(null);
     }
-
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [lightboxUrl]);
 
-  // ✅ Check if customer logged in (cookie session)
+  // ✅ customer/me
   useEffect(() => {
     let cancelled = false;
 
@@ -152,7 +195,7 @@ export default function BookingClient({
     };
   }, []);
 
-  // ✅ Public: load availability rule
+  // ✅ availability rule (must include timezone)
   useEffect(() => {
     let cancelled = false;
 
@@ -184,7 +227,7 @@ export default function BookingClient({
     };
   }, [businessSlug]);
 
-  // ✅ Public: load services (includes deposit + images)
+  // ✅ services
   useEffect(() => {
     let cancelled = false;
 
@@ -231,7 +274,7 @@ export default function BookingClient({
     };
   }, [businessSlug]);
 
-  // ✅ Fetch booked slots for selected date (blocking)
+  // ✅ booked slots for selected date (blocking)
   useEffect(() => {
     let cancelled = false;
 
@@ -275,13 +318,16 @@ export default function BookingClient({
 
   const allSlots = useMemo(() => {
     if (!date) return [];
-    return generateTimeSlots(date, rule);
+    return generateTimeSlots(date, rule); // should generate business-local times
   }, [date, rule]);
 
+  // ✅ FIX: convert DB bookings into business-local HH:mm before blocking
   const bookedSet = useMemo(() => {
     const s = new Set<string>();
+    const tz = rule.timezone || "UTC";
+
     for (const b of dayBookings) {
-      const bTime = hhmmFromISO(b.startsAt);
+      const bTime = hhmmFromISOInTZ(b.startsAt, tz);
       const blocked = slotRangeForService(bTime, rule, b.durationMin);
       blocked.forEach((x) => s.add(x));
     }
@@ -317,10 +363,13 @@ export default function BookingClient({
     if (!emailTrim) return setError("Email is required.");
     if (!isValidEmail(emailTrim)) return setError("Enter a valid email.");
 
+    // ✅ re-check conflict using business-local time comparison
     const needed = slotRangeForService(time, rule, selectedService.durationMin);
+    const tz = rule.timezone || "UTC";
+
     for (const b of dayBookings) {
       const blocked = new Set(
-        slotRangeForService(hhmmFromISO(b.startsAt), rule, b.durationMin)
+        slotRangeForService(hhmmFromISOInTZ(b.startsAt, tz), rule, b.durationMin)
       );
       if (needed.some((x) => blocked.has(x))) {
         return setError("That time was just booked. Pick another slot.");
@@ -329,7 +378,8 @@ export default function BookingClient({
 
     setSubmitting(true);
     try {
-      const startsAt = startsAtISOFromDateTime(date, time);
+      // ✅ FIX: convert business-local selection into real UTC ISO
+      const startsAt = startsAtISOFromBusinessLocal(date, time, tz);
 
       const res = await fetch("/api/bookings", {
         method: "POST",
@@ -360,9 +410,7 @@ export default function BookingClient({
         return;
       }
 
-      router.push(
-        `/${locale}/book/${businessSlug}/success?id=${encodeURIComponent(id)}`
-      );
+      router.push(`/${locale}/book/${businessSlug}/success?id=${encodeURIComponent(id)}`);
     } catch {
       setError("Network error. Try again.");
     } finally {
@@ -417,19 +465,18 @@ export default function BookingClient({
             <p className="mt-2 text-slate-600">
               {loading ? "Loading..." : `Step ${step} of 4`}
             </p>
+            {!loadingRule ? (
+              <p className="mt-1 text-xs text-slate-500">
+                Times shown in business timezone: <span className="font-semibold">{rule.timezone}</span>
+              </p>
+            ) : null}
           </div>
 
           <nav className="flex gap-2 text-sm">
-            <a
-              className="rounded-lg border px-3 py-1 hover:bg-slate-50"
-              href={`/en/book/${businessSlug}`}
-            >
+            <a className="rounded-lg border px-3 py-1 hover:bg-slate-50" href={`/en/book/${businessSlug}`}>
               EN
             </a>
-            <a
-              className="rounded-lg border px-3 py-1 hover:bg-slate-50"
-              href={`/fr/book/${businessSlug}`}
-            >
+            <a className="rounded-lg border px-3 py-1 hover:bg-slate-50" href={`/fr/book/${businessSlug}`}>
               FR
             </a>
           </nav>
@@ -480,9 +527,7 @@ export default function BookingClient({
         </section>
 
         {error ? (
-          <div className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
+          <div className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
         ) : null}
 
         <div className="mt-8 grid gap-6">
@@ -525,7 +570,6 @@ export default function BookingClient({
                             {s.durationMin} min • {formatMoney(s.price, s.currency)}
                           </div>
 
-                          {/* ✅ thumbnails */}
                           {imgs.length ? (
                             <div className="mt-3 flex gap-2 overflow-x-auto">
                               {imgs.slice(0, 6).map((url) => (
@@ -536,7 +580,7 @@ export default function BookingClient({
                                   className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
                                   loading="lazy"
                                   onClick={(e) => {
-                                    e.stopPropagation(); // don’t select service
+                                    e.stopPropagation();
                                     setLightboxUrl(url);
                                   }}
                                 />
@@ -544,7 +588,6 @@ export default function BookingClient({
                             </div>
                           ) : null}
 
-                          {/* deposit badge */}
                           {d ? (
                             <div className="mt-3 inline-flex w-fit rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
                               {d}
@@ -639,7 +682,6 @@ export default function BookingClient({
                     {formatMoney(selectedService.price, selectedService.currency)}
                   </div>
 
-                  {/* show images also here */}
                   {selectedService.images?.length ? (
                     <div className="mt-3 flex gap-2 overflow-x-auto">
                       {selectedService.images.slice(0, 8).map((url) => (

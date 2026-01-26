@@ -582,7 +582,7 @@ export default async function Home({
 <Link
   href={`/${locale}/explore`}
   prefetch
-  className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-50"
+  className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-900"
 >
   Explore Services
 </Link>

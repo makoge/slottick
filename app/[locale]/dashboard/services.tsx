@@ -376,7 +376,7 @@ export default function ServicesEditor() {
 
           {newImages.length === 0 ? (
             <p className="mt-2 text-xs text-slate-600">
-              My opinion: add 3–6 real photos per service — it boosts trust fast.
+              add 3–6 real photos per service, it boosts trust fast.
             </p>
           ) : (
             <div className="mt-3 grid grid-cols-3 gap-3">

@@ -149,7 +149,7 @@ export default async function SeoLandingPage({
         name: `Are there last-minute appointments available in ${city}?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Sometimes—availability depends on each business. Slottick shows real-time openings based on the provider’s schedule.`
+          text: `Sometimes, availability depends on each business. Slottick shows real-time openings based on the provider’s schedule.`
         }
       },
       {
