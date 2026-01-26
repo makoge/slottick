@@ -6,23 +6,21 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false }
 };
 
-
 export default async function PricingPage({
-  params,
+  params
 }: {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
-  const business = await getAuthedBusiness();
+  const { locale } = await params;
 
-  if (!business) {
-    return <p>Please sign in</p>;
-  }
+  const business = await getAuthedBusiness();
+  if (!business) return <p>Please sign in</p>;
 
   return (
     <div>
       <h1>Upgrade</h1>
       <SubscribeButton
-        locale={params.locale}
+        locale={locale}
         userId={business.id}
         email={business.ownerEmail}
       />
