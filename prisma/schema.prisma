@@ -33,6 +33,11 @@ model Business {
 
   logoUrl String?
 
+  heroTag String? 
+
+  ratingAvg   Float? @default(0)
+  ratingCount Int?   @default(0)
+
 
   // auth
   ownerEmail       String   @unique
