@@ -147,7 +147,7 @@ export default async function LocaleLayout({
         {/* MAIN */}
         <main className="bg-white">
           {/* ✅ remove global py-16 to avoid double-padding (pages should control spacing) */}
-          <div className="mx-auto max-w-6xl px-6">{children}</div>
+          <div className="mx-auto max-w-6xl px-6 py-12">{children}</div>
         </main>
 
         {/* FOOTER */}
