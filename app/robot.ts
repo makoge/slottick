@@ -8,15 +8,28 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+
+        // ❌ private / non-SEO areas
         disallow: [
-          "/api",
+          "/api/",
           "/*/login",
           "/*/register",
           "/*/dashboard",
           "/*/billing",
           "/*/customer",
-          "/*/stripe"
+          "/*/stripe",
+
+          // ❌ avoid crawling infinite filter junk
+          "/*?*"
+        ],
+
+        // ✅ allow core assets
+        allow: [
+          "/",
+          "/_next/",
+          "/manifest.webmanifest",
+          "/favicon.ico",
+          "/og.png"
         ]
       }
     ],

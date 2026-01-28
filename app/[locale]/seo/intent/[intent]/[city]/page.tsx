@@ -11,9 +11,7 @@ type Params = {
 };
 
 function getBaseUrl() {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com"
-  );
+  return (process.env.NEXT_PUBLIC_SITE_URL || "https://slottick.com").replace(/\/$/, "");
 }
 
 function titleCase(s: string) {
@@ -24,6 +22,12 @@ function titleCase(s: string) {
     .join(" ");
 }
 
+// OG locale often expects en_US style. If you don’t want to maintain this mapping, remove it.
+function ogLocale(locale: string) {
+  const map: Record<string, string> = { en: "en_US", et: "et_EE" };
+  return map[locale] ?? undefined;
+}
+
 function buildExploreHref(locale: string, intentSlug: string, citySlug: string) {
   const intent = SEO_INTENTS_10.find((x) => x.slug === intentSlug);
   const city = SEO_CITIES_20.find((x) => x.slug === citySlug);
@@ -32,8 +36,7 @@ function buildExploreHref(locale: string, intentSlug: string, citySlug: string) 
   if (intent?.categoryParam) qs.set("category", intent.categoryParam);
   if (city?.name) qs.set("city", city.name);
 
-  // your explore page
-  return `/${locale}/explore?${qs.toString()}`;
+  return `/${locale}/explore${qs.toString() ? `?${qs.toString()}` : ""}`;
 }
 
 // Simple variation engine so pages aren’t copy/paste
@@ -54,15 +57,15 @@ function generateContentBlocks(intentSlug: string, citySlug: string) {
   const bullets = [
     `Compare ${intentTitle.toLowerCase()} options in ${cityName}${country} by category and availability.`,
     `Use real-time booking to avoid back-and-forth messages and scheduling errors.`,
-    `Choose businesses with reviews, clear service names, and consistent availability.`,
+    `Choose businesses with clear service names and consistent availability.`,
     `Book faster by filtering the marketplace for the exact service you want.`
   ];
 
   const paragraphs = [
     `${intentTitle} searches usually mean one thing: you want a service that’s available soon and easy to book. Slottick helps you find ${s1} in ${cityName}${country} and reserve a time that actually fits the provider’s schedule.`,
-    `Instead of calling around, you can browse businesses, check service categories, and book directly. This is especially useful for ${s2}, where availability and timing matter as much as quality.`,
+    `Instead of calling around, you can browse businesses, compare categories, and book directly. This is especially useful for ${s2}, where availability and timing matter as much as quality.`,
     `If you’re looking for ${s3} in ${cityName}, start by narrowing down the service type, then filter by city and category. When you find a provider you like, pick a slot and confirm instantly.`,
-    `Want to explore more options? Slottick’s directory is built for discovery: browse ${s4}, compare ratings, and book in a few clicks.`
+    `Want to explore more options? Slottick’s directory is built for discovery: browse ${s4}, compare options, and book in a few clicks.`
   ];
 
   return { cityName, country, intentTitle, paragraphs, bullets };
@@ -70,7 +73,6 @@ function generateContentBlocks(intentSlug: string, citySlug: string) {
 
 export async function generateStaticParams() {
   const all: Array<Params> = [];
-
   for (const locale of locales) {
     for (const intent of SEO_INTENTS_10) {
       for (const city of SEO_CITIES_20) {
@@ -89,19 +91,28 @@ export async function generateMetadata({
   const { locale, intent, city } = await params;
 
   const baseUrl = getBaseUrl();
+  const ogImg = `${baseUrl}/og.png`;
+
   const intentObj = SEO_INTENTS_10.find((x) => x.slug === intent);
   const cityObj = SEO_CITIES_20.find((x) => x.slug === city);
 
-  const cityName = cityObj?.name ?? titleCase(city);
-  const country = cityObj?.countryName ? `, ${cityObj.countryName}` : "";
-  const pageTitle = intentObj?.slug === "best-beauty-services-in-city"
-    ? `Best beauty services in ${cityName}${country}`
-    : `${intentObj?.title ?? titleCase(intent)} in ${cityName}${country}`;
+  if (!intentObj || !cityObj) {
+    return { robots: { index: false, follow: false } };
+  }
 
-  const description =
-    `Find and book ${pageTitle.toLowerCase()}. Browse trusted local businesses, compare services, and book instantly with real availability on Slottick.`;
+  const cityName = cityObj.name ?? titleCase(city);
+  const country = cityObj.countryName ? `, ${cityObj.countryName}` : "";
+
+  const pageTitle =
+    intentObj.slug === "best-beauty-services-in-city"
+      ? `Best beauty services in ${cityName}${country}`
+      : `${intentObj.title ?? titleCase(intent)} in ${cityName}${country}`;
+
+  const description = `Find and book ${pageTitle.toLowerCase()}. Browse trusted local businesses, compare services, and book instantly with real availability on Slottick.`;
 
   const canonical = `${baseUrl}/${locale}/seo/${intent}/${city}`;
+
+  // IMPORTANT: only keep hreflang if these pages truly exist + are translated.
   const languages = Object.fromEntries(
     locales.map((l) => [l, `${baseUrl}/${l}/seo/${intent}/${city}`])
   );
@@ -111,43 +122,46 @@ export async function generateMetadata({
     title: `${pageTitle} | Slottick`,
     description,
     alternates: { canonical, languages },
-    robots: { index: true, follow: true },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1
+      }
+    },
     openGraph: {
       type: "website",
       url: canonical,
       siteName: "Slottick",
       title: pageTitle,
       description,
-      locale,
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Slottick" }]
+      locale: ogLocale(locale),
+      images: [{ url: ogImg, width: 1200, height: 630, alt: "Slottick" }]
     },
     twitter: {
       card: "summary_large_image",
       title: pageTitle,
       description,
-      images: ["/og.png"]
+      images: [ogImg]
     }
   };
 }
 
-export default async function Page({
-  params
-}: {
-  params: Promise<Params>;
-}) {
+export default async function Page({ params }: { params: Promise<Params> }) {
   const { locale, intent, city } = await params;
 
   const intentObj = SEO_INTENTS_10.find((x) => x.slug === intent);
   const cityObj = SEO_CITIES_20.find((x) => x.slug === city);
 
   if (!intentObj || !cityObj) {
-    // If someone hits random /seo/... URL, keep it clean
     return (
       <main className="mx-auto max-w-3xl px-6 py-14">
         <h1 className="text-3xl font-bold">Page not available</h1>
-        <p className="mt-3 text-slate-600">
-          This SEO page doesn’t exist. Try the marketplace instead.
-        </p>
+        <p className="mt-3 text-slate-600">This SEO page doesn’t exist. Try the marketplace instead.</p>
         <Link className="mt-6 inline-block underline" href={`/${locale}/explore`}>
           Open Explore
         </Link>
@@ -156,16 +170,16 @@ export default async function Page({
   }
 
   const exploreHref = buildExploreHref(locale, intent, city);
-
-  const { cityName, country, intentTitle, paragraphs, bullets } =
-    generateContentBlocks(intent, city);
+  const { cityName, country, intentTitle, paragraphs, bullets } = generateContentBlocks(intent, city);
 
   const mainHeading =
     intentObj.slug === "best-beauty-services-in-city"
       ? `Best beauty services in ${cityName}${country}`
       : `${intentTitle} in ${cityName}${country}`;
 
-  // FAQ schema
+  const baseUrl = getBaseUrl();
+  const canonical = `${baseUrl}/${locale}/seo/${intent}/${city}`;
+
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -176,24 +190,14 @@ export default async function Page({
     }))
   };
 
-  // Breadcrumb schema
-  const baseUrl = getBaseUrl();
+  // ✅ Breadcrumb: Home > Explore > This page
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Explore",
-        item: `${baseUrl}/${locale}/explore`
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: mainHeading,
-        item: `${baseUrl}/${locale}/seo/${intent}/${city}`
-      }
+      { "@type": "ListItem", position: 1, name: "Home", item: `${baseUrl}/${locale}` },
+      { "@type": "ListItem", position: 2, name: "Explore", item: `${baseUrl}/${locale}/explore` },
+      { "@type": "ListItem", position: 3, name: mainHeading, item: canonical }
     ]
   };
 
@@ -256,9 +260,7 @@ export default async function Page({
 
           <section className="mt-12 rounded-2xl border border-slate-200 p-6">
             <h2 className="text-xl font-semibold">Ready to book?</h2>
-            <p className="mt-2 text-slate-600">
-              Go straight to the marketplace and filter by category and city.
-            </p>
+            <p className="mt-2 text-slate-600">Go straight to the marketplace and filter by category and city.</p>
             <div className="mt-5">
               <Link className="font-semibold underline" href={exploreHref}>
                 Explore {intentTitle.toLowerCase()} in {cityName}
@@ -266,32 +268,17 @@ export default async function Page({
             </div>
           </section>
 
-          {/* Strong internal links */}
           <nav className="mt-10 text-sm text-slate-600">
             <span className="font-semibold text-slate-900">More:</span>{" "}
-            <Link className="underline" href={`/${locale}`}>
-              Home
-            </Link>{" "}
-            •{" "}
-            <Link className="underline" href={`/${locale}/explore`}>
-              Explore
-            </Link>{" "}
-            •{" "}
-            <Link className="underline" href={`/${locale}/register`}>
-              List your business
-            </Link>
+            <Link className="underline" href={`/${locale}`}>Home</Link> •{" "}
+            <Link className="underline" href={`/${locale}/explore`}>Explore</Link> •{" "}
+            <Link className="underline" href={`/${locale}/register`}>List your business</Link>
           </nav>
         </div>
       </main>
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
     </>
   );
 }

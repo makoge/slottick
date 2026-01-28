@@ -1,7 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { locales } from "@/lib/i18n";
 
 type Params = { locale: string };
+
+function baseUrl() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || "https://slottick.com").replace(/\/$/, "");
+}
+
+function ogLocale(locale: string) {
+  const map: Record<string, string> = { en: "en_US", et: "et_EE" };
+  return map[locale] ?? undefined; // or remove entirely
+}
 
 export async function generateMetadata({
   params
@@ -10,32 +20,50 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+  const urlBase = baseUrl();
+  const canonical = `${urlBase}/${locale}/guides/bristol-beauty-salons`;
 
-  const canonical = `${baseUrl}/${locale}/guides/bristol-beauty-salons`;
+  // ✅ hreflang for the same guide across locales (if it exists in every locale)
+  const languages = Object.fromEntries(
+    locales.map((l) => [l, `${urlBase}/${l}/guides/bristol-beauty-salons`])
+  );
 
   const title = "Bristol Beauty Salons – Book trusted beauty services online";
   const description =
     "Find Bristol beauty salons and book services online. Compare popular treatments, understand pricing expectations, and discover businesses with real availability.";
 
+  const ogImg = `${urlBase}/og.png`;
+
   return {
-    metadataBase: new URL(baseUrl),
+    metadataBase: new URL(urlBase),
     title,
     description,
-    alternates: { canonical },
+    alternates: { canonical, languages },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1
+      }
+    },
     openGraph: {
       type: "article",
       url: canonical,
       title,
       description,
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Slottick" }]
+      siteName: "Slottick",
+      locale: ogLocale(locale),
+      images: [{ url: ogImg, width: 1200, height: 630, alt: "Slottick" }]
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og.png"]
+      images: [ogImg]
     }
   };
 }
@@ -43,18 +71,30 @@ export async function generateMetadata({
 export default async function Page({ params }: { params: Promise<Params> }) {
   const { locale } = await params;
 
-  const exploreHref = `/${locale}/explore?${new URLSearchParams({
-    city: "Bristol"
-    // NOTE: you don’t have a “Beauty” category in your enum.
-    // We filter by city, and users can choose category inside Explore.
-  }).toString()}`;
+  const urlBase = baseUrl();
 
+  // ✅ make this absolute (better for JSON-LD + crawlers)
+  const exploreUrl = new URL(`/${locale}/explore`, urlBase);
+  exploreUrl.searchParams.set("city", "Bristol");
+
+  const canonical = `${urlBase}/${locale}/guides/bristol-beauty-salons`;
+
+  // ✅ Article schema should point to THIS page, not the explore page
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
+    mainEntityOfPage: { "@type": "WebPage", "@id": canonical },
     headline: "Bristol Beauty Salons – Book trusted beauty services online",
+    description:
+      "Find Bristol beauty salons and book services online. Compare popular treatments, understand pricing expectations, and discover businesses with real availability.",
+    author: { "@type": "Organization", name: "Slottick" },
+    publisher: {
+      "@type": "Organization",
+      name: "Slottick",
+      logo: { "@type": "ImageObject", url: `${urlBase}/og.png` }
+    },
     about: ["Beauty salon", "Bristol", "Online booking"],
-    mainEntityOfPage: { "@type": "WebPage", "@id": exploreHref }
+    isPartOf: { "@type": "WebSite", name: "Slottick", url: urlBase }
   };
 
   return (
@@ -62,22 +102,22 @@ export default async function Page({ params }: { params: Promise<Params> }) {
       <div className="mx-auto max-w-3xl px-6 py-12">
         <header className="mb-8">
           <p className="text-sm font-medium text-slate-600">Slottick • Guides</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight">
-            Bristol Beauty Salons
-          </h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight">Bristol Beauty Salons</h1>
+
           <p className="mt-3 text-slate-600">
-            Bristol has a strong beauty scene with salons offering skincare, nails,
-            lashes, brows, waxing, and more. If you want less messaging and faster
-            confirmations, online booking is the simplest way to secure a time slot.
+            Bristol has a strong beauty scene with salons offering skincare, nails, lashes, brows, waxing,
+            and more. If you want less messaging and faster confirmations, online booking is the simplest
+            way to secure a time slot.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <a
-              href={exploreHref}
+              href={exploreUrl.toString()}
               className="inline-flex rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
             >
               Explore services in Bristol
             </a>
+
             <Link
               href={`/${locale}/explore`}
               className="inline-flex rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold hover:bg-slate-50"
@@ -91,10 +131,8 @@ export default async function Page({ params }: { params: Promise<Params> }) {
           <section>
             <h2 className="text-xl font-semibold">How beauty salon booking works in Bristol</h2>
             <p className="mt-2 text-slate-600">
-              Most salons provide fixed time slots based on service duration (for example,
-              30–60 minutes for treatments, longer for combinations). Online booking lets
-              you pick a service, see real availability, and confirm instantly—without
-              waiting for replies.
+              Most salons provide fixed time slots based on service duration. Online booking lets you pick a
+              service, see real availability, and confirm instantly—without waiting for replies.
             </p>
           </section>
 
@@ -111,11 +149,11 @@ export default async function Page({ params }: { params: Promise<Params> }) {
           <section>
             <h2 className="text-xl font-semibold">Where to find trusted beauty salons in Bristol</h2>
             <p className="mt-2 text-slate-600">
-              Use the marketplace to filter by city, category, and search terms
-              (for example: “nails”, “lash”, “skincare”). Start here:
+              Use the marketplace to filter by city, category, and search terms (for example: “nails”, “lash”,
+              “skincare”). Start here:
             </p>
             <p className="mt-3">
-              <a className="font-semibold underline" href={exploreHref}>
+              <a className="font-semibold underline" href={exploreUrl.toString()}>
                 Browse Bristol businesses on Slottick
               </a>
             </p>
@@ -124,9 +162,8 @@ export default async function Page({ params }: { params: Promise<Params> }) {
           <section>
             <h2 className="text-xl font-semibold">Why book through Slottick</h2>
             <p className="mt-2 text-slate-600">
-              Slottick is built around real availability. Businesses set their services,
-              durations, and working hours once—clients book available times without
-              double booking or endless back-and-forth.
+              Slottick is built around real availability. Businesses set their services, durations, and working
+              hours once—clients book available times without double booking or endless back-and-forth.
             </p>
           </section>
         </section>

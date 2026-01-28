@@ -1,7 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { locales } from "@/lib/i18n";
 
 type Params = { locale: string };
+
+function baseUrl() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || "https://slottick.com").replace(/\/$/, "");
+}
+
+function ogLocale(locale: string) {
+  const map: Record<string, string> = { en: "en_US", et: "et_EE" };
+  return map[locale] ?? undefined;
+}
 
 export async function generateMetadata({
   params
@@ -10,32 +20,50 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+  const urlBase = baseUrl();
+  const canonical = `${urlBase}/${locale}/guides/lash-techs-bristol`;
 
-  const canonical = `${baseUrl}/${locale}/guides/lash-techs-bristol`;
+  // Only keep languages if this exact guide exists in every locale:
+  const languages = Object.fromEntries(
+    locales.map((l) => [l, `${urlBase}/${l}/guides/lash-techs-bristol`])
+  );
 
   const title = "Lash Techs Bristol – Find and book lash services online";
   const description =
     "Find lash techs in Bristol and book online. Learn common lash services, what to ask before booking, and where to find real availability.";
 
+  const ogImg = `${urlBase}/og.png`;
+
   return {
-    metadataBase: new URL(baseUrl),
+    metadataBase: new URL(urlBase),
     title,
     description,
-    alternates: { canonical },
+    alternates: { canonical, languages },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1
+      }
+    },
     openGraph: {
       type: "article",
       url: canonical,
+      siteName: "Slottick",
       title,
       description,
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Slottick" }]
+      locale: ogLocale(locale),
+      images: [{ url: ogImg, width: 1200, height: 630, alt: "Slottick" }]
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og.png"]
+      images: [ogImg]
     }
   };
 }
@@ -43,10 +71,29 @@ export async function generateMetadata({
 export default async function Page({ params }: { params: Promise<Params> }) {
   const { locale } = await params;
 
-  const exploreHref = `/${locale}/explore?${new URLSearchParams({
-    city: "Bristol",
-    category: "Lash"
-  }).toString()}`;
+  const urlBase = baseUrl();
+  const canonical = `${urlBase}/${locale}/guides/lash-techs-bristol`;
+
+  const exploreUrl = new URL(`/${locale}/explore`, urlBase);
+  exploreUrl.searchParams.set("city", "Bristol");
+  exploreUrl.searchParams.set("category", "Lash"); // only if Explore supports it
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    mainEntityOfPage: { "@type": "WebPage", "@id": canonical },
+    headline: "Lash Techs Bristol – Find and book lash services online",
+    description:
+      "Find lash techs in Bristol and book online. Learn common lash services, what to ask before booking, and where to find real availability.",
+    author: { "@type": "Organization", name: "Slottick" },
+    publisher: {
+      "@type": "Organization",
+      name: "Slottick",
+      logo: { "@type": "ImageObject", url: `${urlBase}/og.png` }
+    },
+    about: ["Lash extensions", "Bristol", "Online booking"],
+    isPartOf: { "@type": "WebSite", name: "Slottick", url: urlBase }
+  };
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -56,13 +103,12 @@ export default async function Page({ params }: { params: Promise<Params> }) {
           <h1 className="mt-2 text-3xl font-bold tracking-tight">Lash Techs Bristol</h1>
           <p className="mt-3 text-slate-600">
             Looking for lash extensions, hybrid sets, or a lash lift in Bristol?
-            Online booking makes it easier to compare availability and lock in a time
-            that fits your schedule.
+            Online booking makes it easier to compare availability and lock in a time that fits your schedule.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <a
-              href={exploreHref}
+              href={exploreUrl.toString()}
               className="inline-flex rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
             >
               Explore lash techs in Bristol
@@ -98,11 +144,9 @@ export default async function Page({ params }: { params: Promise<Params> }) {
 
           <section>
             <h2 className="text-xl font-semibold">Where to book lash techs in Bristol</h2>
-            <p className="mt-2 text-slate-600">
-              Use the Bristol lash listings to filter, compare, and book directly:
-            </p>
+            <p className="mt-2 text-slate-600">Use the Bristol lash listings to filter, compare, and book directly:</p>
             <p className="mt-3">
-              <a className="font-semibold underline" href={exploreHref}>
+              <a className="font-semibold underline" href={exploreUrl.toString()}>
                 Browse lash techs in Bristol on Slottick
               </a>
             </p>
@@ -111,8 +155,8 @@ export default async function Page({ params }: { params: Promise<Params> }) {
           <section>
             <h2 className="text-xl font-semibold">Why Slottick helps clients and lash techs</h2>
             <p className="mt-2 text-slate-600">
-              Clients see confirmed times. Lash techs protect their availability with clear
-              durations, breaks, and buffer time—reducing last-minute confusion.
+              Clients see confirmed times. Lash techs protect their availability with clear durations, breaks,
+              and buffer time—reducing last-minute confusion.
             </p>
           </section>
         </section>
@@ -128,6 +172,11 @@ export default async function Page({ params }: { params: Promise<Params> }) {
           </Link>
         </div>
       </div>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
     </main>
   );
 }
