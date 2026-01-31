@@ -5,17 +5,11 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/use-locale";
 
 const CATEGORY_OPTIONS = [
-  "Lash",
-  "Nails",
-  "Brows",
-  "Hair",
-  "Barber",
-  "Massage",
-  "Makeup",
-  "Skincare",
-  "Tattoo",
-  "Fitness",
-  "Other"
+  "Beauty & care",
+  "Wellness & lifestyle",
+  "Creative services",
+  "Home & local",
+  "Education & professionals"
 ] as const;
 
 function slugify(input: string) {
@@ -38,9 +32,15 @@ export default function RegisterClient() {
 
   const [businessName, setBusinessName] = useState("");
   const [category, setCategory] =
-    useState<(typeof CATEGORY_OPTIONS)[number]>("Lash");
+    useState<(typeof CATEGORY_OPTIONS)[number]>("Beauty & care");
+
   const [city, setCity] = useState("Tallinn");
   const [country, setCountry] = useState("EE");
+
+
+  const [street, setStreet] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+
   const [website, setWebsite] = useState("");
   const [email, setEmail] = useState("");
 
@@ -84,11 +84,13 @@ export default function RegisterClient() {
     const bn = businessName.trim();
     const ct = city.trim();
     const cc = country.trim();
+    const st = street.trim();
 
     if (!bn) return "Business name is required.";
     if (!finalSlug) return "Booking slug is required.";
     if (!ct) return "City is required.";
     if (!cc || cc.length < 2) return "Country code is required (e.g. EE).";
+    
 
     const em = email.trim();
     if (!em || !isValidEmail(em)) return "Please enter a valid email.";
@@ -135,6 +137,8 @@ export default function RegisterClient() {
           category,
           city: city.trim(),
           country: country.trim(),
+          street: street.trim(),
+          postalCode: postalCode.trim() || undefined, // ✅ optional
           website: website.trim() || undefined,
           ownerEmail: email.trim(),
           ownerPassword: password,
@@ -144,6 +148,14 @@ export default function RegisterClient() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return alert(data.error || "Failed to create account.");
+
+      // ✅ redirect based on category readiness
+      if (category !== "Beauty & care") {
+        router.push(
+          `/${locale}/coming-soon?category=${encodeURIComponent(category)}`
+        );
+        return;
+      }
 
       router.push(`/${locale}/dashboard`);
     } catch (e: any) {
@@ -159,7 +171,7 @@ export default function RegisterClient() {
         <section className="rounded-3xl border border-slate-200 p-8 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-slate-600">Slotta</p>
+              <p className="text-sm font-medium text-slate-600">Slottick</p>
               <h1 className="mt-2 text-3xl font-bold tracking-tight">
                 Create your account
               </h1>
@@ -195,7 +207,7 @@ export default function RegisterClient() {
               </label>
 
               <label className="grid gap-1 text-sm">
-                Category (service)
+                Category
                 <select
                   className="rounded-xl border border-slate-200 px-3 py-2"
                   value={category}
@@ -230,6 +242,30 @@ export default function RegisterClient() {
                   onChange={(e) => setCountry(e.target.value.toUpperCase())}
                   placeholder="EE"
                   required
+                />
+              </label>
+            </div>
+
+            {/* ✅ new fields after city & country */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-1 text-sm">
+                Street (optional)
+                <input
+                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                  placeholder="e.g. Pärnu mnt 10"
+                  
+                />
+              </label>
+
+              <label className="grid gap-1 text-sm">
+                Postal code (optional)
+                <input
+                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value)}
+                  placeholder="e.g. 10145"
                 />
               </label>
             </div>
@@ -371,4 +407,3 @@ export default function RegisterClient() {
     </main>
   );
 }
-
