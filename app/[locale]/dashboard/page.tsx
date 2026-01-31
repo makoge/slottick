@@ -25,6 +25,7 @@ export default async function DashboardPage({
         country: business.country,
         street: business.street ?? undefined, // ✅ optional
         postalCode: business.postalCode ?? undefined, // ✅ optional
+        logoUrl: business.logoUrl,
         createdAt: business.createdAt.toISOString()
       }}
     />

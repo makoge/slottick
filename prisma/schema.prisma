@@ -1,9 +1,8 @@
-// This is your Prisma schema file,
+
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 generator client {
   provider = "prisma-client-js"
 }
-
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -80,6 +79,9 @@ model Business {
   resetTokens             PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
 
+  // ✅ NEW: website/brand gallery images (for booking page header)
+  galleryImages BusinessImage[]
+
   stripeCustomerId     String?   @unique
   stripeSubscriptionId String?   @unique
   subscriptionStatus   String    @default("inactive")
@@ -110,7 +112,7 @@ model Service {
   depositType    String  @default("PERCENT") // "PERCENT" | "AMOUNT"
   depositValue   Int?
 
-  // ✅ FIX: opposite relation field for Booking.service
+  // opposite relation field for Booking.service
   bookings Booking[]
 
   @@index([businessId])
@@ -150,6 +152,22 @@ model ServiceImage {
   @@index([serviceId])
 }
 
+//
+// ✅ NEW: Business gallery images (NOT service images)
+//
+model BusinessImage {
+  id         String   @id @default(cuid())
+  businessId String
+  url        String
+  sort       Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([businessId, sort])
+}
+
 model Booking {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -158,11 +176,11 @@ model Booking {
   businessId String
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
-  // ✅ link booking to the real service (source of truth)
+  // link booking to the real service (source of truth)
   serviceId String?
   service   Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
 
-  // ✅ FIX: enum snapshot (not String)
+  // enum snapshot (not String)
   serviceCategory ServiceCategory?
 
   // snapshots for emails/history

@@ -2,15 +2,14 @@
 import type { Metadata } from "next";
 import BookingClient from "./booking-client";
 import { locales } from "@/lib/i18n";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/db";
 
 type Params = { locale: string; businessSlug: string };
 
-function titleCaseCategory(x?: string | null) {
-  if (!x) return "service";
-  return x.charAt(0).toUpperCase() + x.slice(1);
+function humanizeIndustry(x?: string | null) {
+  if (!x) return "Service";
+  const clean = String(x).replace(/_/g, " ").toLowerCase();
+  return clean.charAt(0).toUpperCase() + clean.slice(1);
 }
 
 export async function generateMetadata({
@@ -35,7 +34,17 @@ export async function generateMetadata({
       industry: true,
       city: true,
       country: true,
-      marketplaceEligibleAt: true
+      marketplaceEligibleAt: true,
+      heroTag: true,
+      logoUrl: true,
+      galleryImages: true,
+      services: {
+      select: {
+        name: true,
+        price: true,
+        currency: true
+      }
+    }
     }
   });
 
@@ -47,10 +56,18 @@ export async function generateMetadata({
     };
   }
 
-  const cat = titleCaseCategory(business.industry);
+  const cat = humanizeIndustry(business.industry);
+  const where = [business.city, business.country].filter(Boolean).join(", ");
 
-  const title = `Book ${business.name} • ${cat} in ${business.city}`;
-  const description = `Book an appointment with ${business.name} in ${business.city}. Choose a ${cat.toLowerCase()} service, pick a time, and confirm instantly.`;
+  const title = `Book ${business.name} • ${cat}${where ? ` in ${where}` : ""}`;
+  const description =
+    business.heroTag?.trim() ||
+    `Book an appointment with ${business.name}. Choose a service, pick a time, and confirm instantly.`;
+
+  const ogImage =
+  (Array.isArray(business.galleryImages) && business.galleryImages[0]?.url) ||
+  business.logoUrl ||
+  `${baseUrl}/og.png`;
 
   return {
     title,
@@ -62,13 +79,13 @@ export async function generateMetadata({
       title,
       description,
       locale,
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: "Slottick" }]
+      images: [{ url: ogImage }]
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og.png"]
+      images: [ogImage]
     }
   };
 }
@@ -86,24 +103,38 @@ export default async function Page({ params }: { params: Promise<Params> }) {
       name: true,
       slug: true,
       industry: true,
+      heroTag: true,
+
       city: true,
       country: true,
+      street: true,
+      postalCode: true,
+
       website: true,
+      logoUrl: true,
+      galleryImages: true,
+
       marketplaceEligibleAt: true,
-      updatedAt: true,
       services: {
         select: { name: true, durationMin: true, price: true, currency: true }
       }
     }
   });
 
-  // If not public-ready, still render UI (up to you) but don't emit rich schema.
-  const shouldEmitSchema = !!business?.marketplaceEligibleAt;
+  if (!business) {
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-16">
+        <h1 className="text-2xl font-bold">Business not found</h1>
+      </main>
+    );
+  }
+
+  const shouldEmitSchema = !!business.marketplaceEligibleAt;
 
   let ratingAvg: number | null = null;
   let ratingCount = 0;
 
-  if (shouldEmitSchema && business?.id) {
+  if (shouldEmitSchema) {
     const agg = await prisma.review.aggregate({
       where: { businessId: business.id },
       _avg: { rating: true },
@@ -116,17 +147,18 @@ export default async function Page({ params }: { params: Promise<Params> }) {
   const url = `${baseUrl}/${locale}/book/${businessSlug}`;
 
   const localBusinessJsonLd =
-    shouldEmitSchema && business
+    shouldEmitSchema
       ? {
           "@context": "https://schema.org",
           "@type": "LocalBusiness",
           name: business.name,
           url,
-          areaServed: business.city,
           address: {
             "@type": "PostalAddress",
-            addressLocality: business.city,
-            addressCountry: business.country
+            streetAddress: business.street ?? undefined,
+            postalCode: business.postalCode ?? undefined,
+            addressLocality: business.city ?? undefined,
+            addressCountry: business.country ?? undefined
           },
           sameAs: business.website ? [business.website] : undefined,
           aggregateRating:
@@ -142,10 +174,7 @@ export default async function Page({ params }: { params: Promise<Params> }) {
                 "@type": "Offer",
                 price: s.price,
                 priceCurrency: s.currency,
-                itemOffered: {
-                  "@type": "Service",
-                  name: s.name
-                }
+                itemOffered: { "@type": "Service", name: s.name }
               }))
             : undefined
         }
@@ -162,7 +191,29 @@ export default async function Page({ params }: { params: Promise<Params> }) {
 
   return (
     <>
-      <BookingClient locale={locale} businessSlug={businessSlug} />
+      <BookingClient
+        locale={locale}
+        businessSlug={businessSlug}
+        business={{
+          name: business.name,
+          slug: business.slug,
+          industry: business.industry,
+          heroTag: business.heroTag,
+
+          city: business.city,
+          country: business.country,
+          street: business.street,
+          postalCode: business.postalCode,
+
+          website: business.website,
+          logoUrl: business.logoUrl,
+         galleryImages: Array.isArray(business.galleryImages)
+  ? business.galleryImages
+      .sort((a, b) => a.sort - b.sort)
+      .map((img) => img.url): [],
+
+        }}
+      />
 
       {localBusinessJsonLd ? (
         <script
@@ -178,4 +229,3 @@ export default async function Page({ params }: { params: Promise<Params> }) {
     </>
   );
 }
-

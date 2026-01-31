@@ -12,24 +12,11 @@ import {
 } from "@/lib/availability";
 import { Currency, Service, formatMoney } from "@/lib/services";
 
-function formatBusinessName(slug?: string) {
-  if (!slug) return "this studio";
-  return slug
-    .split("-")
-    .filter(Boolean)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
-
 function isValidEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-type DbDayBooking = {
-  startsAt: string; // ISO (UTC)
-  durationMin: number;
-};
-
+type DbDayBooking = { startsAt: string; durationMin: number };
 type DepositType = "PERCENT" | "AMOUNT";
 
 type DbService = {
@@ -38,11 +25,9 @@ type DbService = {
   durationMin: number;
   price: number;
   currency: string;
-
   depositEnabled?: boolean;
   depositType?: DepositType;
   depositValue?: number | null;
-
   images?: string[];
 };
 
@@ -55,6 +40,22 @@ type CustomerMe = {
   };
 };
 
+type BusinessPublic = {
+  name: string;
+  slug: string;
+  industry?: string | null;
+  heroTag?: string | null;
+
+  city?: string | null;
+  country?: string | null;
+  street?: string | null;
+  postalCode?: string | null;
+
+  website?: string | null;
+  logoUrl?: string | null;
+  galleryImages: string[];
+};
+
 function toCurrency(x: unknown): Currency {
   const s = String(x ?? "EUR").toUpperCase();
   return s === "EUR" || s === "USD" || s === "FCFA" ? (s as Currency) : "EUR";
@@ -64,15 +65,11 @@ function depositLabel(s: Service) {
   if (!s.depositEnabled) return null;
   const v = Number(s.depositValue || 0);
   if (!v) return null;
-
   return s.depositType === "AMOUNT"
     ? `Deposit required: ${formatMoney(v, s.currency)}`
     : `Deposit required: ${v}%`;
 }
 
-/**
- * Convert a UTC ISO instant into HH:mm in the business timezone.
- */
 function hhmmFromISOInTZ(iso: string, timeZone: string) {
   const dt = new Date(iso);
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -81,24 +78,17 @@ function hhmmFromISOInTZ(iso: string, timeZone: string) {
     minute: "2-digit",
     hour12: false
   }).formatToParts(dt);
-
   const h = parts.find((p) => p.type === "hour")?.value ?? "00";
   const m = parts.find((p) => p.type === "minute")?.value ?? "00";
   return `${h}:${m}`;
 }
 
-/**
- * Convert a business-local wall time (date + HH:mm in rule.timezone) into a real UTC ISO.
- * This avoids the bug: new Date(`${date}T${time}Z`) which forces UTC.
- */
 function startsAtISOFromBusinessLocal(date: string, time: string, timeZone: string) {
   const [y, mo, d] = date.split("-").map(Number);
   const [hh, mm] = time.split(":").map(Number);
 
-  // Start with an approximate UTC instant using the same numbers.
   const approxUTC = new Date(Date.UTC(y, mo - 1, d, hh, mm, 0));
 
-  // Ask: "what wall time would this instant be in the business TZ?"
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone,
     year: "numeric",
@@ -112,7 +102,6 @@ function startsAtISOFromBusinessLocal(date: string, time: string, timeZone: stri
 
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
 
-  // Rebuild the wall time we got, as UTC milliseconds (as-if it were UTC)
   const asIfUTC = Date.UTC(
     Number(get("year")),
     Number(get("month")) - 1,
@@ -122,20 +111,28 @@ function startsAtISOFromBusinessLocal(date: string, time: string, timeZone: stri
     Number(get("second"))
   );
 
-  // Offset between "as if UTC" and the approx instant
   const offsetMs = asIfUTC - approxUTC.getTime();
+  return new Date(approxUTC.getTime() - offsetMs).toISOString();
+}
 
-  // Subtract offset to get the real UTC instant for the desired business wall time
-  const realUTC = new Date(approxUTC.getTime() - offsetMs);
-  return realUTC.toISOString();
+function fullAddress(b: BusinessPublic) {
+  return [b.street, b.postalCode, b.city, b.country].filter(Boolean).join(", ");
+}
+
+function cleanWebsite(url?: string | null) {
+  const x = (url ?? "").trim();
+  if (!x) return "";
+  return /^https?:\/\//i.test(x) ? x : `https://${x}`;
 }
 
 export default function BookingClient({
   locale,
-  businessSlug
+  businessSlug,
+  business
 }: {
   locale: string;
   businessSlug: string;
+  business: BusinessPublic;
 }) {
   const router = useRouter();
 
@@ -162,44 +159,38 @@ export default function BookingClient({
   const [error, setError] = useState<string | null>(null);
 
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
   useEffect(() => {
     if (!lightboxUrl) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setLightboxUrl(null);
-    }
+    const onKeyDown = (e: KeyboardEvent) => e.key === "Escape" && setLightboxUrl(null);
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [lightboxUrl]);
 
-  // ✅ customer/me
+  // customer/me
   useEffect(() => {
     let cancelled = false;
-
-    async function run() {
+    (async () => {
       setLoadingCustomer(true);
       try {
         const res = await fetch("/api/customer/me", { cache: "no-store" });
         const data = (await res.json().catch(() => ({}))) as CustomerMe;
-        if (cancelled) return;
-        setCustomer(data?.customer ?? null);
+        if (!cancelled) setCustomer(data?.customer ?? null);
       } catch {
         if (!cancelled) setCustomer(null);
       } finally {
         if (!cancelled) setLoadingCustomer(false);
       }
-    }
-
-    run();
+    })();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // ✅ availability rule (must include timezone)
+  // availability rule
   useEffect(() => {
     let cancelled = false;
-
-    async function run() {
+    (async () => {
       setLoadingRule(true);
       try {
         const res = await fetch(
@@ -208,36 +199,27 @@ export default function BookingClient({
         );
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
-
-        if (res.ok && data?.rule) {
-          setRule({ ...defaultAvailability, ...data.rule });
-        } else {
-          setRule(defaultAvailability);
-        }
+        setRule(res.ok && data?.rule ? { ...defaultAvailability, ...data.rule } : defaultAvailability);
       } catch {
         if (!cancelled) setRule(defaultAvailability);
       } finally {
         if (!cancelled) setLoadingRule(false);
       }
-    }
-
-    run();
+    })();
     return () => {
       cancelled = true;
     };
   }, [businessSlug]);
 
-  // ✅ services
+  // services
   useEffect(() => {
     let cancelled = false;
-
-    async function run() {
+    (async () => {
       setLoadingServices(true);
       try {
-        const res = await fetch(
-          `/api/services?businessSlug=${encodeURIComponent(businessSlug)}`,
-          { cache: "no-store" }
-        );
+        const res = await fetch(`/api/services?businessSlug=${encodeURIComponent(businessSlug)}`, {
+          cache: "no-store"
+        });
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
 
@@ -248,14 +230,12 @@ export default function BookingClient({
               durationMin: Number(s.durationMin ?? 0),
               price: Number(s.price ?? 0),
               currency: toCurrency(s.currency),
-
               depositEnabled: Boolean(s.depositEnabled),
               depositType: s.depositType === "AMOUNT" ? "AMOUNT" : "PERCENT",
               depositValue:
                 s.depositEnabled && Number.isFinite(Number(s.depositValue))
                   ? Number(s.depositValue)
                   : undefined,
-
               images: Array.isArray(s.images) ? s.images.map(String) : []
             }))
           : [];
@@ -266,19 +246,18 @@ export default function BookingClient({
       } finally {
         if (!cancelled) setLoadingServices(false);
       }
-    }
+    })();
 
-    run();
     return () => {
       cancelled = true;
     };
   }, [businessSlug]);
 
-  // ✅ booked slots for selected date (blocking)
+  // booked slots for date
   useEffect(() => {
     let cancelled = false;
 
-    async function run() {
+    (async () => {
       setDayBookings([]);
       if (!date) return;
 
@@ -303,9 +282,8 @@ export default function BookingClient({
       } catch {
         // ignore
       }
-    }
+    })();
 
-    run();
     return () => {
       cancelled = true;
     };
@@ -318,29 +296,24 @@ export default function BookingClient({
 
   const allSlots = useMemo(() => {
     if (!date) return [];
-    return generateTimeSlots(date, rule); // should generate business-local times
+    return generateTimeSlots(date, rule);
   }, [date, rule]);
 
-  // ✅ FIX: convert DB bookings into business-local HH:mm before blocking
   const bookedSet = useMemo(() => {
     const s = new Set<string>();
     const tz = rule.timezone || "UTC";
-
     for (const b of dayBookings) {
       const bTime = hhmmFromISOInTZ(b.startsAt, tz);
-      const blocked = slotRangeForService(bTime, rule, b.durationMin);
-      blocked.forEach((x) => s.add(x));
+      slotRangeForService(bTime, rule, b.durationMin).forEach((x) => s.add(x));
     }
     return s;
   }, [dayBookings, rule]);
 
   const availableSlots = useMemo(() => {
     if (!date || !selectedService) return [];
-
     return allSlots.filter((tm) => {
       if (!canFitServiceAt(tm, rule, selectedService.durationMin)) return false;
       if (overlapsBreak(tm, rule, selectedService.durationMin)) return false;
-
       const needed = slotRangeForService(tm, rule, selectedService.durationMin);
       return needed.every((x) => !bookedSet.has(x));
     });
@@ -363,10 +336,10 @@ export default function BookingClient({
     if (!emailTrim) return setError("Email is required.");
     if (!isValidEmail(emailTrim)) return setError("Enter a valid email.");
 
-    // ✅ re-check conflict using business-local time comparison
-    const needed = slotRangeForService(time, rule, selectedService.durationMin);
     const tz = rule.timezone || "UTC";
 
+    // conflict re-check
+    const needed = slotRangeForService(time, rule, selectedService.durationMin);
     for (const b of dayBookings) {
       const blocked = new Set(
         slotRangeForService(hhmmFromISOInTZ(b.startsAt, tz), rule, b.durationMin)
@@ -378,7 +351,6 @@ export default function BookingClient({
 
     setSubmitting(true);
     try {
-      // ✅ FIX: convert business-local selection into real UTC ISO
       const startsAt = startsAtISOFromBusinessLocal(date, time, tz);
 
       const res = await fetch("/api/bookings", {
@@ -405,10 +377,7 @@ export default function BookingClient({
       }
 
       const id: string | undefined = data.booking?.id;
-      if (!id) {
-        setError("Booking created but missing id.");
-        return;
-      }
+      if (!id) return setError("Booking created but missing id.");
 
       router.push(`/${locale}/book/${businessSlug}/success?id=${encodeURIComponent(id)}`);
     } catch {
@@ -425,9 +394,25 @@ export default function BookingClient({
     `/${locale}/book/${businessSlug}`
   )}`;
 
+  // ---- website-like header content
+  const addr = fullAddress(business);
+  const mapsQuery = encodeURIComponent(addr || `${business.city ?? ""} ${business.country ?? ""}`.trim());
+  const mapsEmbed = `https://www.google.com/maps?q=${mapsQuery}&output=embed`;
+  const mapsOpen = `https://www.google.com/maps?q=${mapsQuery}`;
+
+  const website = cleanWebsite(business.website);
+  const gallery = Array.isArray(business.galleryImages) ? business.galleryImages.filter(Boolean) : [];
+  const heroImages = useMemo(() => {
+    const imgs = [...gallery];
+    // fallback if no gallery: use logo as a "brand" image
+    if (imgs.length === 0 && business.logoUrl) imgs.push(business.logoUrl);
+    while (imgs.length < 3) imgs.push(imgs[0] || "/og.png");
+    return imgs.slice(0, 3);
+  }, [gallery, business.logoUrl]);
+
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      {/* ✅ Lightbox */}
+      {/* Lightbox */}
       {lightboxUrl ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
@@ -435,10 +420,7 @@ export default function BookingClient({
           role="dialog"
           aria-modal="true"
         >
-          <div
-            className="relative max-h-[90vh] max-w-[92vw]"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="relative max-h-[90vh] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
             <button
               type="button"
               onClick={() => setLightboxUrl(null)}
@@ -448,83 +430,172 @@ export default function BookingClient({
             </button>
             <img
               src={lightboxUrl}
-              alt="Work photo"
+              alt="Photo"
               className="max-h-[90vh] max-w-[92vw] rounded-2xl bg-white object-contain"
             />
           </div>
         </div>
       ) : null}
 
-      <div className="mx-auto max-w-3xl px-6 py-12">
-        <header className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-slate-600">Slottick • Booking</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight">
-              Book with {formatBusinessName(businessSlug)}
-            </h1>
-            <p className="mt-2 text-slate-600">
-              {loading ? "Loading..." : `Step ${step} of 4`}
-            </p>
-            {!loadingRule ? (
-              <p className="mt-1 text-xs text-slate-500">
-                Times shown in business timezone: <span className="font-semibold">{rule.timezone}</span>
-              </p>
-            ) : null}
-          </div>
+      {/* Website-like hero */}
+      <section className="border-b border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-5xl px-6 py-10">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-3">
+                {business.logoUrl ? (
+                  <img
+                    src={business.logoUrl}
+                    alt={`${business.name} logo`}
+                    className="h-12 w-12 rounded-xl border border-slate-200 object-cover bg-white"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-400">
+                    {business.name?.charAt(0)?.toUpperCase() || "S"}
+                  </div>
+                )}
 
-          <nav className="flex gap-2 text-sm">
-            <a className="rounded-lg border px-3 py-1 hover:bg-slate-50" href={`/en/book/${businessSlug}`}>
-              EN
-            </a>
-            <a className="rounded-lg border px-3 py-1 hover:bg-slate-50" href={`/fr/book/${businessSlug}`}>
-              FR
-            </a>
-          </nav>
-        </header>
-
-        {/* Guest vs Account */}
-        <section className="mt-6 rounded-2xl border border-slate-200 p-5 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="text-sm font-medium text-slate-700">Booking options</div>
-              <div className="mt-1 text-sm text-slate-600">
-                Book instantly as guest, or create an account to explore more businesses in your city.
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <a
-                className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-                href={createAccountHref}
-              >
-                Create account
-              </a>
-              <a
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-                href={loginHref}
-              >
-                Log in
-              </a>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm">
-            {loadingCustomer ? (
-              <div className="text-slate-600">Checking account...</div>
-            ) : customer ? (
-              <div>
-                <div className="font-semibold">Signed in as {customer.email}</div>
-                <div className="mt-1 text-slate-600">
-                  You’ll be able to explore other services nearby (city-based) after booking.
+                <div className="min-w-0">
+                  <h1 className="truncate text-3xl font-bold tracking-tight">{business.name}</h1>
+                  <p className="mt-1 truncate text-sm text-slate-600">
+                    {business.industry ? String(business.industry).replace(/_/g, " ") : "Service"}
+                    {addr ? ` • ${addr}` : ""}
+                  </p>
                 </div>
               </div>
-            ) : (
-              <div className="text-slate-600">
-                You’re booking as guest. Creating an account lets you discover more businesses and rebook faster.
+
+              {business.heroTag ? (
+                <p className="mt-4 max-w-2xl text-slate-700">{business.heroTag}</p>
+              ) : (
+                <p className="mt-4 max-w-2xl text-slate-700">
+                  Book online in seconds. Pick a service, select a time, and confirm instantly.
+                </p>
+              )}
+
+              <div className="mt-4 flex flex-wrap gap-2 text-sm">
+                <span className="rounded-full bg-white px-3 py-1 font-semibold text-slate-700 ring-1 ring-slate-200">
+                  {loading ? "Loading..." : `Step ${step} of 4`}
+                </span>
+                {!loadingRule ? (
+                  <span className="rounded-full bg-white px-3 py-1 text-slate-600 ring-1 ring-slate-200">
+                    Timezone: <span className="font-semibold">{rule.timezone}</span>
+                  </span>
+                ) : null}
+                {website ? (
+                  <a
+                    href={website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-white px-3 py-1 font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"
+                  >
+                    Visit website
+                  </a>
+                ) : null}
               </div>
-            )}
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                <a
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                  href={createAccountHref}
+                >
+                  Create account
+                </a>
+                <a
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-100"
+                  href={loginHref}
+                >
+                  Log in
+                </a>
+
+                <div className="ml-auto flex gap-2">
+                  <a
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-100"
+                    href={`/en/book/${businessSlug}`}
+                  >
+                    EN
+                  </a>
+                  <a
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-100"
+                    href={`/fr/book/${businessSlug}`}
+                  >
+                    FR
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* 3-image brand gallery */}
+            <div className="w-full max-w-xl">
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLightboxUrl(heroImages[0])}
+                  className="col-span-2 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                >
+                  <img
+                    src={heroImages[0]}
+                    alt={`${business.name} main`}
+                    className="h-48 w-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+
+                <div className="grid gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setLightboxUrl(heroImages[1])}
+                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                  >
+                    <img
+                      src={heroImages[1]}
+                      alt={`${business.name} photo 2`}
+                      className="h-[92px] w-full object-cover"
+                      loading="lazy"
+                    />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setLightboxUrl(heroImages[2])}
+                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+                  >
+                    <img
+                      src={heroImages[2]}
+                      alt={`${business.name} photo 3`}
+                      className="h-[92px] w-full object-cover"
+                      loading="lazy"
+                    />
+                  </button>
+                </div>
+              </div>
+
+              
+            </div>
           </div>
-        </section>
+        </div>
+      </section>
+
+      {/* Booking body */}
+      <div className="mx-auto max-w-3xl px-6 py-12">
+        {loadingCustomer ? null : (
+          <section className="rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div className="text-sm font-medium text-slate-700">Booking options</div>
+            <div className="mt-2 rounded-xl bg-slate-50 p-4 text-sm">
+              {customer ? (
+                <div>
+                  <div className="font-semibold">Signed in as {customer.email}</div>
+                  <div className="mt-1 text-slate-600">
+                    You can rebook faster and explore businesses in your city.
+                  </div>
+                </div>
+              ) : (
+                <div className="text-slate-600">
+                  You’re booking as guest. Creating an account lets you rebook faster.
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {error ? (
           <div className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
@@ -533,21 +604,17 @@ export default function BookingClient({
         <div className="mt-8 grid gap-6">
           {/* 1) Service */}
           <section className="rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">1) Choose a service</h2>
+            <h2 className="text-lg font-semibold">Choose a service</h2>
 
             {loadingServices ? (
               <p className="mt-3 text-sm text-slate-600">Loading services...</p>
             ) : services.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-600">
-                No services available. The business owner needs to add services.
-              </p>
+              <p className="mt-3 text-sm text-slate-600">No services available yet.</p>
             ) : (
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 {services.map((s) => {
                   const active = s.id === serviceId;
                   const d = depositLabel(s);
-                  const imgs = s.images ?? [];
-
                   return (
                     <button
                       key={s.id}
@@ -569,24 +636,6 @@ export default function BookingClient({
                           <div className="mt-1 text-sm text-slate-600">
                             {s.durationMin} min • {formatMoney(s.price, s.currency)}
                           </div>
-
-                          {imgs.length ? (
-                            <div className="mt-3 flex gap-2 overflow-x-auto">
-                              {imgs.slice(0, 6).map((url) => (
-                                <img
-                                  key={url}
-                                  src={url}
-                                  alt={`${s.name} work`}
-                                  className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
-                                  loading="lazy"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setLightboxUrl(url);
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          ) : null}
 
                           {d ? (
                             <div className="mt-3 inline-flex w-fit rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
@@ -610,12 +659,11 @@ export default function BookingClient({
 
           {/* 2) Date */}
           <section className="rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">2) Pick a date</h2>
-
+            <h2 className="text-lg font-semibold">Pick a date</h2>
             {!serviceId ? (
               <p className="mt-3 text-sm text-slate-600">Select a service first.</p>
             ) : (
-              <div className="mt-4 flex flex-wrap items-end gap-3">
+              <div className="mt-4">
                 <label className="grid gap-1 text-sm">
                   Date
                   <input
@@ -636,7 +684,7 @@ export default function BookingClient({
 
           {/* 3) Time */}
           <section className="rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">3) Pick a time</h2>
+            <h2 className="text-lg font-semibold">Pick a time</h2>
 
             {!serviceId || !date ? (
               <p className="mt-3 text-sm text-slate-600">Select a service and date first.</p>
@@ -669,10 +717,10 @@ export default function BookingClient({
 
           {/* 4) Details */}
           <section className="rounded-2xl border border-slate-200 p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">4) Your details</h2>
+            <h2 className="text-lg font-semibold">Your details</h2>
 
             {!selectedService || !date || !time ? (
-              <p className="mt-3 text-sm text-slate-600">Finish steps 1–3 first.</p>
+              <p className="mt-3 text-sm text-slate-600">Finish service + date + time first.</p>
             ) : (
               <div className="mt-4 grid gap-4">
                 <div className="rounded-xl bg-slate-50 p-4 text-sm">
@@ -681,30 +729,6 @@ export default function BookingClient({
                     {date} • {time} • {selectedService.durationMin} min •{" "}
                     {formatMoney(selectedService.price, selectedService.currency)}
                   </div>
-
-                  {selectedService.images?.length ? (
-                    <div className="mt-3 flex gap-2 overflow-x-auto">
-                      {selectedService.images.slice(0, 8).map((url) => (
-                        <img
-                          key={url}
-                          src={url}
-                          alt={`${selectedService.name} work`}
-                          className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
-                          loading="lazy"
-                          onClick={() => setLightboxUrl(url)}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-
-                  {selectedService.depositEnabled ? (
-                    <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-                      <div className="font-semibold">Deposit required</div>
-                      <div className="mt-1">{depositLabel(selectedService)}</div>
-                    </div>
-                  ) : (
-                    <div className="mt-3 text-xs text-slate-500">No deposit required.</div>
-                  )}
                 </div>
 
                 <label className="grid gap-1 text-sm">
@@ -760,8 +784,48 @@ export default function BookingClient({
               </div>
             )}
           </section>
+
+          {/* MAP section (bottom) */}
+          <section className="rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Location</h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  {addr || "Address not provided."}
+                </p>
+              </div>
+
+              {addr ? (
+                <a
+                  href={mapsOpen}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                >
+                  Open in Maps
+                </a>
+              ) : null}
+            </div>
+
+            {addr ? (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                <iframe
+                  title={`${business.name} map`}
+                  src={mapsEmbed}
+                  className="h-72 w-full"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            ) : (
+              <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
+                The business owner hasn’t added an address yet.
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </main>
   );
 }
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatMoney } from "@/lib/services";
 
@@ -8,7 +8,6 @@ import AvailabilityEditor from "./availability";
 import ServicesEditor from "./services";
 import BookingsPanel from "./bookings";
 import SchedulePanel from "./schedule";
-
 
 type Props = {
   locale: string;
@@ -50,6 +49,13 @@ type StatCardProps = {
   sub?: string;
   tone?: "blue" | "green" | "purple";
   children?: React.ReactNode;
+};
+
+type GalleryImage = {
+  id: string;
+  url: string;
+  sort: number;
+  createdAt?: string;
 };
 
 const tones = {
@@ -102,6 +108,244 @@ function isValidUrlOrEmpty(v: string) {
   }
 }
 
+function BookingGalleryManager() {
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [err, setErr] = useState<string>("");
+
+  async function load() {
+    setErr("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/uploads/gallery", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Failed to load gallery");
+      setImages(Array.isArray(data.images) ? data.images : []);
+    } catch (e: any) {
+      setErr(e?.message || "Failed to load gallery");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function uploadFiles(files: FileList | null) {
+    if (!files || !files.length) return;
+    setErr("");
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const form = new FormData();
+        form.append("file", file);
+
+        const res = await fetch("/api/uploads/gallery", {
+          method: "POST",
+          body: form
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || `Upload failed (${res.status})`);
+
+        const img = data?.image;
+        if (img?.id && img?.url) {
+          setImages((prev) => [...prev, img]);
+        }
+      }
+    } catch (e: any) {
+      setErr(e?.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function remove(id: string) {
+    setErr("");
+    const prev = images;
+    setImages((x) => x.filter((i) => i.id !== id));
+    try {
+      const res = await fetch(`/api/uploads/gallery?id=${encodeURIComponent(id)}`, {
+        method: "DELETE"
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Delete failed");
+      setImages(Array.isArray(data.images) ? data.images : []);
+    } catch (e: any) {
+      setErr(e?.message || "Delete failed");
+      setImages(prev);
+    }
+  }
+
+  async function move(id: string, dir: -1 | 1) {
+    const idx = images.findIndex((i) => i.id === id);
+    if (idx < 0) return;
+    const next = [...images];
+    const j = idx + dir;
+    if (j < 0 || j >= next.length) return;
+
+    [next[idx], next[j]] = [next[j], next[idx]];
+    setImages(next);
+
+    try {
+      const res = await fetch("/api/uploads/gallery", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order: next.map((x) => x.id) })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Reorder failed");
+      setImages(Array.isArray(data.images) ? data.images : next);
+    } catch (e: any) {
+      setErr(e?.message || "Reorder failed");
+      load(); // authoritative reload
+    }
+  }
+
+  const hero = images[0]?.url || "";
+  const side1 = images[1]?.url || "";
+  const side2 = images[2]?.url || "";
+
+  return (
+    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-base font-semibold">Booking page images</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            First image = hero. Next two = side images. These show on your booking page.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <label className="inline-flex cursor-pointer items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+            {uploading ? "Uploading…" : "Upload images"}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              className="hidden"
+              onChange={(e) => uploadFiles(e.target.files)}
+              disabled={uploading}
+            />
+          </label>
+
+          <button
+            type="button"
+            className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+            onClick={load}
+            disabled={loading || uploading}
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {err ? (
+        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          {err}
+        </div>
+      ) : null}
+
+      {/* Preview */}
+      <div className="mt-5 grid gap-4 lg:grid-cols-12">
+        <div className="lg:col-span-8">
+          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+            {hero ? (
+              <img src={hero} alt="Hero preview" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
+                Hero image preview
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:col-span-4">
+          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+            {side1 ? (
+              <img src={side1} alt="Side preview 1" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
+                Side image 1
+              </div>
+            )}
+          </div>
+
+          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+            {side2 ? (
+              <img src={side2} alt="Side preview 2" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
+                Side image 2
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* List */}
+      <div className="mt-6">
+        <div className="text-sm font-medium text-slate-700">Your images</div>
+
+        {loading ? (
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            Loading…
+          </div>
+        ) : images.length === 0 ? (
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            No images yet. Upload 3 for the full layout.
+          </div>
+        ) : (
+          <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {images.map((img, idx) => (
+              <li key={img.id} className="rounded-2xl border border-slate-200 bg-white p-3">
+                <div className="aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                  <img src={img.url} alt={`Gallery image ${idx + 1}`} className="h-full w-full object-cover" />
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <div className="text-xs text-slate-500">
+                    {idx === 0 ? "Hero" : idx === 1 ? "Side 1" : idx === 2 ? "Side 2" : `Image ${idx + 1}`}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
+                      disabled={idx === 0 || uploading}
+                      onClick={() => move(img.id, -1)}
+                    >
+                      Up
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
+                      disabled={idx === images.length - 1 || uploading}
+                      onClick={() => move(img.id, 1)}
+                    >
+                      Down
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                      disabled={uploading}
+                      onClick={() => remove(img.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function DashboardClient({ locale, business }: Props) {
   const router = useRouter();
 
@@ -125,7 +369,7 @@ export default function DashboardClient({ locale, business }: Props) {
   const [logoPreview, setLogoPreview] = useState<string>(business.logoUrl ?? "");
   const [logoUploading, setLogoUploading] = useState(false);
 
-  // ✅ explicit remove logo toggle (optional)
+  // explicit remove logo toggle
   const [removeLogo, setRemoveLogo] = useState(false);
 
   // bookings/stats
@@ -216,11 +460,11 @@ export default function DashboardClient({ locale, business }: Props) {
       if (!key) continue;
 
       const lastAt = new Date(b.startsAt).getTime();
-      const name = b.customerName?.trim() || "Unknown";
-      const country = (b.customerCountry ?? "").trim() || "Unknown";
+      const nm = b.customerName?.trim() || "Unknown";
+      const ct = (b.customerCountry ?? "").trim() || "Unknown";
 
       const existing = customerMap.get(key);
-      if (!existing || lastAt > existing.lastAt) customerMap.set(key, { name, country, lastAt });
+      if (!existing || lastAt > existing.lastAt) customerMap.set(key, { name: nm, country: ct, lastAt });
     }
 
     const recentCustomers = Array.from(customerMap.values())
@@ -303,9 +547,6 @@ export default function DashboardClient({ locale, business }: Props) {
     try {
       const uploadedLogoUrl = await uploadLogoIfAny();
 
-      // ✅ IMPORTANT: do not send logoUrl unless:
-      // - user uploaded a new one
-      // - OR user explicitly clicked remove
       const payload: any = {
         name: n,
         website: website.trim() || null,
@@ -330,7 +571,6 @@ export default function DashboardClient({ locale, business }: Props) {
         return;
       }
 
-      // ✅ update UI (keep old logo unless changed)
       setBiz((prev) => ({
         ...prev,
         name: data?.business?.name ?? n,
@@ -433,7 +673,11 @@ export default function DashboardClient({ locale, business }: Props) {
                 </p>
               </div>
 
-              <button type="button" onClick={cancelEdit} className="text-sm font-semibold text-slate-600 underline">
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="text-sm font-semibold text-slate-600 underline"
+              >
                 Cancel
               </button>
             </div>
@@ -447,32 +691,58 @@ export default function DashboardClient({ locale, business }: Props) {
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
                 Business name
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={name} onChange={(e) => setName(e.target.value)} />
+                <input
+                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Website (optional)
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
+                <input
+                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://..."
+                />
               </label>
 
               <label className="grid gap-1 text-sm">
                 City
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={city} onChange={(e) => setCity(e.target.value)} />
+                <input
+                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Country (code)
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} placeholder="EE" />
+                <input
+                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value.toUpperCase())}
+                  placeholder="EE"
+                />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Street (optional)
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={street} onChange={(e) => setStreet(e.target.value)} />
+                <input
+                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Postal code (optional)
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
+                <input
+                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value)}
+                />
               </label>
             </div>
 
@@ -500,12 +770,15 @@ export default function DashboardClient({ locale, business }: Props) {
 
               {logoPreview ? (
                 <div className="flex items-center gap-3">
-                  <img src={logoPreview} alt="Logo preview" className="h-14 w-14 rounded-2xl border border-slate-200 object-cover" />
+                  <img
+                    src={logoPreview}
+                    alt="Logo preview"
+                    className="h-14 w-14 rounded-2xl border border-slate-200 object-cover"
+                  />
                   <button
                     type="button"
                     className="text-sm underline text-slate-600"
                     onClick={() => {
-                      // ✅ user wants no logo
                       setLogoFile(null);
                       setLogoPreview("");
                       setRemoveLogo(true);
@@ -534,27 +807,43 @@ export default function DashboardClient({ locale, business }: Props) {
 
         {/* Stats row */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard title="Total bookings" value={statsLoading ? "—" : String(stats.totalBookings)} sub={statsLoading ? "Loading…" : "All time (not cancelled)"} tone="blue" />
+          <StatCard
+            title="Total bookings"
+            value={statsLoading ? "—" : String(stats.totalBookings)}
+            sub={statsLoading ? "Loading…" : "All time (not cancelled)"}
+            tone="blue"
+          />
           <StatCard title="Revenue generated" sub={statsLoading ? "Loading…" : "Confirmed in the past"} tone="green">
             <div className="grid gap-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Weekly</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  Weekly
+                </span>
                 <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.weeklyRevenue}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Monthly</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  Monthly
+                </span>
                 <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.monthlyRevenue}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Yearly</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  Yearly
+                </span>
                 <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.yearlyRevenue}</span>
               </div>
             </div>
           </StatCard>
-          <StatCard title="Customers" value={statsLoading ? "—" : String(stats.uniqueCustomers)} sub={statsLoading ? "Loading…" : "Unique customers"} tone="purple" />
+          <StatCard
+            title="Customers"
+            value={statsLoading ? "—" : String(stats.uniqueCustomers)}
+            sub={statsLoading ? "Loading…" : "Unique customers"}
+            tone="purple"
+          />
         </div>
 
-        {/* Share link card + panels */}
+        {/* Share link card */}
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
@@ -565,7 +854,11 @@ export default function DashboardClient({ locale, business }: Props) {
                   <div className="truncate">{bookingUrl || bookingPath}</div>
                 </div>
 
-                <button type="button" onClick={copyLink} className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">
+                <button
+                  type="button"
+                  onClick={copyLink}
+                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+                >
                   {copied ? "Copied ✓" : "Copy link"}
                 </button>
               </div>
@@ -579,6 +872,10 @@ export default function DashboardClient({ locale, business }: Props) {
           </div>
         </section>
 
+        {/* ✅ NEW: Booking page images manager */}
+        <BookingGalleryManager />
+
+        {/* Panels */}
         <div className="mt-8 grid gap-6 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
