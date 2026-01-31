@@ -7,6 +7,7 @@ import {
   slotRangeForService,
   type AvailabilityRule
 } from "@/lib/availability";
+import { ServiceCategory } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -138,8 +139,6 @@ export async function GET(req: Request) {
       customerCountry: true,
       notes: true,
       status: true,
-
-      // optional if exists:
       serviceCategory: true,
       serviceId: true
     }
@@ -158,8 +157,7 @@ export async function POST(req: Request) {
 
   const businessSlug = String(body.businessSlug ?? "").trim();
   const serviceId = String(body.serviceId ?? "").trim();
-
-  const startsAt = toDate(body.startsAt); // should already be UTC ISO from client
+  const startsAt = toDate(body.startsAt);
 
   const customerName = String(body.customerName ?? "").trim();
   const customerPhone = String(body.customerPhone ?? "").trim();
@@ -180,34 +178,22 @@ export async function POST(req: Request) {
 
   if (!business) return NextResponse.json({ error: "Business not found" }, { status: 404 });
 
-  // ✅ Fetch service from DB (source of truth)
+  // ✅ Source of truth: service row (must belong to business)
   const service = await prisma.service.findFirst({
     where: { id: serviceId, businessId: business.id },
-    select: {
-      id: true,
-      name: true,
-      durationMin: true,
-      price: true,
-      currency: true,
-      category: true
-    }
+    select: { id: true, name: true, durationMin: true, price: true, currency: true, category: true }
   });
 
   if (!service) {
     return NextResponse.json({ error: "Service not found" }, { status: 404 });
   }
 
-  const serviceName = service.name;
   const durationMin = service.durationMin;
-  const price = service.price;
-  const currency = service.currency;
-  const serviceCategory = service.category ? String(service.category).trim() : null;
-
   if (!Number.isFinite(durationMin) || durationMin <= 0) {
-    return NextResponse.json({ error: "Invalid duration" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid service duration" }, { status: 400 });
   }
 
-  // Availability (same as your original)
+  // Availability (same behavior)
   const ar = business.availabilityRule;
   const rule: AvailabilityRule = {
     ...defaultAvailability,
@@ -237,7 +223,6 @@ export async function POST(req: Request) {
     select: { startsAt: true, durationMin: true }
   });
 
-  // ✅ compare using business-local hh:mm
   const requestedTime = hhmmInTZ(startsAt, tz);
   const neededSlots = slotRangeForService(requestedTime, rule, durationMin);
 
@@ -250,21 +235,21 @@ export async function POST(req: Request) {
     }
   }
 
+  // ✅ Persist booking (serviceCategory is enum-safe)
   let booking;
   try {
     booking = await prisma.booking.create({
       data: {
         businessId: business.id,
 
-        // ✅ recommended fields (remove if not in schema yet)
         serviceId: service.id,
-        serviceCategory: serviceCategory || undefined,
+        serviceCategory: service.category as ServiceCategory, // ✅ enum
 
-        // snapshot fields for history/emails
-        serviceName,
-        durationMin,
-        price,
-        currency,
+        // snapshots for history/emails
+        serviceName: service.name,
+        durationMin: service.durationMin,
+        price: service.price,
+        currency: service.currency,
 
         startsAt,
         customerName,
@@ -291,20 +276,20 @@ export async function POST(req: Request) {
     booking.id
   )}`;
 
-  // ✅ Email date/time in business local
+  // Email date/time in business local
   const dateText = localDate;
   const timeText = requestedTime;
-  const priceText = money(price, currency);
+  const priceText = money(service.price, service.currency);
 
   if (customerEmail) {
     try {
       await sendBookingConfirmationEmail({
         to: customerEmail,
         businessName: business.name,
-        serviceName,
+        serviceName: service.name,
         date: dateText,
         time: timeText,
-        durationMin,
+        durationMin: service.durationMin,
         priceText,
         manageLink
       });
@@ -322,10 +307,10 @@ export async function POST(req: Request) {
     await sendBookingConfirmationEmail({
       to: business.ownerEmail,
       businessName: business.name,
-      serviceName: `${serviceName} — ${ownerExtra}`,
+      serviceName: `${service.name} — ${ownerExtra}`,
       date: dateText,
       time: timeText,
-      durationMin,
+      durationMin: service.durationMin,
       priceText,
       manageLink
     });
@@ -333,5 +318,7 @@ export async function POST(req: Request) {
     console.error("[booking] owner email failed", e);
   }
 
-  return NextResponse.json({ booking });
+  return NextResponse.json({
+    booking: { ...booking, startsAt: booking.startsAt.toISOString() }
+  });
 }
