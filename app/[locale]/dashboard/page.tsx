@@ -3,7 +3,7 @@ import { getAuthedBusiness } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage({
-  params,
+  params
 }: {
   params: Promise<{ locale: string }>;
 }) {
@@ -20,11 +20,14 @@ export default async function DashboardPage({
         slug: business.slug,
         website: business.website ?? undefined,
         ownerEmail: business.ownerEmail,
-        category: business.category,
+        industry: business.industry, // ✅ renamed
         city: business.city,
         country: business.country,
-        createdAt: business.createdAt.toISOString(),
+        street: business.street ?? undefined, // ✅ optional
+        postalCode: business.postalCode ?? undefined, // ✅ optional
+        createdAt: business.createdAt.toISOString()
       }}
     />
   );
 }
+

@@ -392,15 +392,6 @@ export default async function Home({ params }: { params: Promise<Params> }) {
           </details>
         ))}
       </div>
-
-      <div className="mt-8">
-        <Link
-          href={`/${locale}/register`}
-          className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-        >
-          Create your booking page
-        </Link>
-      </div>
     </div>
 
     {/* RIGHT: Visual */}

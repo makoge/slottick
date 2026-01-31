@@ -10,12 +10,18 @@ datasource db {
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
-
-
 enum BookingStatus {
   CONFIRMED
   CANCELLED
   DONE
+}
+
+enum Industry {
+  BEAUTY_AND_CARE
+  WELLNESS_AND_LIFESTYLE
+  CREATIVE_SERVICES
+  HOME_AND_LOCAL
+  EDUCATION_AND_PROFESSIONALS
 }
 
 model Business {
@@ -25,24 +31,25 @@ model Business {
 
   // public profile
   name     String
-  slug     String @unique
-  category String
+  slug     String  @unique
+  industry Industry // ✅ renamed + enum
+
   city     String
   country  String
+  street   String?   
+  postalCode String? 
   website  String?
 
   logoUrl String?
-
-  heroTag String? 
+  heroTag String?
 
   ratingAvg   Float? @default(0)
   ratingCount Int?   @default(0)
 
-
   // auth
-  ownerEmail       String   @unique
-  passwordHash     String
-  emailVerifiedAt  DateTime?
+  ownerEmail      String   @unique
+  passwordHash    String
+  emailVerifiedAt DateTime?
 
   failedLoginCount Int      @default(0)
   lockUntil        DateTime?
@@ -59,12 +66,12 @@ model Business {
   resetTokens             PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
 
-  stripeCustomerId      String?  @unique
-  stripeSubscriptionId  String?  @unique
-  subscriptionStatus    String   @default("inactive") // inactive | active | past_due | canceled
-  currentPeriodEnd      DateTime?
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+  subscriptionStatus   String   @default("inactive") // inactive | active | past_due | canceled
+  currentPeriodEnd     DateTime?
 
-  @@index([category])
+  @@index([industry]) // ✅ updated index
   @@index([city])
   @@index([country])
 }
@@ -78,18 +85,19 @@ model Service {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   name        String
+  category    String   @default("Other") // ✅ NEW (for Explore + SEO)
   durationMin Int
   price       Int
   currency    String // "EUR" | "USD" | "FCFA"
-  images       ServiceImage[]
-
-
+  images      ServiceImage[]
 
   depositEnabled Boolean @default(false)
   depositType    String  @default("PERCENT") // "PERCENT" | "AMOUNT"
   depositValue   Int?    // percent (1-100) OR fixed amount in currency units
 
   @@index([businessId])
+  @@index([category])          // ✅ NEW: category filtering
+  @@index([category, name])    // ✅ NEW: helps search queries
 }
 
 model AvailabilityRule {
@@ -141,11 +149,11 @@ model Booking {
   // ✅ single source of truth for time
   startsAt DateTime
 
-  customerName  String
-  customerPhone String
-  customerEmail String?
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
   customerCountry String?
-  notes         String?
+  notes           String?
 
   status      BookingStatus @default(CONFIRMED)
   cancelledAt DateTime?
@@ -153,10 +161,8 @@ model Booking {
   // review workflow
   reviewEmailSentAt DateTime?
   review            Review?
-  reviewTokenHash String?
+  reviewTokenHash   String?
 
-
-  // prevent double booking at same exact start time
   @@unique([businessId, startsAt])
   @@index([businessId, startsAt])
 }
@@ -215,8 +221,8 @@ model EmailVerificationToken {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
-  @@index([expiresAt])
 }
+
 model Customer {
   id           String   @id @default(cuid())
   createdAt    DateTime @default(now())
@@ -229,12 +235,11 @@ model Customer {
 }
 
 model CustomerSession {
-  tokenHash String   @id
-  createdAt DateTime @default(now())
-  expiresAt DateTime
+  tokenHash  String   @id
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@index([customerId])
 }
-

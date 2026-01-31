@@ -4,6 +4,26 @@ import { getAuthedBusiness } from "@/lib/auth";
 
 type DepositType = "PERCENT" | "AMOUNT";
 
+/** Keep this list in sync with your dashboard dropdown. */
+const SERVICE_CATEGORY_OPTIONS = [
+  "Hair",
+  "Barber",
+  "Lash",
+  "Brows",
+  "Nails",
+  "Manicure",
+  "Pedicure",
+  "Makeup",
+  "Skincare",
+  "Massage",
+  "Tattoo",
+  "Waxing",
+  "Facial",
+  "Other"
+] as const;
+
+type ServiceCategory = (typeof SERVICE_CATEGORY_OPTIONS)[number];
+
 function toCurrency(x: unknown) {
   const s = String(x ?? "EUR").toUpperCase();
   return s === "USD" || s === "EUR" || s === "FCFA" ? s : "EUR";
@@ -24,6 +44,12 @@ function toPositiveInt(x: unknown, fallback = 0) {
   return Math.max(0, Math.floor(n));
 }
 
+function toServiceCategory(x: unknown): ServiceCategory {
+  const s = String(x ?? "").trim();
+  const hit = SERVICE_CATEGORY_OPTIONS.find((c) => c === s);
+  return hit ?? "Other";
+}
+
 function isSafeImageUrl(u: string) {
   const url = u.trim();
   if (!url) return false;
@@ -33,16 +59,14 @@ function isSafeImageUrl(u: string) {
 
 function normalizeImageUrls(raw: unknown) {
   const arr = Array.isArray(raw) ? raw : [];
-  const cleaned = arr
-    .map((x) => String(x ?? "").trim())
-    .filter(isSafeImageUrl);
-
+  const cleaned = arr.map((x) => String(x ?? "").trim()).filter(isSafeImageUrl);
   return Array.from(new Set(cleaned)).slice(0, 12);
 }
 
 type NormalizedService = {
   id: string;
   name: string;
+  category: ServiceCategory; // ✅ NEW
   durationMin: number;
   price: number;
   currency: string;
@@ -59,6 +83,7 @@ function normalizeServices(raw: unknown): NormalizedService[] {
     .map((s: any) => {
       const id = String(s?.id ?? "").trim();
       const name = String(s?.name ?? "").trim();
+      const category = toServiceCategory(s?.category); // ✅ NEW
 
       const durationMin = Math.max(5, toPositiveInt(s?.durationMin, 0));
       const price = Math.max(0, toPositiveInt(s?.price, 0));
@@ -84,6 +109,7 @@ function normalizeServices(raw: unknown): NormalizedService[] {
       return {
         id,
         name,
+        category,
         durationMin,
         price,
         currency,
@@ -112,8 +138,9 @@ export async function GET(req: Request) {
     businessId = biz.id;
   } else {
     const authed = await getAuthedBusiness();
-    if (!authed)
+    if (!authed) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     businessId = authed.id;
   }
 
@@ -123,6 +150,7 @@ export async function GET(req: Request) {
     select: {
       id: true,
       name: true,
+      category: true, // ✅ NEW
       durationMin: true,
       price: true,
       currency: true,
@@ -136,13 +164,14 @@ export async function GET(req: Request) {
   const mapped = services.map((s) => ({
     id: s.id,
     name: s.name,
+    category: toServiceCategory(s.category), // ✅ normalize for safety
     durationMin: s.durationMin,
     price: s.price,
     currency: s.currency,
     depositEnabled: s.depositEnabled,
     depositType: s.depositType,
     depositValue: s.depositValue,
-    images: s.images.map((i) => i.url) // ✅ UI gets string[]
+    images: s.images.map((i) => i.url)
   }));
 
   return NextResponse.json({ services: mapped });
@@ -151,8 +180,9 @@ export async function GET(req: Request) {
 // PUT: owner-only, replaces all services + images
 export async function PUT(req: Request) {
   const business = await getAuthedBusiness();
-  if (!business)
+  if (!business) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const body = await req.json().catch(() => ({}));
   const next = normalizeServices(body.services);
@@ -172,6 +202,7 @@ export async function PUT(req: Request) {
           id: s.id,
           businessId: business.id,
           name: s.name,
+          category: s.category, // ✅ NEW
           durationMin: s.durationMin,
           price: s.price,
           currency: s.currency,
@@ -194,6 +225,7 @@ export async function PUT(req: Request) {
       select: {
         id: true,
         name: true,
+        category: true, // ✅ NEW
         durationMin: true,
         price: true,
         currency: true,
@@ -207,6 +239,7 @@ export async function PUT(req: Request) {
     return services.map((s) => ({
       id: s.id,
       name: s.name,
+      category: toServiceCategory(s.category),
       durationMin: s.durationMin,
       price: s.price,
       currency: s.currency,
@@ -219,3 +252,4 @@ export async function PUT(req: Request) {
 
   return NextResponse.json({ services: saved });
 }
+

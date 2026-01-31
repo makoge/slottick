@@ -6,9 +6,33 @@ import { Currency, Service, formatMoney } from "@/lib/services";
 const currencyOptions: Currency[] = ["EUR", "USD", "FCFA"];
 type DepositType = "PERCENT" | "AMOUNT";
 
+/**
+ * Beauty & care service categories (used for Explore + SEO).
+ * Opinion: keep this list curated (not free-text) to protect search quality.
+ */
+const SERVICE_CATEGORY_OPTIONS = [
+  "Hair",
+  "Barber",
+  "Lash",
+  "Brows",
+  "Nails",
+  "Manicure",
+  "Pedicure",
+  "Makeup",
+  "Skincare",
+  "Massage",
+  "Tattoo",
+  "Waxing",
+  "Facial",
+  "Other"
+] as const;
+
+type ServiceCategory = (typeof SERVICE_CATEGORY_OPTIONS)[number];
+
 type DbService = {
   id: string;
   name: string;
+  category?: string | null; // ✅ NEW
   durationMin: number;
   price: number;
   currency: string;
@@ -17,13 +41,18 @@ type DbService = {
   depositType?: DepositType;
   depositValue?: number;
 
-  // ✅ NEW
   images?: string[];
 };
 
 function toCurrency(x: unknown): Currency {
   const s = String(x ?? "EUR").toUpperCase();
   return s === "EUR" || s === "USD" || s === "FCFA" ? (s as Currency) : "EUR";
+}
+
+function toServiceCategory(x: unknown): ServiceCategory {
+  const s = String(x ?? "").trim();
+  const hit = SERVICE_CATEGORY_OPTIONS.find((c) => c === s);
+  return hit ?? "Other";
 }
 
 function toPositiveInt(x: string, fallback = 0) {
@@ -37,10 +66,10 @@ function clamp(n: number, min: number, max: number) {
 }
 
 type ServiceWithDeposit = Service & {
+  category?: ServiceCategory; // ✅ NEW
   depositEnabled?: boolean;
   depositType?: DepositType;
   depositValue?: number;
-  // ✅ NEW
   images?: string[];
 };
 
@@ -78,6 +107,7 @@ export default function ServicesEditor() {
 
   // add form
   const [name, setName] = useState("");
+  const [category, setCategory] = useState<ServiceCategory>("Hair"); // ✅ NEW
   const [durationMin, setDurationMin] = useState<number>(60);
   const [priceText, setPriceText] = useState<string>("50");
   const [currency, setCurrency] = useState<Currency>("EUR");
@@ -87,7 +117,7 @@ export default function ServicesEditor() {
   const [depositType, setDepositType] = useState<DepositType>("PERCENT");
   const [depositValueText, setDepositValueText] = useState<string>("20");
 
-  // ✅ NEW: images for new service
+  // images for new service
   const [newImages, setNewImages] = useState<string[]>([]);
   const [uploadingNewImage, setUploadingNewImage] = useState(false);
 
@@ -108,6 +138,7 @@ export default function ServicesEditor() {
         ? (data.services as DbService[]).map((s) => ({
             id: String(s.id),
             name: String(s.name ?? ""),
+            category: toServiceCategory(s.category), // ✅ NEW
             durationMin: Number(s.durationMin ?? 0),
             price: Number(s.price ?? 0),
             currency: toCurrency(s.currency),
@@ -166,6 +197,7 @@ export default function ServicesEditor() {
         const mapped: ServiceWithDeposit[] = (data.services as DbService[]).map((s) => ({
           id: String(s.id),
           name: String(s.name ?? ""),
+          category: toServiceCategory(s.category), // ✅ NEW
           durationMin: Number(s.durationMin ?? 0),
           price: Number(s.price ?? 0),
           currency: toCurrency(s.currency),
@@ -200,7 +232,7 @@ export default function ServicesEditor() {
     id: string,
     patch: Pick<
       ServiceWithDeposit,
-      "name" | "durationMin" | "depositEnabled" | "depositType" | "depositValue" | "images"
+      "name" | "category" | "durationMin" | "depositEnabled" | "depositType" | "depositValue" | "images"
     >
   ) {
     const next = services.map((s) => (s.id === id ? { ...s, ...patch } : s));
@@ -244,14 +276,13 @@ export default function ServicesEditor() {
       {
         id: crypto.randomUUID(),
         name: cleanName,
+        category, // ✅ NEW
         durationMin: Math.max(5, Number(durationMin) || 5),
         price,
         currency,
         depositEnabled,
         depositType,
         depositValue,
-
-        // ✅ NEW
         images: newImages
       },
       ...services
@@ -260,6 +291,7 @@ export default function ServicesEditor() {
     persist(next);
 
     setName("");
+    setCategory("Hair");
     setDurationMin(60);
     setPriceText("50");
     setCurrency("EUR");
@@ -268,7 +300,6 @@ export default function ServicesEditor() {
     setDepositType("PERCENT");
     setDepositValueText("20");
 
-    // reset images
     setNewImages([]);
   }
 
@@ -282,8 +313,8 @@ export default function ServicesEditor() {
       </div>
 
       <p className="mt-2 text-sm text-slate-600">
-        Add your services with duration and price. Price + currency are locked after you
-        create the service. Optional: require a deposit. Add photos so customers see your work.
+        Add your services with category, duration and price. Category helps Explore search + SEO.
+        Optional: require a deposit. Add photos so customers see your work.
       </p>
 
       {error ? (
@@ -307,6 +338,25 @@ export default function ServicesEditor() {
             />
           </label>
 
+          {/* ✅ NEW: Category selector */}
+          <label className="grid min-w-0 gap-1 text-sm">
+            Category
+            <select
+              className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as ServiceCategory)}
+              disabled={loading || saving}
+            >
+              {SERVICE_CATEGORY_OPTIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2">
           <label className="grid min-w-0 gap-1 text-sm">
             Duration (minutes)
             <input
@@ -319,40 +369,40 @@ export default function ServicesEditor() {
               disabled={loading || saving}
             />
           </label>
+
+          <div className="grid min-w-0 gap-3 sm:grid-cols-[2fr_1fr]">
+            <label className="grid min-w-0 gap-1 text-sm">
+              Price
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-3 text-lg font-semibold"
+                value={priceText}
+                onChange={(e) => setPriceText(e.target.value.replace(/[^\d]/g, ""))}
+                disabled={loading || saving}
+              />
+            </label>
+
+            <label className="grid min-w-0 gap-1 text-sm">
+              Currency
+              <select
+                className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-3 text-base font-medium"
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value as Currency)}
+                disabled={loading || saving}
+              >
+                {currencyOptions.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
 
-        <div className="grid min-w-0 gap-3 sm:grid-cols-[2fr_1fr]">
-          <label className="grid min-w-0 gap-1 text-sm">
-            Price
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-3 text-lg font-semibold"
-              value={priceText}
-              onChange={(e) => setPriceText(e.target.value.replace(/[^\d]/g, ""))}
-              disabled={loading || saving}
-            />
-          </label>
-
-          <label className="grid min-w-0 gap-1 text-sm">
-            Currency
-            <select
-              className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-3 text-base font-medium"
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value as Currency)}
-              disabled={loading || saving}
-            >
-              {currencyOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        {/* ✅ NEW: Work photos for new service */}
+        {/* Work photos for new service */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-medium">Work photos (optional)</div>
@@ -376,7 +426,7 @@ export default function ServicesEditor() {
 
           {newImages.length === 0 ? (
             <p className="mt-2 text-xs text-slate-600">
-              add 3–6 real photos per service, it boosts trust fast.
+              Add 3–6 real photos per service. It boosts trust fast.
             </p>
           ) : (
             <div className="mt-3 grid grid-cols-3 gap-3">
@@ -487,12 +537,19 @@ export default function ServicesEditor() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="font-semibold">{s.name}</div>
+
+                      {/* ✅ Category chip */}
+                      <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                        {s.category ?? "Other"}
+                      </span>
+
                       {badge ? (
                         <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
                           {badge}
                         </span>
                       ) : null}
                     </div>
+
                     <div className="mt-1 text-sm text-slate-600">
                       {s.durationMin} min • {formatMoney(s.price, s.currency)}
                     </div>
@@ -508,7 +565,79 @@ export default function ServicesEditor() {
                   </button>
                 </div>
 
-                {/* ✅ Images per service */}
+                {/* ✅ Inline edit: name + category + duration */}
+                <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-3">
+                  <label className="grid gap-1 text-sm">
+                    Name
+                    <input
+                      className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+                      value={s.name}
+                      onChange={(e) =>
+                        updateService(s.id, {
+                          name: e.target.value,
+                          category: s.category ?? "Other",
+                          durationMin: s.durationMin,
+                          depositEnabled: s.depositEnabled,
+                          depositType: s.depositType,
+                          depositValue: s.depositValue,
+                          images: s.images
+                        })
+                      }
+                      disabled={saving}
+                    />
+                  </label>
+
+                  <label className="grid gap-1 text-sm">
+                    Category
+                    <select
+                      className="w-full rounded-xl border border-slate-200 px-3 py-2"
+                      value={s.category ?? "Other"}
+                      onChange={(e) =>
+                        updateService(s.id, {
+                          name: s.name,
+                          category: toServiceCategory(e.target.value),
+                          durationMin: s.durationMin,
+                          depositEnabled: s.depositEnabled,
+                          depositType: s.depositType,
+                          depositValue: s.depositValue,
+                          images: s.images
+                        })
+                      }
+                      disabled={saving}
+                    >
+                      {SERVICE_CATEGORY_OPTIONS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="grid gap-1 text-sm">
+                    Duration
+                    <input
+                      type="number"
+                      min={5}
+                      step={5}
+                      className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+                      value={s.durationMin}
+                      onChange={(e) =>
+                        updateService(s.id, {
+                          name: s.name,
+                          category: s.category ?? "Other",
+                          durationMin: Math.max(5, Number(e.target.value) || 5),
+                          depositEnabled: s.depositEnabled,
+                          depositType: s.depositType,
+                          depositValue: s.depositValue,
+                          images: s.images
+                        })
+                      }
+                      disabled={saving}
+                    />
+                  </label>
+                </div>
+
+                {/* Images per service */}
                 <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-medium">Work photos</div>
@@ -527,7 +656,10 @@ export default function ServicesEditor() {
                           try {
                             setError(null);
                             const url = await uploadServiceImage(file);
-                            updateServiceImages(s.id, Array.from(new Set([...(s.images ?? []), url])).slice(0, 12));
+                            updateServiceImages(
+                              s.id,
+                              Array.from(new Set([...(s.images ?? []), url])).slice(0, 12)
+                            );
                           } catch (err: any) {
                             setError(err?.message || "Upload failed");
                           } finally {
@@ -539,9 +671,7 @@ export default function ServicesEditor() {
                   </div>
 
                   {imgs.length === 0 ? (
-                    <p className="mt-2 text-xs text-slate-600">
-                      No photos yet.
-                    </p>
+                    <p className="mt-2 text-xs text-slate-600">No photos yet.</p>
                   ) : (
                     <div className="mt-3 grid grid-cols-3 gap-3">
                       {imgs.map((url) => (
@@ -554,7 +684,9 @@ export default function ServicesEditor() {
                           <button
                             type="button"
                             className="absolute right-2 top-2 rounded-lg bg-white/90 px-2 py-1 text-xs font-semibold"
-                            onClick={() => updateServiceImages(s.id, imgs.filter((x) => x !== url))}
+                            onClick={() =>
+                              updateServiceImages(s.id, imgs.filter((x) => x !== url))
+                            }
                           >
                             Remove
                           </button>
@@ -564,58 +696,7 @@ export default function ServicesEditor() {
                   )}
                 </div>
 
-                {/* Inline edit (name/duration) */}
-                <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-3">
-                  <label className="grid gap-1 text-sm">
-                    Name
-                    <input
-                      className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
-                      value={s.name}
-                      onChange={(e) =>
-                        updateService(s.id, {
-                          name: e.target.value,
-                          durationMin: s.durationMin,
-                          depositEnabled: s.depositEnabled,
-                          depositType: s.depositType,
-                          depositValue: s.depositValue,
-                          images: s.images
-                        })
-                      }
-                      disabled={saving}
-                    />
-                  </label>
-
-                  <label className="grid gap-1 text-sm">
-                    Duration
-                    <input
-                      type="number"
-                      min={5}
-                      step={5}
-                      className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
-                      value={s.durationMin}
-                      onChange={(e) =>
-                        updateService(s.id, {
-                          name: s.name,
-                          durationMin: Math.max(5, Number(e.target.value) || 5),
-                          depositEnabled: s.depositEnabled,
-                          depositType: s.depositType,
-                          depositValue: s.depositValue,
-                          images: s.images
-                        })
-                      }
-                      disabled={saving}
-                    />
-                  </label>
-
-                  <div className="grid gap-1 text-sm">
-                    <div>Price</div>
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-lg font-semibold break-words">
-                      {formatMoney(s.price, s.currency)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Deposit edit (kept same behavior) */}
+                {/* Deposit edit */}
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   <label className="flex items-center gap-3 text-sm font-medium">
                     <input
@@ -624,6 +705,7 @@ export default function ServicesEditor() {
                       onChange={(e) =>
                         updateService(s.id, {
                           name: s.name,
+                          category: s.category ?? "Other",
                           durationMin: s.durationMin,
                           depositEnabled: e.target.checked,
                           depositType: s.depositType ?? "PERCENT",
@@ -645,6 +727,7 @@ export default function ServicesEditor() {
                       onChange={(e) =>
                         updateService(s.id, {
                           name: s.name,
+                          category: s.category ?? "Other",
                           durationMin: s.durationMin,
                           depositEnabled: Boolean(s.depositEnabled),
                           depositType: e.target.value as DepositType,
@@ -682,6 +765,7 @@ export default function ServicesEditor() {
 
                         updateService(s.id, {
                           name: s.name,
+                          category: s.category ?? "Other",
                           durationMin: s.durationMin,
                           depositEnabled: Boolean(s.depositEnabled),
                           depositType: s.depositType ?? "PERCENT",

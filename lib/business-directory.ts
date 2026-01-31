@@ -1,21 +1,14 @@
-export type BusinessCategory =
-  | "Lash"
-  | "Nails"
-  | "Brows"
-  | "Hair"
-  | "Barber"
-  | "Massage"
-  | "Makeup"
-  | "Skincare"
-  | "Tattoo"
-  | "Fitness"
-  | "Other";
-
+export type BusinessIndustry =
+  | "Beauty & care"
+  | "Wellness & lifestyle"
+  | "Creative services"
+  | "Home & local"
+  | "Education & professionals";
 
 export type BusinessDirectoryItem = {
   slug: string;
   name: string;
-  category: BusinessCategory;
+  industry: BusinessIndustry;
   city: string;
   country: string;
   ratingAvg: number; // 0..5
@@ -28,7 +21,7 @@ export const BUSINESS_DIRECTORY: BusinessDirectoryItem[] = [
   {
     slug: "demo-lash-studio",
     name: "Demo Lash Studio",
-    category: "Lash",
+    industry: "Beauty & care",
     city: "Tallinn",
     country: "Estonia",
     ratingAvg: 4.8,
@@ -39,7 +32,7 @@ export const BUSINESS_DIRECTORY: BusinessDirectoryItem[] = [
   {
     slug: "nails-by-lina",
     name: "Nails by Lina",
-    category: "Nails",
+    industry: "Beauty & care",
     city: "Tallinn",
     country: "Estonia",
     ratingAvg: 4.6,
@@ -48,7 +41,7 @@ export const BUSINESS_DIRECTORY: BusinessDirectoryItem[] = [
   {
     slug: "brow-room-central",
     name: "Brow Room Central",
-    category: "Brows",
+    industry: "Beauty & care",
     city: "Helsinki",
     country: "Finland",
     ratingAvg: 4.7,
@@ -58,7 +51,7 @@ export const BUSINESS_DIRECTORY: BusinessDirectoryItem[] = [
   {
     slug: "barber-club-north",
     name: "Barber Club North",
-    category: "Barber",
+    industry: "Beauty & care",
     city: "Riga",
     country: "Latvia",
     ratingAvg: 4.5,
@@ -66,4 +59,10 @@ export const BUSINESS_DIRECTORY: BusinessDirectoryItem[] = [
   }
 ];
 
-export const ALL_CATEGORIES: BusinessCategory[] = ["Lash", "Nails", "Brows", "Barber", "Massage","Makeup","Fitness","Skincare","Tattoo", "Other"];
+export const ALL_INDUSTRIES: BusinessIndustry[] = [
+  "Beauty & care",
+  "Wellness & lifestyle",
+  "Creative services",
+  "Home & local",
+  "Education & professionals"
+];

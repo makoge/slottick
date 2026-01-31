@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/use-locale";
 
-const CATEGORY_OPTIONS = [
+const INDUSTRY_OPTIONS = [
   "Beauty & care",
   "Wellness & lifestyle",
   "Creative services",
@@ -31,8 +31,8 @@ export default function RegisterClient() {
   const router = useRouter();
 
   const [businessName, setBusinessName] = useState("");
-  const [category, setCategory] =
-    useState<(typeof CATEGORY_OPTIONS)[number]>("Beauty & care");
+  const [industry, setIndustry] =
+    useState<(typeof INDUSTRY_OPTIONS)[number]>("Beauty & care");
 
   const [city, setCity] = useState("Tallinn");
   const [country, setCountry] = useState("EE");
@@ -134,7 +134,7 @@ export default function RegisterClient() {
         body: JSON.stringify({
           name: businessName.trim(),
           slug: finalSlug,
-          category,
+          industry,
           city: city.trim(),
           country: country.trim(),
           street: street.trim(),
@@ -149,10 +149,10 @@ export default function RegisterClient() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) return alert(data.error || "Failed to create account.");
 
-      // ✅ redirect based on category readiness
-      if (category !== "Beauty & care") {
+      // ✅ redirect based on industry readiness
+      if (industry !== "Beauty & care") {
         router.push(
-          `/${locale}/coming-soon?category=${encodeURIComponent(category)}`
+          `/${locale}/coming-soon?industry=${encodeURIComponent(industry)}`
         );
         return;
       }
@@ -210,12 +210,12 @@ export default function RegisterClient() {
                 Category
                 <select
                   className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value as any)}
+                  value={industry}
+                  onChange={(e) => setIndustry(e.target.value as any)}
                 >
-                  {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
+                  {INDUSTRY_OPTIONS.map((i) => (
+                    <option key={i} value={i}>
+                      {i}
                     </option>
                   ))}
                 </select>

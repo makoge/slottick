@@ -26,12 +26,15 @@ export async function getAuthedBusiness() {
           createdAt: true,
           name: true,
           slug: true,
-          category: true,
+          industry: true,     
           city: true,
           country: true,
+          street: true,       
+          postalCode: true,   
           website: true,
           ownerEmail: true,
-          emailVerifiedAt: true
+          emailVerifiedAt: true,
+          logoUrl: true 
         }
       }
     }

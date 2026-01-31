@@ -8,6 +8,22 @@ import {
   sendVerifyEmail
 } from "@/lib/email";
 
+// ✅ match your Prisma enum values (schema.prisma)
+const INDUSTRY_VALUES = new Set([
+  "BEAUTY_AND_CARE",
+  "WELLNESS_AND_LIFESTYLE",
+  "CREATIVE_SERVICES",
+  "HOME_AND_LOCAL",
+  "EDUCATION_AND_PROFESSIONALS"
+] as const);
+
+type IndustryEnum =
+  | "BEAUTY_AND_CARE"
+  | "WELLNESS_AND_LIFESTYLE"
+  | "CREATIVE_SERVICES"
+  | "HOME_AND_LOCAL"
+  | "EDUCATION_AND_PROFESSIONALS";
+
 function sha256(x: string) {
   return crypto.createHash("sha256").update(x).digest("hex");
 }
@@ -30,13 +46,9 @@ function normalizeWebsite(website: string | null) {
   if (!website) return null;
   const w = website.trim();
   if (!w) return null;
-  // allow "example.com" -> "https://example.com"
   if (!/^https?:\/\//i.test(w)) return `https://${w}`;
   return w;
 }
-
-
-
 
 function getLocaleFromReferer(req: Request) {
   const ref = req.headers.get("referer");
@@ -49,18 +61,45 @@ function getLocaleFromReferer(req: Request) {
   }
 }
 
+// ✅ Accept either pretty labels or enum values from the frontend
+function toIndustryEnum(input: unknown): IndustryEnum {
+  const raw = String(input ?? "").trim();
+
+  // already enum?
+  if (INDUSTRY_VALUES.has(raw as IndustryEnum)) return raw as IndustryEnum;
+
+  // pretty label -> enum mapping
+  const map: Record<string, IndustryEnum> = {
+    "Beauty & care": "BEAUTY_AND_CARE",
+    "Wellness & lifestyle": "WELLNESS_AND_LIFESTYLE",
+    "Creative services": "CREATIVE_SERVICES",
+    "Home & local": "HOME_AND_LOCAL",
+    "Education & professionals": "EDUCATION_AND_PROFESSIONALS"
+  };
+
+  return map[raw] ?? "BEAUTY_AND_CARE";
+}
+
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
 
+  // logoUrl safety
   const logoUrl = body.logoUrl ? String(body.logoUrl).trim() : "";
-const safeLogoUrl =
-  logoUrl && /^https?:\/\//i.test(logoUrl) ? logoUrl : undefined;
-
+  const safeLogoUrl =
+    logoUrl && /^https?:\/\//i.test(logoUrl) ? logoUrl : undefined;
 
   const name = String(body.name ?? "").trim();
-  const category = String(body.category ?? "Other").trim();
+
+  // ✅ industry instead of category
+  const industry = toIndustryEnum(body.industry ?? body.category);
+
   const city = String(body.city ?? "").trim();
-  const country = String(body.country ?? "").trim();
+  const country = String(body.country ?? "").trim().toUpperCase();
+
+  // ✅ new fields
+  const street = String(body.street ?? "").trim();
+  const postalCode = String(body.postalCode ?? "").trim();
+
   const website = normalizeWebsite(body.website ? String(body.website) : null);
 
   const ownerEmail = String(body.ownerEmail ?? "").trim().toLowerCase();
@@ -74,6 +113,7 @@ const safeLogoUrl =
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
 
+  // keep your rule (6)
   if (ownerPassword.length < 6) {
     return NextResponse.json(
       { error: "Password must be at least 6 characters" },
@@ -81,7 +121,17 @@ const safeLogoUrl =
     );
   }
 
-  const emailExists = await prisma.business.findUnique({ where: { ownerEmail } });
+  // basic country sanity
+  if (country.length < 2) {
+    return NextResponse.json(
+      { error: "Country code is required (e.g. EE)" },
+      { status: 400 }
+    );
+  }
+
+  const emailExists = await prisma.business.findUnique({
+    where: { ownerEmail }
+  });
   if (emailExists) {
     return NextResponse.json(
       { error: "An account with this email already exists. Please log in." },
@@ -99,7 +149,6 @@ const safeLogoUrl =
     slug = `${baseSlug}-${i + 2}`;
   }
 
-  // if still colliding (very unlikely), fail cleanly
   const stillExists = await prisma.business.findUnique({ where: { slug } });
   if (stillExists) {
     return NextResponse.json(
@@ -110,36 +159,37 @@ const safeLogoUrl =
 
   const passwordHash = await bcrypt.hash(ownerPassword, 10);
 
-  // Create business
   const business = await prisma.business.create({
     data: {
       name,
       slug,
-      category,
+      industry, // ✅ enum
       city,
       country,
+      street: street || undefined, // ✅ optional
+      postalCode: postalCode || undefined, // ✅ optional
       website: website || undefined,
       ownerEmail,
       passwordHash,
       logoUrl: safeLogoUrl
-
     },
     select: {
       id: true,
       name: true,
       slug: true,
-      category: true,
+      industry: true,
       city: true,
       country: true,
+      street: true,
+      postalCode: true,
       website: true,
       ownerEmail: true,
       createdAt: true,
       logoUrl: true
-
     }
   });
 
-  // Create email verification token
+  // Email verification token
   const verifyToken = crypto.randomUUID();
   const verifyTokenHash = sha256(verifyToken);
   const verifyExpiresAt = new Date(Date.now() + 1000 * 60 * 30);
@@ -164,7 +214,6 @@ const safeLogoUrl =
     verifyToken
   )}`;
 
-  // Emails (never block signup)
   await Promise.allSettled([
     sendWelcomeOwnerEmail({
       to: business.ownerEmail,
@@ -183,19 +232,19 @@ const safeLogoUrl =
     })
   ]);
 
-  // Return safe public info
   return NextResponse.json({
     business: {
       name: business.name,
       slug: business.slug,
-      category: business.category,
+      industry: business.industry,
       city: business.city,
       country: business.country,
+      street: business.street,
+      postalCode: business.postalCode,
       website: business.website,
       ownerEmail: business.ownerEmail,
       createdAt: business.createdAt,
       logoUrl: business.logoUrl
-
     }
   });
 }
@@ -214,14 +263,15 @@ export async function GET() {
     return {
       slug: b.slug,
       name: b.name,
-      category: b.category,
+      industry: b.industry,
       city: b.city,
       country: b.country,
+      street: b.street,
+      postalCode: b.postalCode,
       website: b.website,
       ratingAvg: avg,
       ratingCount: count,
       logoUrl: b.logoUrl
-
     };
   });
 

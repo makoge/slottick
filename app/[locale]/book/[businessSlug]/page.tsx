@@ -32,7 +32,7 @@ export async function generateMetadata({
     where: { slug: businessSlug },
     select: {
       name: true,
-      category: true,
+      industry: true,
       city: true,
       country: true,
       marketplaceEligibleAt: true
@@ -47,7 +47,7 @@ export async function generateMetadata({
     };
   }
 
-  const cat = titleCaseCategory(business.category);
+  const cat = titleCaseCategory(business.industry);
 
   const title = `Book ${business.name} • ${cat} in ${business.city}`;
   const description = `Book an appointment with ${business.name} in ${business.city}. Choose a ${cat.toLowerCase()} service, pick a time, and confirm instantly.`;
@@ -85,7 +85,7 @@ export default async function Page({ params }: { params: Promise<Params> }) {
       id: true,
       name: true,
       slug: true,
-      category: true,
+      industry: true,
       city: true,
       country: true,
       website: true,
