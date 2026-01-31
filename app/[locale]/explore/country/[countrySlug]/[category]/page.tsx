@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ExploreClient from "../../../explore-client";
 import { locales } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
-import { Industry } from "@prisma/client";
+import { ServiceCategory, Industry } from "@prisma/client";
 
 const COUNTRY_LANDINGS = [
   { slug: "england", code: "GB", name: "England" },
@@ -10,13 +10,14 @@ const COUNTRY_LANDINGS = [
   { slug: "germany", code: "DE", name: "Germany" }
 ] as const;
 
+// URL category -> Prisma enum
 const CATEGORY_LANDINGS = [
-  { slug: "lash", name: "Lash", title: "Lash extensions" },
-  { slug: "nails", name: "Nails", title: "Nail salons" },
-  { slug: "brows", name: "Brows", title: "Brow services" },
-  { slug: "barber", name: "Barber", title: "Barbers" },
-  { slug: "massage", name: "Massage", title: "Massage" },
-  { slug: "other", name: "Other", title: "Beauty & wellness services" }
+  { slug: "lash", enum: ServiceCategory.LASH, title: "Lash extensions" },
+  { slug: "nails", enum: ServiceCategory.NAILS, title: "Nail salons" },
+  { slug: "brows", enum: ServiceCategory.BROWS, title: "Brow services" },
+  { slug: "barber", enum: ServiceCategory.BARBER, title: "Barbers" },
+  { slug: "massage", enum: ServiceCategory.MASSAGE, title: "Massage" },
+  { slug: "other", enum: ServiceCategory.OTHER, title: "Beauty & wellness services" }
 ] as const;
 
 type CountrySlug = (typeof COUNTRY_LANDINGS)[number]["slug"];
@@ -41,6 +42,24 @@ function envBaseUrl() {
 function ogLocale(locale: string) {
   const map: Record<string, string> = { en: "en_US", et: "et_EE" };
   return map[locale] ?? undefined;
+}
+
+// Pretty labels for Industry dropdown (optional but nicer than enums)
+function industryLabel(x: Industry) {
+  switch (x) {
+    case Industry.BEAUTY_AND_CARE:
+      return "Beauty & care";
+    case Industry.WELLNESS_AND_LIFESTYLE:
+      return "Wellness & lifestyle";
+    case Industry.CREATIVE_SERVICES:
+      return "Creative services";
+    case Industry.HOME_AND_LOCAL:
+      return "Home & local";
+    case Industry.EDUCATION_AND_PROFESSIONALS:
+      return "Education & professionals";
+    default:
+      return String(x);
+  }
 }
 
 export async function generateMetadata({
@@ -98,15 +117,15 @@ export default async function Page({
   const country = COUNTRY_LANDINGS.find((x) => x.slug === countrySlug)!;
   const cat = CATEGORY_LANDINGS.find((x) => x.slug === category)!;
 
-  // ✅ Fetch businesses by SERVICE CATEGORY (better SEO relevance)
+  // ✅ Filter businesses by SERVICE enum category (correct + type-safe)
   const businesses = await prisma.business.findMany({
     take: 500,
-    orderBy: { ratingAvg: "desc" },
+    orderBy: [{ ratingAvg: "desc" }, { ratingCount: "desc" }],
     where: {
       country: country.code,
       services: {
         some: {
-          category: cat.name // ✅ Service.category (e.g. "Massage")
+          category: cat.enum
         }
       }
     },
@@ -123,17 +142,12 @@ export default async function Page({
     }
   });
 
-  // ✅ Industries dropdown (enum values as strings)
-  const industriesRaw = await prisma.business.findMany({
-    select: { industry: true },
-    distinct: ["industry"]
-  });
-
-  const industries = industriesRaw
-    .map((x) => x.industry)
-    .filter(Boolean)
+  // ✅ Industries list (only those present in these results)
+  const industries = Array.from(
+    new Set(businesses.map((b) => b.industry).filter(Boolean))
+  )
     .sort((a, b) => String(a).localeCompare(String(b)))
-    .map((x) => String(x)); // ✅ enum -> string
+    .map((x) => industryLabel(x));
 
   const baseUrl = envBaseUrl();
 
@@ -173,7 +187,7 @@ export default async function Page({
     <>
       <ExploreClient
         businesses={businesses as any}
-        industries={industries.length ? (industries as any) : (["BEAUTY_AND_CARE"] as any)}
+        industries={industries.length ? industries : ["Beauty & care"]}
         heading={`${cat.title} in ${country.name}`}
         intro={`Browse ${cat.title.toLowerCase()} in ${country.name}, filter by city, and book instantly.`}
         defaultCity=""
