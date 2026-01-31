@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
         select: {
           name: true,
           slug: true,
-          category: true,
+          industry: true,
           city: true,
           country: true,
           website: true,
