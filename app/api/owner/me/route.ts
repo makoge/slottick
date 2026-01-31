@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthedBusiness } from "@/lib/auth";
 
+export const runtime = "nodejs";
+
 function normalizeWebsite(website: string | null) {
   if (!website) return null;
   const w = website.trim();
@@ -10,10 +12,24 @@ function normalizeWebsite(website: string | null) {
   return w;
 }
 
-function isValidHttpUrlOrNull(v: unknown) {
-  if (v == null) return true; // allow null / undefined
+function isValidLogoUrlOrNull(v: unknown) {
+  if (v == null) return true;
   const s = String(v).trim();
-  if (!s) return true; // treat "" as null in handler
+  if (!s) return true;
+
+  // ✅ allow blob urls + normal urls
+  try {
+    const u = new URL(s);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isValidHttpUrlOrNull(v: unknown) {
+  if (v == null) return true;
+  const s = String(v).trim();
+  if (!s) return true;
   try {
     const u = new URL(s);
     return u.protocol === "http:" || u.protocol === "https:";
@@ -24,9 +40,7 @@ function isValidHttpUrlOrNull(v: unknown) {
 
 export async function GET() {
   const business = await getAuthedBusiness();
-  if (!business) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!business) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   return NextResponse.json({
     business: {
@@ -35,7 +49,6 @@ export async function GET() {
       slug: business.slug,
       website: business.website,
       ownerEmail: business.ownerEmail,
-
       industry: business.industry,
       city: business.city,
       country: business.country,
@@ -48,9 +61,7 @@ export async function GET() {
 
 export async function PATCH(req: Request) {
   const authed = await getAuthedBusiness();
-  if (!authed) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!authed) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
 
@@ -58,53 +69,42 @@ export async function PATCH(req: Request) {
   const city = String(body.city ?? "").trim();
   const country = String(body.country ?? "").trim().toUpperCase();
 
-  // optional fields
   const streetRaw = body.street == null ? null : String(body.street).trim();
   const postalRaw = body.postalCode == null ? null : String(body.postalCode).trim();
 
-  const websiteNormalized = normalizeWebsite(
-    body.website == null ? null : String(body.website)
-  );
+  const website = normalizeWebsite(body.website == null ? null : String(body.website));
 
-  // logoUrl can be null (remove) or a valid http(s) url
-  const logoUrlRaw = body.logoUrl == null ? null : String(body.logoUrl).trim();
-  const logoUrl = logoUrlRaw ? logoUrlRaw : null;
+  // ✅ keep existing if undefined, remove only if null, set new if string
+  const logoUrl =
+    body.logoUrl === undefined
+      ? undefined
+      : body.logoUrl == null
+        ? null
+        : String(body.logoUrl).trim() || null;
 
-  if (!name) {
-    return NextResponse.json({ error: "Business name is required." }, { status: 400 });
-  }
-  if (!city) {
-    return NextResponse.json({ error: "City is required." }, { status: 400 });
-  }
-  if (!country || country.length < 2) {
-    return NextResponse.json(
-      { error: "Country code is required (e.g. EE)." },
-      { status: 400 }
-    );
-  }
-  if (!isValidHttpUrlOrNull(websiteNormalized)) {
+  if (!name) return NextResponse.json({ error: "Business name is required." }, { status: 400 });
+  if (!city) return NextResponse.json({ error: "City is required." }, { status: 400 });
+  if (!country || country.length < 2)
+    return NextResponse.json({ error: "Country code is required (e.g. EE)." }, { status: 400 });
+
+  if (!isValidHttpUrlOrNull(website))
     return NextResponse.json({ error: "Website URL is invalid." }, { status: 400 });
-  }
-  if (!isValidHttpUrlOrNull(logoUrl)) {
+
+  if (!isValidLogoUrlOrNull(logoUrl))
     return NextResponse.json({ error: "Logo URL is invalid." }, { status: 400 });
-  }
 
   const updated = await prisma.business.update({
     where: { id: authed.id },
     data: {
       name,
-      website: websiteNormalized,
+      website,
       city,
       country,
-
       street: streetRaw ? streetRaw : null,
       postalCode: postalRaw ? postalRaw : null,
-
-      // if null => remove logo
-      logoUrl
+      ...(logoUrl === undefined ? {} : { logoUrl }) // ✅ only write if provided
     },
     select: {
-      id: true,
       createdAt: true,
       name: true,
       slug: true,
@@ -126,7 +126,6 @@ export async function PATCH(req: Request) {
       slug: updated.slug,
       website: updated.website,
       ownerEmail: updated.ownerEmail,
-
       industry: updated.industry,
       city: updated.city,
       country: updated.country,

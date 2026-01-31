@@ -318,7 +318,7 @@ export default function DashboardClient({ locale, business }: Props) {
       if (uploadedLogoUrl) payload.logoUrl = uploadedLogoUrl;
       if (removeLogo) payload.logoUrl = null;
 
-      const res = await fetch("/api/owner", {
+      const res = await fetch("/api/owner/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
