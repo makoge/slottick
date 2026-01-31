@@ -281,7 +281,7 @@ export default function ExploreClient({
                       <div className="mt-1 text-xs text-slate-500">{Number(b.ratingCount ?? 0)} reviews</div>
                     </div>
 
-                    <span className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold group-hover:bg-white">
+                    <span className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold group-hover:bg-[#7bc043a5]">
                       Book
                     </span>
                   </div>

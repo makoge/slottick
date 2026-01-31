@@ -162,7 +162,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
             </h1>
 
             <p className="max-w-xl text-lg text-slate-600">
-              Slottick turns your availability into a shareable booking page. Clients book your real
+              Slottick turns your availability into a shareable booking website. Clients book your real
               schedule, no back-and-forth, no double booking.
             </p>
 
@@ -186,7 +186,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
           </div>
 
           {/* VISUAL */}
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-8 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-[#7bc043a5] p-8 shadow-sm">
             <div className="space-y-4 text-sm text-slate-600">
               <p>✔ Services, durations & pricing</p>
               <p>✔ Availability rules & breaks</p>
