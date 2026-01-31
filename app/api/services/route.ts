@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthedBusiness } from "@/lib/auth";
+import { ServiceCategory } from "@prisma/client";
 
 type DepositType = "PERCENT" | "AMOUNT";
 
-/** Keep this list in sync with your dashboard dropdown. */
-const SERVICE_CATEGORY_OPTIONS = [
+/**
+ * UI labels (pretty). Keep in sync with dropdown.
+ * DB stores enum values (ServiceCategory).
+ */
+const SERVICE_CATEGORY_LABELS = [
   "Hair",
   "Barber",
   "Lash",
@@ -22,7 +26,40 @@ const SERVICE_CATEGORY_OPTIONS = [
   "Other"
 ] as const;
 
-type ServiceCategory = (typeof SERVICE_CATEGORY_OPTIONS)[number];
+type ServiceCategoryLabel = (typeof SERVICE_CATEGORY_LABELS)[number];
+
+/** Label -> enum */
+const LABEL_TO_ENUM: Record<ServiceCategoryLabel, ServiceCategory> = {
+  Hair: ServiceCategory.HAIR,
+  Barber: ServiceCategory.BARBER,
+  Lash: ServiceCategory.LASH,
+  Brows: ServiceCategory.BROWS,
+  Nails: ServiceCategory.NAILS,
+  Manicure: ServiceCategory.NAILS,  // opinion: manicure/pedicure are nails
+  Pedicure: ServiceCategory.NAILS,
+  Makeup: ServiceCategory.MAKEUP,
+  Skincare: ServiceCategory.SKINCARE,
+  Massage: ServiceCategory.MASSAGE,
+  Tattoo: ServiceCategory.TATTOO,
+  Waxing: ServiceCategory.OTHER,    // if you want real enums for these, add them to schema
+  Facial: ServiceCategory.SKINCARE, // or OTHER
+  Other: ServiceCategory.OTHER
+};
+
+/** Enum -> label (for UI) */
+const ENUM_TO_LABEL: Record<ServiceCategory, ServiceCategoryLabel> = {
+  LASH: "Lash",
+  NAILS: "Nails",
+  BROWS: "Brows",
+  HAIR: "Hair",
+  BARBER: "Barber",
+  MASSAGE: "Massage",
+  MAKEUP: "Makeup",
+  SKINCARE: "Skincare",
+  TATTOO: "Tattoo",
+  FITNESS: "Other", // not in your UI list; map safely
+  OTHER: "Other"
+};
 
 function toCurrency(x: unknown) {
   const s = String(x ?? "EUR").toUpperCase();
@@ -44,14 +81,8 @@ function toPositiveInt(x: unknown, fallback = 0) {
   return Math.max(0, Math.floor(n));
 }
 
-function toServiceCategory(x: unknown): ServiceCategory {
-  const s = String(x ?? "").trim();
-  const hit = SERVICE_CATEGORY_OPTIONS.find((c) => c === s);
-  return hit ?? "Other";
-}
-
 function isSafeImageUrl(u: string) {
-  const url = u.trim();
+  const url = String(u ?? "").trim();
   if (!url) return false;
   if (url.startsWith("/")) return true;
   return /^https?:\/\//i.test(url);
@@ -63,10 +94,37 @@ function normalizeImageUrls(raw: unknown) {
   return Array.from(new Set(cleaned)).slice(0, 12);
 }
 
+/**
+ * Accepts:
+ * - "Hair" (label)
+ * - "HAIR" (enum)
+ * - unknown -> OTHER
+ */
+function toServiceCategoryEnum(x: unknown): ServiceCategory {
+  const raw = String(x ?? "").trim();
+  if (!raw) return ServiceCategory.OTHER;
+
+  // enum form
+  if (Object.values(ServiceCategory).includes(raw as ServiceCategory)) {
+    return raw as ServiceCategory;
+  }
+
+  // label form
+  const hit = SERVICE_CATEGORY_LABELS.find((c) => c === raw) as ServiceCategoryLabel | undefined;
+  if (hit) return LABEL_TO_ENUM[hit];
+
+  return ServiceCategory.OTHER;
+}
+
+function toServiceCategoryLabel(x: unknown): ServiceCategoryLabel {
+  const en = toServiceCategoryEnum(x);
+  return ENUM_TO_LABEL[en] ?? "Other";
+}
+
 type NormalizedService = {
   id: string;
   name: string;
-  category: ServiceCategory; // ✅ NEW
+  category: ServiceCategory; // ✅ enum for DB
   durationMin: number;
   price: number;
   currency: string;
@@ -83,16 +141,14 @@ function normalizeServices(raw: unknown): NormalizedService[] {
     .map((s: any) => {
       const id = String(s?.id ?? "").trim();
       const name = String(s?.name ?? "").trim();
-      const category = toServiceCategory(s?.category); // ✅ NEW
+      const category = toServiceCategoryEnum(s?.category);
 
       const durationMin = Math.max(5, toPositiveInt(s?.durationMin, 0));
       const price = Math.max(0, toPositiveInt(s?.price, 0));
       const currency = toCurrency(s?.currency);
 
       const depositEnabled = toBool(s?.depositEnabled);
-      const depositType: DepositType = depositEnabled
-        ? toDepositType(s?.depositType)
-        : "PERCENT";
+      const depositType: DepositType = depositEnabled ? toDepositType(s?.depositType) : "PERCENT";
 
       let depositValue: number | null = null;
       if (depositEnabled) {
@@ -103,7 +159,6 @@ function normalizeServices(raw: unknown): NormalizedService[] {
             : Math.max(1, Math.min(1_000_000, v));
       }
 
-      // accept either `images` or `imageUrls` from client
       const imageUrls = normalizeImageUrls(s?.images ?? s?.imageUrls);
 
       return {
@@ -138,9 +193,7 @@ export async function GET(req: Request) {
     businessId = biz.id;
   } else {
     const authed = await getAuthedBusiness();
-    if (!authed) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!authed) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     businessId = authed.id;
   }
 
@@ -150,7 +203,7 @@ export async function GET(req: Request) {
     select: {
       id: true,
       name: true,
-      category: true, // ✅ NEW
+      category: true,
       durationMin: true,
       price: true,
       currency: true,
@@ -164,7 +217,7 @@ export async function GET(req: Request) {
   const mapped = services.map((s) => ({
     id: s.id,
     name: s.name,
-    category: toServiceCategory(s.category), // ✅ normalize for safety
+    category: ENUM_TO_LABEL[s.category] ?? "Other", // ✅ UI label
     durationMin: s.durationMin,
     price: s.price,
     currency: s.currency,
@@ -180,18 +233,13 @@ export async function GET(req: Request) {
 // PUT: owner-only, replaces all services + images
 export async function PUT(req: Request) {
   const business = await getAuthedBusiness();
-  if (!business) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!business) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({}));
   const next = normalizeServices(body.services);
 
   const saved = await prisma.$transaction(async (tx) => {
-    // delete images then services (avoid FK issues)
-    await tx.serviceImage.deleteMany({
-      where: { service: { businessId: business.id } }
-    });
+    await tx.serviceImage.deleteMany({ where: { service: { businessId: business.id } } });
     await tx.service.deleteMany({ where: { businessId: business.id } });
 
     if (next.length === 0) return [];
@@ -202,7 +250,7 @@ export async function PUT(req: Request) {
           id: s.id,
           businessId: business.id,
           name: s.name,
-          category: s.category, // ✅ NEW
+          category: s.category, // ✅ enum-safe now
           durationMin: s.durationMin,
           price: s.price,
           currency: s.currency,
@@ -210,10 +258,7 @@ export async function PUT(req: Request) {
           depositType: s.depositType,
           depositValue: s.depositValue ?? undefined,
           images: {
-            create: s.imageUrls.map((url, idx) => ({
-              url,
-              sort: idx
-            }))
+            create: s.imageUrls.map((url, idx) => ({ url, sort: idx }))
           }
         }
       });
@@ -225,7 +270,7 @@ export async function PUT(req: Request) {
       select: {
         id: true,
         name: true,
-        category: true, // ✅ NEW
+        category: true,
         durationMin: true,
         price: true,
         currency: true,
@@ -239,7 +284,7 @@ export async function PUT(req: Request) {
     return services.map((s) => ({
       id: s.id,
       name: s.name,
-      category: toServiceCategory(s.category),
+      category: ENUM_TO_LABEL[s.category] ?? "Other",
       durationMin: s.durationMin,
       price: s.price,
       currency: s.currency,

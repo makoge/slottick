@@ -137,7 +137,11 @@ export async function GET(req: Request) {
       customerPhone: true,
       customerCountry: true,
       notes: true,
-      status: true
+      status: true,
+
+      // optional if exists:
+      serviceCategory: true,
+      serviceId: true
     }
   });
 
@@ -153,10 +157,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
 
   const businessSlug = String(body.businessSlug ?? "").trim();
-  const serviceName = String(body.serviceName ?? "").trim();
-  const durationMin = Number(body.durationMin ?? 0);
-  const price = Number(body.price ?? 0);
-  const currency = String(body.currency ?? "EUR").trim();
+  const serviceId = String(body.serviceId ?? "").trim();
 
   const startsAt = toDate(body.startsAt); // should already be UTC ISO from client
 
@@ -166,15 +167,10 @@ export async function POST(req: Request) {
     ? String(body.customerEmail).trim().toLowerCase()
     : null;
   const customerCountry = body.customerCountry ? String(body.customerCountry).trim() : null;
-
   const notes = body.notes ? String(body.notes).trim() : null;
 
-  if (!businessSlug || !serviceName || !customerName || !customerPhone || !startsAt) {
+  if (!businessSlug || !serviceId || !customerName || !customerPhone || !startsAt) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-  }
-
-  if (!Number.isFinite(durationMin) || durationMin <= 0) {
-    return NextResponse.json({ error: "Invalid duration" }, { status: 400 });
   }
 
   const business = await prisma.business.findUnique({
@@ -184,6 +180,34 @@ export async function POST(req: Request) {
 
   if (!business) return NextResponse.json({ error: "Business not found" }, { status: 404 });
 
+  // ✅ Fetch service from DB (source of truth)
+  const service = await prisma.service.findFirst({
+    where: { id: serviceId, businessId: business.id },
+    select: {
+      id: true,
+      name: true,
+      durationMin: true,
+      price: true,
+      currency: true,
+      category: true
+    }
+  });
+
+  if (!service) {
+    return NextResponse.json({ error: "Service not found" }, { status: 404 });
+  }
+
+  const serviceName = service.name;
+  const durationMin = service.durationMin;
+  const price = service.price;
+  const currency = service.currency;
+  const serviceCategory = service.category ? String(service.category).trim() : null;
+
+  if (!Number.isFinite(durationMin) || durationMin <= 0) {
+    return NextResponse.json({ error: "Invalid duration" }, { status: 400 });
+  }
+
+  // Availability (same as your original)
   const ar = business.availabilityRule;
   const rule: AvailabilityRule = {
     ...defaultAvailability,
@@ -231,10 +255,17 @@ export async function POST(req: Request) {
     booking = await prisma.booking.create({
       data: {
         businessId: business.id,
+
+        // ✅ recommended fields (remove if not in schema yet)
+        serviceId: service.id,
+        serviceCategory: serviceCategory || undefined,
+
+        // snapshot fields for history/emails
         serviceName,
         durationMin,
         price,
         currency,
+
         startsAt,
         customerName,
         customerPhone,
