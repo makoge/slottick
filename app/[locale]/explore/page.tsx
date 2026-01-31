@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import ExploreClient from "./explore-client";
 import { locales } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
-import { Industry } from "@prisma/client";
+import { Industry, ServiceCategory } from "@prisma/client";
 
 export const revalidate = 3600;
 
@@ -27,14 +27,13 @@ function hasFilters(sp: Record<string, string | string[] | undefined>) {
   return Boolean(q || city || industry);
 }
 
+/** URL/label -> Industry enum */
 function toIndustryEnum(input: unknown): Industry | undefined {
   const raw = String(input ?? "").trim();
   if (!raw) return undefined;
 
-  // enum values
   if (Object.values(Industry).includes(raw as Industry)) return raw as Industry;
 
-  // pretty labels (optional)
   const map: Record<string, Industry> = {
     "Beauty & care": Industry.BEAUTY_AND_CARE,
     "Wellness & lifestyle": Industry.WELLNESS_AND_LIFESTYLE,
@@ -46,7 +45,7 @@ function toIndustryEnum(input: unknown): Industry | undefined {
   return map[raw];
 }
 
-// Optional: pretty label for dropdown display
+/** Industry enum -> pretty label for dropdown */
 function industryLabel(x: Industry) {
   const labels: Record<Industry, string> = {
     BEAUTY_AND_CARE: "Beauty & care",
@@ -56,6 +55,49 @@ function industryLabel(x: Industry) {
     EDUCATION_AND_PROFESSIONALS: "Education & professionals"
   };
   return labels[x] ?? String(x);
+}
+
+/** Try to interpret search text as a ServiceCategory enum (because it's enum in Prisma) */
+function toServiceCategoryFromQuery(q: string): ServiceCategory | undefined {
+  const s = q.trim().toLowerCase();
+  if (!s) return undefined;
+
+  const map: Record<string, ServiceCategory> = {
+    lash: ServiceCategory.LASH,
+    lashes: ServiceCategory.LASH,
+
+    nail: ServiceCategory.NAILS,
+    nails: ServiceCategory.NAILS,
+    manicure: ServiceCategory.NAILS,
+    pedicure: ServiceCategory.NAILS,
+
+    brow: ServiceCategory.BROWS,
+    brows: ServiceCategory.BROWS,
+    eyebrow: ServiceCategory.BROWS,
+
+    hair: ServiceCategory.HAIR,
+    haircut: ServiceCategory.HAIR,
+    hairstylist: ServiceCategory.HAIR,
+
+    barber: ServiceCategory.BARBER,
+    barbers: ServiceCategory.BARBER,
+
+    massage: ServiceCategory.MASSAGE,
+
+    makeup: ServiceCategory.MAKEUP,
+    skincare: ServiceCategory.SKINCARE,
+    tattoo: ServiceCategory.TATTOO,
+    fitness: ServiceCategory.FITNESS,
+
+    other: ServiceCategory.OTHER
+  };
+
+  // direct hit
+  if (map[s]) return map[s];
+
+  // fuzzy match (e.g. "hair stylist")
+  const hit = Object.keys(map).find((k) => s.includes(k));
+  return hit ? map[hit] : undefined;
 }
 
 export async function generateMetadata({
@@ -75,7 +117,7 @@ export async function generateMetadata({
 
   const title = "Explore services near you";
   const description =
-    "Explore and book trusted businesses near you. Search by service name or category, filter by city and industry.";
+    "Explore and book trusted businesses near you. Search by service name, filter by city and industry.";
 
   const filtered = hasFilters(sp);
 
@@ -118,8 +160,9 @@ export default async function Page({
   const city = normalize(sp.city);
 
   const industryEnum = toIndustryEnum(normalize(sp.industry));
+  const serviceCategoryFromQ = toServiceCategoryFromQuery(q);
 
-  // ✅ industries list for dropdown (enum values + nice labels)
+  // ✅ Industries dropdown (pretty labels)
   const industriesRaw = await prisma.business.findMany({
     select: { industry: true },
     distinct: ["industry"]
@@ -127,9 +170,9 @@ export default async function Page({
 
   const industries = industriesRaw
     .map((x) => x.industry)
-    .filter(Boolean)
+    .filter((x): x is Industry => Boolean(x))
     .sort((a, b) => String(a).localeCompare(String(b)))
-    .map((x) => String(x));
+    .map(industryLabel);
 
   const businesses = await prisma.business.findMany({
     take: 500,
@@ -148,7 +191,10 @@ export default async function Page({
                   some: {
                     OR: [
                       { name: { contains: q, mode: "insensitive" } },
-                      { category: { contains: q, mode: "insensitive" } }
+                      // ✅ enum-safe: only add this OR branch if we can map q -> enum
+                      ...(serviceCategoryFromQ
+                        ? [{ category: { equals: serviceCategoryFromQ } }]
+                        : [])
                     ]
                   }
                 }
