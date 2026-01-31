@@ -9,6 +9,7 @@ import ServicesEditor from "./services";
 import BookingsPanel from "./bookings";
 import SchedulePanel from "./schedule";
 
+
 type Props = {
   locale: string;
   business: {
@@ -18,7 +19,7 @@ type Props = {
     website?: string | null;
     ownerEmail: string;
 
-    industry?: string | null; // ✅ renamed
+    industry?: string | null;
     city?: string | null;
     country?: string | null;
 
@@ -31,7 +32,7 @@ type Props = {
 
 type DbBooking = {
   id: string;
-  startsAt: string; // ISO
+  startsAt: string;
   durationMin: number;
   serviceName: string;
   price: number;
@@ -61,22 +62,13 @@ function StatCard({ title, value, sub, tone = "blue", children }: StatCardProps)
   return (
     <div className={`rounded-2xl border p-5 shadow-sm ${tones[tone]}`}>
       <div className="text-sm font-medium text-slate-600">{title}</div>
-
-      {value && (
-        <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-          {value}
-        </div>
-      )}
-
+      {value && <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{value}</div>}
       {sub && <div className="mt-1 text-sm text-slate-500">{sub}</div>}
       {children && <div className="mt-3">{children}</div>}
     </div>
   );
 }
 
-function pad2(n: number) {
-  return String(n).padStart(2, "0");
-}
 function startOfWeekMonday(d: Date) {
   const day = d.getDay();
   const diff = day === 0 ? -6 : 1 - day;
@@ -102,7 +94,6 @@ function isValidUrlOrEmpty(v: string) {
   const x = v.trim();
   if (!x) return true;
   try {
-    // allow "example.com" too
     const withProto = /^https?:\/\//i.test(x) ? x : `https://${x}`;
     new URL(withProto);
     return true;
@@ -114,10 +105,10 @@ function isValidUrlOrEmpty(v: string) {
 export default function DashboardClient({ locale, business }: Props) {
   const router = useRouter();
 
-  // keep editable local copy
+  // local copy
   const [biz, setBiz] = useState<Props["business"]>(business);
 
-  // --- profile editor state
+  // profile editor
   const [editing, setEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string>("");
@@ -129,17 +120,20 @@ export default function DashboardClient({ locale, business }: Props) {
   const [street, setStreet] = useState(business.street ?? "");
   const [postalCode, setPostalCode] = useState(business.postalCode ?? "");
 
+  // logo state
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>(business.logoUrl ?? "");
   const [logoUploading, setLogoUploading] = useState(false);
 
-  // --- bookings / stats state
+  // ✅ explicit remove logo toggle (optional)
+  const [removeLogo, setRemoveLogo] = useState(false);
+
+  // bookings/stats
   const [copied, setCopied] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
   const [bookings, setBookings] = useState<DbBooking[]>([]);
 
   const bookingPath = useMemo(() => `/${locale}/book/${biz.slug}`, [biz.slug, locale]);
-
   const bookingUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
     return `${window.location.origin}${bookingPath}`;
@@ -164,10 +158,7 @@ export default function DashboardClient({ locale, business }: Props) {
   async function refreshStats(signal?: AbortSignal) {
     setStatsLoading(true);
     try {
-      const res = await fetch("/api/bookings?scope=owner", {
-        cache: "no-store",
-        signal
-      });
+      const res = await fetch("/api/bookings?scope=owner", { cache: "no-store", signal });
       const data = await res.json().catch(() => ({}));
       setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
     } finally {
@@ -186,7 +177,6 @@ export default function DashboardClient({ locale, business }: Props) {
     const now = new Date();
     const nowMs = now.getTime();
     const active = bookings.filter((b) => b.status !== "CANCELLED");
-
     const totalBookings = active.length;
 
     const customerKeys = new Set<string>();
@@ -230,9 +220,7 @@ export default function DashboardClient({ locale, business }: Props) {
       const country = (b.customerCountry ?? "").trim() || "Unknown";
 
       const existing = customerMap.get(key);
-      if (!existing || lastAt > existing.lastAt) {
-        customerMap.set(key, { name, country, lastAt });
-      }
+      if (!existing || lastAt > existing.lastAt) customerMap.set(key, { name, country, lastAt });
     }
 
     const recentCustomers = Array.from(customerMap.values())
@@ -253,14 +241,17 @@ export default function DashboardClient({ locale, business }: Props) {
   function startEdit() {
     setProfileError("");
     setEditing(true);
+
     setName(biz.name);
     setWebsite(biz.website ?? "");
     setCity(biz.city ?? "");
     setCountry(biz.country ?? "");
     setStreet(biz.street ?? "");
     setPostalCode(biz.postalCode ?? "");
+
     setLogoFile(null);
     setLogoPreview(biz.logoUrl ?? "");
+    setRemoveLogo(false);
   }
 
   function cancelEdit() {
@@ -268,6 +259,7 @@ export default function DashboardClient({ locale, business }: Props) {
     setEditing(false);
     setLogoFile(null);
     setLogoPreview(biz.logoUrl ?? "");
+    setRemoveLogo(false);
   }
 
   async function uploadLogoIfAny(): Promise<string | undefined> {
@@ -280,9 +272,16 @@ export default function DashboardClient({ locale, business }: Props) {
 
       const res = await fetch("/api/uploads/logo", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Logo upload failed.");
 
-      return data.url as string;
+      if (!res.ok) {
+        throw new Error(data?.error || `Logo upload failed (${res.status})`);
+      }
+
+      if (!data?.url || typeof data.url !== "string") {
+        throw new Error("Logo upload failed (missing url).");
+      }
+
+      return data.url;
     } finally {
       setLogoUploading(false);
     }
@@ -304,27 +303,34 @@ export default function DashboardClient({ locale, business }: Props) {
     try {
       const uploadedLogoUrl = await uploadLogoIfAny();
 
+      // ✅ IMPORTANT: do not send logoUrl unless:
+      // - user uploaded a new one
+      // - OR user explicitly clicked remove
+      const payload: any = {
+        name: n,
+        website: website.trim() || null,
+        city: c,
+        country: cc,
+        street: street.trim() || null,
+        postalCode: postalCode.trim() || null
+      };
+
+      if (uploadedLogoUrl) payload.logoUrl = uploadedLogoUrl;
+      if (removeLogo) payload.logoUrl = null;
+
       const res = await fetch("/api/owner", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: n,
-          website: website.trim() || null,
-          city: c,
-          country: cc,
-          street: street.trim() || null,
-          postalCode: postalCode.trim() || null,
-          logoUrl: uploadedLogoUrl ?? null
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setProfileError(data.error || "Failed to update profile.");
+        setProfileError(data?.error || "Failed to update profile.");
         return;
       }
 
-      // update UI immediately
+      // ✅ update UI (keep old logo unless changed)
       setBiz((prev) => ({
         ...prev,
         name: data?.business?.name ?? n,
@@ -333,11 +339,16 @@ export default function DashboardClient({ locale, business }: Props) {
         country: data?.business?.country ?? cc,
         street: data?.business?.street ?? (street.trim() || null),
         postalCode: data?.business?.postalCode ?? (postalCode.trim() || null),
-        logoUrl: data?.business?.logoUrl ?? (uploadedLogoUrl ?? prev.logoUrl)
+        logoUrl:
+          typeof data?.business?.logoUrl !== "undefined"
+            ? data.business.logoUrl
+            : removeLogo
+              ? null
+              : uploadedLogoUrl ?? prev.logoUrl
       }));
 
       setEditing(false);
-      router.refresh(); // keep server props in sync
+      router.refresh();
     } catch (e: any) {
       setProfileError(e?.message || "Network error. Try again.");
     } finally {
@@ -347,18 +358,13 @@ export default function DashboardClient({ locale, business }: Props) {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="mx-auto w-full max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-10">
+      <div className="mx-auto w-full max-w-screen-2xl px-4 py-10 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex items-start gap-4">
-            {/* Logo */}
             <div className="h-14 w-14 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               {biz.logoUrl ? (
-                <img
-                  src={biz.logoUrl}
-                  alt="Business logo"
-                  className="h-full w-full object-cover"
-                />
+                <img src={biz.logoUrl} alt="Business logo" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-400">
                   {biz.name?.charAt(0)?.toUpperCase() || "S"}
@@ -370,9 +376,7 @@ export default function DashboardClient({ locale, business }: Props) {
               <p className="text-sm font-medium text-slate-600">Dashboard</p>
               <h1 className="mt-2 text-3xl font-bold tracking-tight">{biz.name}</h1>
               <p className="mt-1 text-sm text-slate-600">
-                <span className="font-semibold text-slate-900">
-                  {biz.industry ?? "Industry"}
-                </span>
+                <span className="font-semibold text-slate-900">{biz.industry ?? "Industry"}</span>
                 {biz.city ? ` • ${biz.city}` : ""}
                 {biz.country ? `, ${biz.country}` : ""}
                 {" • "}
@@ -429,11 +433,7 @@ export default function DashboardClient({ locale, business }: Props) {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={cancelEdit}
-                className="text-sm font-semibold text-slate-600 underline"
-              >
+              <button type="button" onClick={cancelEdit} className="text-sm font-semibold text-slate-600 underline">
                 Cancel
               </button>
             </div>
@@ -447,58 +447,32 @@ export default function DashboardClient({ locale, business }: Props) {
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
                 Business name
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={name} onChange={(e) => setName(e.target.value)} />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Website (optional)
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  placeholder="https://..."
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
               </label>
 
               <label className="grid gap-1 text-sm">
                 City
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={city} onChange={(e) => setCity(e.target.value)} />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Country (code)
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                  placeholder="EE"
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} placeholder="EE" />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Street (optional)
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={street}
-                  onChange={(e) => setStreet(e.target.value)}
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={street} onChange={(e) => setStreet(e.target.value)} />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Postal code (optional)
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={postalCode}
-                  onChange={(e) => setPostalCode(e.target.value)}
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
               </label>
             </div>
 
@@ -513,31 +487,28 @@ export default function DashboardClient({ locale, business }: Props) {
                   onChange={(e) => {
                     const f = e.target.files?.[0] ?? null;
                     setLogoFile(f);
+                    setRemoveLogo(false);
 
                     if (!f) {
                       setLogoPreview(biz.logoUrl ?? "");
                       return;
                     }
-
-                    const url = URL.createObjectURL(f);
-                    setLogoPreview(url);
+                    setLogoPreview(URL.createObjectURL(f));
                   }}
                 />
               </label>
 
               {logoPreview ? (
                 <div className="flex items-center gap-3">
-                  <img
-                    src={logoPreview}
-                    alt="Logo preview"
-                    className="h-14 w-14 rounded-2xl border border-slate-200 object-cover"
-                  />
+                  <img src={logoPreview} alt="Logo preview" className="h-14 w-14 rounded-2xl border border-slate-200 object-cover" />
                   <button
                     type="button"
                     className="text-sm underline text-slate-600"
                     onClick={() => {
+                      // ✅ user wants no logo
                       setLogoFile(null);
                       setLogoPreview("");
+                      setRemoveLogo(true);
                     }}
                   >
                     Remove
@@ -563,119 +534,43 @@ export default function DashboardClient({ locale, business }: Props) {
 
         {/* Stats row */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard
-            title="Total bookings"
-            value={statsLoading ? "—" : String(stats.totalBookings)}
-            sub={statsLoading ? "Loading…" : "All time (not cancelled)"}
-            tone="blue"
-          />
-
-          <StatCard
-            title="Revenue generated"
-            sub={statsLoading ? "Loading…" : "Confirmed in the past"}
-            tone="green"
-          >
+          <StatCard title="Total bookings" value={statsLoading ? "—" : String(stats.totalBookings)} sub={statsLoading ? "Loading…" : "All time (not cancelled)"} tone="blue" />
+          <StatCard title="Revenue generated" sub={statsLoading ? "Loading…" : "Confirmed in the past"} tone="green">
             <div className="grid gap-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                  Weekly
-                </span>
-                <span className="font-semibold text-slate-900">
-                  {statsLoading ? "—" : stats.weeklyRevenue}
-                </span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Weekly</span>
+                <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.weeklyRevenue}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                  Monthly
-                </span>
-                <span className="font-semibold text-slate-900">
-                  {statsLoading ? "—" : stats.monthlyRevenue}
-                </span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Monthly</span>
+                <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.monthlyRevenue}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                  Yearly
-                </span>
-                <span className="font-semibold text-slate-900">
-                  {statsLoading ? "—" : stats.yearlyRevenue}
-                </span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Yearly</span>
+                <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.yearlyRevenue}</span>
               </div>
             </div>
           </StatCard>
-
-          <StatCard
-            title="Customers"
-            value={statsLoading ? "—" : String(stats.uniqueCustomers)}
-            sub={statsLoading ? "Loading…" : "Unique customers"}
-            tone="purple"
-          />
+          <StatCard title="Customers" value={statsLoading ? "—" : String(stats.uniqueCustomers)} sub={statsLoading ? "Loading…" : "Unique customers"} tone="purple" />
         </div>
 
-        {/* Recent customers */}
-        <section className="mt-6 rounded-2xl border border-purple-200 bg-purple-50 p-6 shadow-sm">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold text-purple-900">Recent customers</h2>
-              <p className="mt-1 text-sm text-purple-700">Latest bookings activity</p>
-            </div>
-
-            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-              {statsLoading ? "Loading…" : `${stats.recentCustomers.length} new`}
-            </span>
-          </div>
-
-          {statsLoading ? (
-            <div className="mt-4 rounded-xl border border-purple-200 bg-white p-4 text-sm text-purple-700">
-              Loading…
-            </div>
-          ) : stats.recentCustomers.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-purple-200 bg-white p-4 text-sm text-purple-700">
-              No customers yet.
-            </div>
-          ) : (
-            <ul className="mt-4 divide-y divide-purple-100">
-              {stats.recentCustomers.map((c, i) => (
-                <li key={`${c.name}-${i}`} className="flex items-center justify-between py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-200 text-sm font-semibold text-purple-800">
-                      {c.name.charAt(0).toUpperCase()}
-                    </div>
-
-                    <span className="font-medium text-slate-900">{c.name}</span>
-                  </div>
-
-                  <span className="text-sm text-purple-700">{c.country}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* Share link card */}
+        {/* Share link card + panels */}
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-600">
-                Your shareable booking link
-              </div>
+              <div className="text-sm font-medium text-slate-600">Your shareable booking link</div>
 
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="min-w-0 flex-1 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 ring-1 ring-slate-200">
                   <div className="truncate">{bookingUrl || bookingPath}</div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={copyLink}
-                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-                >
+                <button type="button" onClick={copyLink} className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">
                   {copied ? "Copied ✓" : "Copy link"}
                 </button>
               </div>
 
-              <div className="mt-2 text-sm text-slate-500">
-                Share on Instagram bio, WhatsApp, your website, anywhere.
-              </div>
+              <div className="mt-2 text-sm text-slate-500">Share on Instagram bio, WhatsApp, your website, anywhere.</div>
             </div>
           </div>
 
@@ -684,16 +579,12 @@ export default function DashboardClient({ locale, business }: Props) {
           </div>
         </section>
 
-        {/* Main content layout */}
         <div className="mt-8 grid gap-6 lg:grid-cols-12">
-          {/* Left column */}
           <div className="lg:col-span-7">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
                 <h2 className="text-base font-semibold">Schedule overview</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  See your timeline and upcoming slots.
-                </p>
+                <p className="mt-1 text-sm text-slate-500">See your timeline and upcoming slots.</p>
               </div>
               <SchedulePanel />
             </div>
@@ -701,22 +592,17 @@ export default function DashboardClient({ locale, business }: Props) {
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
                 <h2 className="text-base font-semibold">Bookings</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Track requests, confirmations, and status.
-                </p>
+                <p className="mt-1 text-sm text-slate-500">Track requests, confirmations, and status.</p>
               </div>
               <BookingsPanel />
             </div>
           </div>
 
-          {/* Right column */}
           <div className="space-y-6 lg:col-span-5">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
                 <h2 className="text-base font-semibold">Availability</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Set your working hours and breaks.
-                </p>
+                <p className="mt-1 text-sm text-slate-500">Set your working hours and breaks.</p>
               </div>
               <AvailabilityEditor />
             </div>
@@ -724,9 +610,7 @@ export default function DashboardClient({ locale, business }: Props) {
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
                 <h2 className="text-base font-semibold">Services & pricing</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Add services, duration, and price.
-                </p>
+                <p className="mt-1 text-sm text-slate-500">Add services, duration, and price.</p>
               </div>
               <ServicesEditor />
             </div>
