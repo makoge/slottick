@@ -1,8 +1,14 @@
+// app/[locale]/explore/country/[countrySlug]/[category]/page.tsx
 import type { Metadata } from "next";
 import ExploreClient from "../../../explore-client";
 import { locales } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
-import { ServiceCategory, Industry } from "@prisma/client";
+import { ServiceCategory } from "@prisma/client";
+
+// If your DB is sometimes not reachable during build,
+// this prevents a hard build fail by letting the page render empty.
+// (Opinion: keep this ON until everything is stable.)
+export const dynamic = "force-dynamic";
 
 const COUNTRY_LANDINGS = [
   { slug: "england", code: "GB", name: "England" },
@@ -10,14 +16,13 @@ const COUNTRY_LANDINGS = [
   { slug: "germany", code: "DE", name: "Germany" }
 ] as const;
 
-// URL category -> Prisma enum
 const CATEGORY_LANDINGS = [
-  { slug: "lash", enum: ServiceCategory.LASH, title: "Lash extensions" },
-  { slug: "nails", enum: ServiceCategory.NAILS, title: "Nail salons" },
-  { slug: "brows", enum: ServiceCategory.BROWS, title: "Brow services" },
-  { slug: "barber", enum: ServiceCategory.BARBER, title: "Barbers" },
-  { slug: "massage", enum: ServiceCategory.MASSAGE, title: "Massage" },
-  { slug: "other", enum: ServiceCategory.OTHER, title: "Beauty & wellness services" }
+  { slug: "lash", title: "Lash extensions", enum: ServiceCategory.LASH },
+  { slug: "nails", title: "Nail salons", enum: ServiceCategory.NAILS },
+  { slug: "brows", title: "Brow services", enum: ServiceCategory.BROWS },
+  { slug: "barber", title: "Barbers", enum: ServiceCategory.BARBER },
+  { slug: "massage", title: "Massage", enum: ServiceCategory.MASSAGE },
+  { slug: "other", title: "Beauty & wellness services", enum: ServiceCategory.OTHER }
 ] as const;
 
 type CountrySlug = (typeof COUNTRY_LANDINGS)[number]["slug"];
@@ -44,24 +49,6 @@ function ogLocale(locale: string) {
   return map[locale] ?? undefined;
 }
 
-// Pretty labels for Industry dropdown (optional but nicer than enums)
-function industryLabel(x: Industry) {
-  switch (x) {
-    case Industry.BEAUTY_AND_CARE:
-      return "Beauty & care";
-    case Industry.WELLNESS_AND_LIFESTYLE:
-      return "Wellness & lifestyle";
-    case Industry.CREATIVE_SERVICES:
-      return "Creative services";
-    case Industry.HOME_AND_LOCAL:
-      return "Home & local";
-    case Industry.EDUCATION_AND_PROFESSIONALS:
-      return "Education & professionals";
-    default:
-      return String(x);
-  }
-}
-
 export async function generateMetadata({
   params
 }: {
@@ -72,8 +59,12 @@ export async function generateMetadata({
   const siteName = "Slottick";
   const baseUrl = envBaseUrl();
 
-  const country = COUNTRY_LANDINGS.find((x) => x.slug === countrySlug)!;
-  const cat = CATEGORY_LANDINGS.find((x) => x.slug === category)!;
+  const country = COUNTRY_LANDINGS.find((x) => x.slug === countrySlug);
+  const cat = CATEGORY_LANDINGS.find((x) => x.slug === category);
+
+  if (!country || !cat) {
+    return { title: `Explore | ${siteName}`, robots: { index: false, follow: true } };
+  }
 
   const canonical = `${baseUrl}/${locale}/explore/country/${countrySlug}/${category}`;
   const languages = Object.fromEntries(
@@ -114,40 +105,63 @@ export default async function Page({
 }) {
   const { locale, countrySlug, category } = await params;
 
-  const country = COUNTRY_LANDINGS.find((x) => x.slug === countrySlug)!;
-  const cat = CATEGORY_LANDINGS.find((x) => x.slug === category)!;
+  const country = COUNTRY_LANDINGS.find((x) => x.slug === countrySlug);
+  const cat = CATEGORY_LANDINGS.find((x) => x.slug === category);
 
-  // ✅ Filter businesses by SERVICE enum category (correct + type-safe)
-  const businesses = await prisma.business.findMany({
-    take: 500,
-    orderBy: [{ ratingAvg: "desc" }, { ratingCount: "desc" }],
-    where: {
-      country: country.code,
-      services: {
-        some: {
-          category: cat.enum
+  if (!country || !cat) {
+    return (
+      <ExploreClient
+        businesses={[]}
+        industries={[]}
+        heading="Explore"
+        intro="Browse businesses"
+        defaultCity=""
+      />
+    );
+  }
+
+  let businesses: any[] = [];
+  let industries: string[] = [];
+
+  try {
+    businesses = await prisma.business.findMany({
+      take: 500,
+      orderBy: { ratingAvg: "desc" },
+      where: {
+        country: country.code,
+        services: {
+          some: {
+            category: cat.enum // ✅ enum-safe match (LASH/NAILS/...)
+          }
         }
+      },
+      select: {
+        name: true,
+        slug: true,
+        industry: true,
+        city: true,
+        country: true,
+        ratingAvg: true,
+        ratingCount: true,
+        heroTag: true,
+        logoUrl: true
       }
-    },
-    select: {
-      name: true,
-      slug: true,
-      industry: true,
-      city: true,
-      country: true,
-      ratingAvg: true,
-      ratingCount: true,
-      heroTag: true,
-      logoUrl: true
-    }
-  });
+    });
 
-  // ✅ Industries list (only those present in these results)
-  const industries = Array.from(
-    new Set(businesses.map((b) => b.industry).filter(Boolean))
-  )
-    .sort((a, b) => String(a).localeCompare(String(b)))
-    .map((x) => industryLabel(x));
+    const industriesRaw = await prisma.business.findMany({
+      select: { industry: true },
+      distinct: ["industry"]
+    });
+
+    industries = industriesRaw
+      .map((x) => String(x.industry))
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+  } catch {
+    // ✅ IMPORTANT: don't crash prerender/build
+    businesses = [];
+    industries = [];
+  }
 
   const baseUrl = envBaseUrl();
 
@@ -187,7 +201,7 @@ export default async function Page({
     <>
       <ExploreClient
         businesses={businesses as any}
-        industries={industries.length ? industries : ["Beauty & care"]}
+        industries={industries}
         heading={`${cat.title} in ${country.name}`}
         intro={`Browse ${cat.title.toLowerCase()} in ${country.name}, filter by city, and book instantly.`}
         defaultCity=""
