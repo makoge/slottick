@@ -1,9 +1,10 @@
-export default function ComingSoonPage({
+export default async function ComingSoonPage({
   searchParams
 }: {
-  searchParams: { category?: string };
+  searchParams: Promise<{ category?: string }>;
 }) {
-  const category = searchParams.category ?? "this category";
+  const sp = await searchParams;
+  const category = sp?.category ?? "this category";
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
