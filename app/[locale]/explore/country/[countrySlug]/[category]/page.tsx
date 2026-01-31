@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import ExploreClient from "../../../explore-client";
-
 import { locales } from "@/lib/i18n";
+import { prisma } from "@/lib/db";
+import { Industry } from "@prisma/client";
 
 const COUNTRY_LANDINGS = [
   { slug: "england", code: "GB", name: "England" },
@@ -33,6 +34,15 @@ export async function generateStaticParams() {
   return all;
 }
 
+function envBaseUrl() {
+  return (process.env.NEXT_PUBLIC_SITE_URL || "https://slottick.com").replace(/\/$/, "");
+}
+
+function ogLocale(locale: string) {
+  const map: Record<string, string> = { en: "en_US", et: "et_EE" };
+  return map[locale] ?? undefined;
+}
+
 export async function generateMetadata({
   params
 }: {
@@ -41,19 +51,18 @@ export async function generateMetadata({
   const { locale, countrySlug, category } = await params;
 
   const siteName = "Slottick";
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+  const baseUrl = envBaseUrl();
 
   const country = COUNTRY_LANDINGS.find((x) => x.slug === countrySlug)!;
   const cat = CATEGORY_LANDINGS.find((x) => x.slug === category)!;
 
-  const canonical = `${baseUrl}/${locale}/explore/${countrySlug}/${category}`;
+  const canonical = `${baseUrl}/${locale}/explore/country/${countrySlug}/${category}`;
   const languages = Object.fromEntries(
-    locales.map((l) => [l, `${baseUrl}/${l}/explore/${countrySlug}/${category}`])
+    locales.map((l) => [l, `${baseUrl}/${l}/explore/country/${countrySlug}/${category}`])
   );
 
   const title = `${cat.title} in ${country.name} — book trusted businesses`;
-  const description = `Find and book ${cat.title.toLowerCase()} in ${country.name}. Browse top-rated businesses, filter by city, and book instantly with real availability.`;
+  const description = `Find and book ${cat.title.toLowerCase()} in ${country.name}. Browse top-rated businesses and book instantly with real availability.`;
 
   return {
     metadataBase: new URL(baseUrl),
@@ -67,14 +76,14 @@ export async function generateMetadata({
       siteName,
       title,
       description,
-      locale,
-      images: [{ url: "/og.png", width: 1200, height: 630, alt: siteName }]
+      locale: ogLocale(locale),
+      images: [{ url: `${baseUrl}/og.png`, width: 1200, height: 630, alt: siteName }]
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og.png"]
+      images: [`${baseUrl}/og.png`]
     }
   };
 }
@@ -89,53 +98,73 @@ export default async function Page({
   const country = COUNTRY_LANDINGS.find((x) => x.slug === countrySlug)!;
   const cat = CATEGORY_LANDINGS.find((x) => x.slug === category)!;
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/businesses`, {
-    cache: "no-store"
+  // ✅ Fetch businesses by SERVICE CATEGORY (better SEO relevance)
+  const businesses = await prisma.business.findMany({
+    take: 500,
+    orderBy: { ratingAvg: "desc" },
+    where: {
+      country: country.code,
+      services: {
+        some: {
+          category: cat.name // ✅ Service.category (e.g. "Massage")
+        }
+      }
+    },
+    select: {
+      name: true,
+      slug: true,
+      industry: true,
+      city: true,
+      country: true,
+      ratingAvg: true,
+      ratingCount: true,
+      heroTag: true,
+      logoUrl: true
+    }
   });
-  const data = await res.json();
 
-  const businessesAll = data.businesses ?? [];
-  const businesses = businessesAll
-    .filter((b: any) => String(b.country).toUpperCase() === country.code)
-    .filter((b: any) => String(b.category) === cat.name);
+  // ✅ Industries dropdown (enum values as strings)
+  const industriesRaw = await prisma.business.findMany({
+    select: { industry: true },
+    distinct: ["industry"]
+  });
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+  const industries = industriesRaw
+    .map((x) => x.industry)
+    .filter(Boolean)
+    .sort((a, b) => String(a).localeCompare(String(b)))
+    .map((x) => String(x)); // ✅ enum -> string
+
+  const baseUrl = envBaseUrl();
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: `${cat.title} in ${country.name}`,
-    itemListElement: businesses.slice(0, 200).map((b: any, i: number) => ({
+    itemListElement: businesses.slice(0, 200).map((b, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `${baseUrl}/${locale}/book/${b.slug}`,
-      name: b.name
+      url: `${baseUrl}/${locale}/book/${encodeURIComponent(String(b.slug ?? ""))}`,
+      name: String(b.name ?? "")
     }))
   };
 
-  // Optional but strong for SEO: breadcrumbs
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Explore",
-        item: `${baseUrl}/${locale}/explore`
-      },
+      { "@type": "ListItem", position: 1, name: "Explore", item: `${baseUrl}/${locale}/explore` },
       {
         "@type": "ListItem",
         position: 2,
         name: country.name,
-        item: `${baseUrl}/${locale}/explore/${countrySlug}`
+        item: `${baseUrl}/${locale}/explore/country/${countrySlug}`
       },
       {
         "@type": "ListItem",
         position: 3,
         name: cat.title,
-        item: `${baseUrl}/${locale}/explore/${countrySlug}/${category}`
+        item: `${baseUrl}/${locale}/explore/country/${countrySlug}/${category}`
       }
     ]
   };
@@ -143,9 +172,8 @@ export default async function Page({
   return (
     <>
       <ExploreClient
-
-        businesses={businesses}
-        categories={["Lash", "Nails", "Brows", "Barber", "Massage", "Other"] as any}
+        businesses={businesses as any}
+        industries={industries.length ? (industries as any) : (["BEAUTY_AND_CARE"] as any)}
         heading={`${cat.title} in ${country.name}`}
         intro={`Browse ${cat.title.toLowerCase()} in ${country.name}, filter by city, and book instantly.`}
         defaultCity=""

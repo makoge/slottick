@@ -128,7 +128,8 @@ export default async function Page({
   const industries = industriesRaw
     .map((x) => x.industry)
     .filter(Boolean)
-    .sort((a, b) => String(a).localeCompare(String(b)));
+    .sort((a, b) => String(a).localeCompare(String(b)))
+    .map((x) => String(x));
 
   const businesses = await prisma.business.findMany({
     take: 500,
