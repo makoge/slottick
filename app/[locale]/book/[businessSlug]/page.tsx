@@ -12,6 +12,18 @@ function humanizeIndustry(x?: string | null) {
   return clean.charAt(0).toUpperCase() + clean.slice(1);
 }
 
+function pickOgImage(
+  baseUrl: string,
+  logoUrl?: string | null,
+  gallery?: Array<{ url: string; sort: number }> | null
+) {
+  const sorted = Array.isArray(gallery)
+    ? [...gallery].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
+    : [];
+
+  return sorted[0]?.url || logoUrl || `${baseUrl}/og.png`;
+}
+
 export async function generateMetadata({
   params
 }: {
@@ -35,16 +47,19 @@ export async function generateMetadata({
       city: true,
       country: true,
       marketplaceEligibleAt: true,
-      heroTag: true,
+
+      // ✅ new field
+      description: true,
+
       logoUrl: true,
-      galleryImages: true,
+      galleryImages: {
+        select: { url: true, sort: true },
+        orderBy: [{ sort: "asc" }, { createdAt: "asc" }]
+      },
+
       services: {
-      select: {
-        name: true,
-        price: true,
-        currency: true
+        select: { name: true, price: true, currency: true }
       }
-    }
     }
   });
 
@@ -58,16 +73,14 @@ export async function generateMetadata({
 
   const cat = humanizeIndustry(business.industry);
   const where = [business.city, business.country].filter(Boolean).join(", ");
-
   const title = `Book ${business.name} • ${cat}${where ? ` in ${where}` : ""}`;
+
+  // ✅ use description, not heroTag
   const description =
-    business.heroTag?.trim() ||
+    business.description?.trim() ||
     `Book an appointment with ${business.name}. Choose a service, pick a time, and confirm instantly.`;
 
-  const ogImage =
-  (Array.isArray(business.galleryImages) && business.galleryImages[0]?.url) ||
-  business.logoUrl ||
-  `${baseUrl}/og.png`;
+  const ogImage = pickOgImage(baseUrl, business.logoUrl, business.galleryImages);
 
   return {
     title,
@@ -103,7 +116,9 @@ export default async function Page({ params }: { params: Promise<Params> }) {
       name: true,
       slug: true,
       industry: true,
-      heroTag: true,
+
+      // ✅ new field
+      description: true,
 
       city: true,
       country: true,
@@ -112,7 +127,11 @@ export default async function Page({ params }: { params: Promise<Params> }) {
 
       website: true,
       logoUrl: true,
-      galleryImages: true,
+
+      galleryImages: {
+        select: { id: true, url: true, sort: true, createdAt: true },
+        orderBy: [{ sort: "asc" }, { createdAt: "asc" }]
+      },
 
       marketplaceEligibleAt: true,
       services: {
@@ -189,6 +208,14 @@ export default async function Page({ params }: { params: Promise<Params> }) {
     ]
   };
 
+  const galleryImages: string[] = Array.isArray(business.galleryImages)
+    ? business.galleryImages
+        .slice()
+        .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
+        .map((img) => img.url)
+        .filter(Boolean)
+    : [];
+
   return (
     <>
       <BookingClient
@@ -198,7 +225,9 @@ export default async function Page({ params }: { params: Promise<Params> }) {
           name: business.name,
           slug: business.slug,
           industry: business.industry,
-          heroTag: business.heroTag,
+
+          // ✅ pass description down
+          description: business.description ?? null,
 
           city: business.city,
           country: business.country,
@@ -207,11 +236,7 @@ export default async function Page({ params }: { params: Promise<Params> }) {
 
           website: business.website,
           logoUrl: business.logoUrl,
-         galleryImages: Array.isArray(business.galleryImages)
-  ? business.galleryImages
-      .sort((a, b) => a.sort - b.sort)
-      .map((img) => img.url): [],
-
+          galleryImages
         }}
       />
 
