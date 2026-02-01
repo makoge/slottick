@@ -34,7 +34,8 @@ export async function getAuthedBusiness() {
           website: true,
           ownerEmail: true,
           emailVerifiedAt: true,
-          logoUrl: true 
+          logoUrl: true,
+          description: true 
         }
       }
     }

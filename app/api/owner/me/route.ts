@@ -12,20 +12,6 @@ function normalizeWebsite(website: string | null) {
   return w;
 }
 
-function isValidLogoUrlOrNull(v: unknown) {
-  if (v == null) return true;
-  const s = String(v).trim();
-  if (!s) return true;
-
-  // ✅ allow blob urls + normal urls
-  try {
-    const u = new URL(s);
-    return u.protocol === "http:" || u.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 function isValidHttpUrlOrNull(v: unknown) {
   if (v == null) return true;
   const s = String(v).trim();
@@ -38,11 +24,26 @@ function isValidHttpUrlOrNull(v: unknown) {
   }
 }
 
+function isValidLogoUrlOrNull(v: unknown) {
+  // same as http(s) check, kept separate in case you expand later
+  return isValidHttpUrlOrNull(v);
+}
+
+function countWords(text: string) {
+  const t = text.trim();
+  if (!t) return 0;
+  return t.split(/\s+/).filter(Boolean).length;
+}
+
+function json(data: any, status = 200) {
+  return NextResponse.json(data, { status });
+}
+
 export async function GET() {
   const business = await getAuthedBusiness();
-  if (!business) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!business) return json({ error: "Unauthorized" }, 401);
 
-  return NextResponse.json({
+  return json({
     business: {
       createdAt: business.createdAt.toISOString(),
       name: business.name,
@@ -54,56 +55,90 @@ export async function GET() {
       country: business.country,
       street: business.street,
       postalCode: business.postalCode,
-      logoUrl: business.logoUrl
+      logoUrl: business.logoUrl,
+      description: business.description ?? null
     }
   });
 }
 
 export async function PATCH(req: Request) {
   const authed = await getAuthedBusiness();
-  if (!authed) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!authed) return json({ error: "Unauthorized" }, 401);
 
   const body = await req.json().catch(() => ({}));
 
-  const name = String(body.name ?? "").trim();
-  const city = String(body.city ?? "").trim();
-  const country = String(body.country ?? "").trim().toUpperCase();
+  // Build update data ONLY from fields that are provided
+  const data: Record<string, any> = {};
 
-  const streetRaw = body.street == null ? null : String(body.street).trim();
-  const postalRaw = body.postalCode == null ? null : String(body.postalCode).trim();
+  // name
+  if (body.name !== undefined) {
+    const name = String(body.name ?? "").trim();
+    if (!name) return json({ error: "Business name is required." }, 400);
+    data.name = name;
+  }
 
-  const website = normalizeWebsite(body.website == null ? null : String(body.website));
+  // city
+  if (body.city !== undefined) {
+    const city = String(body.city ?? "").trim();
+    if (!city) return json({ error: "City is required." }, 400);
+    data.city = city;
+  }
 
-  // ✅ keep existing if undefined, remove only if null, set new if string
-  const logoUrl =
-    body.logoUrl === undefined
-      ? undefined
-      : body.logoUrl == null
-        ? null
-        : String(body.logoUrl).trim() || null;
+  // country
+  if (body.country !== undefined) {
+    const country = String(body.country ?? "").trim().toUpperCase();
+    if (!country || country.length < 2) {
+      return json({ error: "Country code is required (e.g. EE)." }, 400);
+    }
+    data.country = country;
+  }
 
-  if (!name) return NextResponse.json({ error: "Business name is required." }, { status: 400 });
-  if (!city) return NextResponse.json({ error: "City is required." }, { status: 400 });
-  if (!country || country.length < 2)
-    return NextResponse.json({ error: "Country code is required (e.g. EE)." }, { status: 400 });
+  // street / postal
+  if (body.street !== undefined) {
+    const streetRaw = body.street == null ? null : String(body.street).trim();
+    data.street = streetRaw ? streetRaw : null;
+  }
 
-  if (!isValidHttpUrlOrNull(website))
-    return NextResponse.json({ error: "Website URL is invalid." }, { status: 400 });
+  if (body.postalCode !== undefined) {
+    const postalRaw = body.postalCode == null ? null : String(body.postalCode).trim();
+    data.postalCode = postalRaw ? postalRaw : null;
+  }
 
-  if (!isValidLogoUrlOrNull(logoUrl))
-    return NextResponse.json({ error: "Logo URL is invalid." }, { status: 400 });
+  // website
+  if (body.website !== undefined) {
+    const website = normalizeWebsite(body.website == null ? null : String(body.website));
+    if (!isValidHttpUrlOrNull(website)) return json({ error: "Website URL is invalid." }, 400);
+    data.website = website;
+  }
+
+  // logoUrl (undefined=keep, null=remove, string=set)
+  if (body.logoUrl !== undefined) {
+    const logoUrl =
+      body.logoUrl == null ? null : String(body.logoUrl).trim() || null;
+
+    if (!isValidLogoUrlOrNull(logoUrl)) return json({ error: "Logo URL is invalid." }, 400);
+    data.logoUrl = logoUrl;
+  }
+
+  // ✅ description (max 600 words)
+  if (body.description !== undefined) {
+    const desc = body.description == null ? null : String(body.description);
+    const trimmed = desc == null ? null : desc.trim();
+
+    if (trimmed && countWords(trimmed) > 600) {
+      return json({ error: "Description too long (max 600 words)." }, 400);
+    }
+
+    data.description = trimmed ? trimmed : null;
+  }
+
+  if (Object.keys(data).length === 0) {
+    return json({ error: "No fields to update." }, 400);
+  }
 
   const updated = await prisma.business.update({
     where: { id: authed.id },
-    data: {
-      name,
-      website,
-      city,
-      country,
-      street: streetRaw ? streetRaw : null,
-      postalCode: postalRaw ? postalRaw : null,
-      ...(logoUrl === undefined ? {} : { logoUrl }) // ✅ only write if provided
-    },
+    data,
     select: {
       createdAt: true,
       name: true,
@@ -115,11 +150,12 @@ export async function PATCH(req: Request) {
       country: true,
       street: true,
       postalCode: true,
-      logoUrl: true
+      logoUrl: true,
+      description: true
     }
   });
 
-  return NextResponse.json({
+  return json({
     business: {
       createdAt: updated.createdAt.toISOString(),
       name: updated.name,
@@ -131,7 +167,8 @@ export async function PATCH(req: Request) {
       country: updated.country,
       street: updated.street,
       postalCode: updated.postalCode,
-      logoUrl: updated.logoUrl
+      logoUrl: updated.logoUrl,
+      description: updated.description ?? null
     }
   });
 }

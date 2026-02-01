@@ -26,6 +26,9 @@ type Props = {
     postalCode?: string | null;
 
     logoUrl?: string | null;
+
+    // ✅ new field (stored on Business)
+    description?: string | null;
   };
 };
 
@@ -107,6 +110,8 @@ function isValidUrlOrEmpty(v: string) {
     return false;
   }
 }
+
+/* ----------------------------- Gallery Manager ----------------------------- */
 
 function BookingGalleryManager() {
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -346,11 +351,105 @@ function BookingGalleryManager() {
   );
 }
 
+/* -------------------------- Description Editor (NEW) ------------------------- */
+
+function BookingDescriptionEditor({
+  initial,
+  onSaved
+}: {
+  initial: string;
+  onSaved: (next: string) => void;
+}) {
+  const [value, setValue] = useState(initial);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
+
+  const words = useMemo(() => value.trim().split(/\s+/).filter(Boolean).length, [value]);
+  useEffect(() => setValue(initial), [initial]);
+
+  async function save() {
+    setErr("");
+    const trimmed = value.trim();
+
+    if (trimmed && words > 600) {
+      setErr("Too long — max 600 words.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/owner/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: trimmed || null })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Failed to save description");
+
+      const next = String(data?.business?.description ?? trimmed ?? "");
+      onSaved(next);
+    } catch (e: any) {
+      setErr(e?.message || "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-base font-semibold">Booking page description</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Shows on your booking hero. Keep it local + clear (max 600 words).
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={save}
+          disabled={saving || words > 600}
+          className="w-fit rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+      </div>
+
+      {err ? (
+        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          {err}
+        </div>
+      ) : null}
+
+      <div className="mt-4 grid gap-2">
+        <textarea
+          className="min-h-[140px] w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-300"
+          placeholder="Example: We’re a Tallinn-based nail studio specializing in..."
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <span className={words > 600 ? "font-semibold text-rose-700" : ""}>{words}/600 words</span>
+          <button type="button" className="underline" onClick={() => setValue("")}>
+            Clear
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------ Dashboard Client ----------------------------- */
+
 export default function DashboardClient({ locale, business }: Props) {
   const router = useRouter();
 
   // local copy
   const [biz, setBiz] = useState<Props["business"]>(business);
+
+  // ✅ local description state (separate, controlled)
+  const [bookingDesc, setBookingDesc] = useState(String(business.description ?? ""));
 
   // profile editor
   const [editing, setEditing] = useState(false);
@@ -517,13 +616,8 @@ export default function DashboardClient({ locale, business }: Props) {
       const res = await fetch("/api/uploads/logo", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) {
-        throw new Error(data?.error || `Logo upload failed (${res.status})`);
-      }
-
-      if (!data?.url || typeof data.url !== "string") {
-        throw new Error("Logo upload failed (missing url).");
-      }
+      if (!res.ok) throw new Error(data?.error || `Logo upload failed (${res.status})`);
+      if (!data?.url || typeof data.url !== "string") throw new Error("Logo upload failed (missing url).");
 
       return data.url;
     } finally {
@@ -531,6 +625,7 @@ export default function DashboardClient({ locale, business }: Props) {
     }
   }
 
+  // ✅ profile save does NOT touch description
   async function saveProfile() {
     setProfileError("");
 
@@ -585,6 +680,7 @@ export default function DashboardClient({ locale, business }: Props) {
             : removeLogo
               ? null
               : uploadedLogoUrl ?? prev.logoUrl
+        // ✅ DO NOT update description here
       }));
 
       setEditing(false);
@@ -668,16 +764,10 @@ export default function DashboardClient({ locale, business }: Props) {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-base font-semibold">Business profile</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Update your public info. Changes reflect on your booking page.
-                </p>
+                <p className="mt-1 text-sm text-slate-500">Update your public info. Changes reflect on your booking page.</p>
               </div>
 
-              <button
-                type="button"
-                onClick={cancelEdit}
-                className="text-sm font-semibold text-slate-600 underline"
-              >
+              <button type="button" onClick={cancelEdit} className="text-sm font-semibold text-slate-600 underline">
                 Cancel
               </button>
             </div>
@@ -691,58 +781,32 @@ export default function DashboardClient({ locale, business }: Props) {
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
                 Business name
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={name} onChange={(e) => setName(e.target.value)} />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Website (optional)
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  placeholder="https://..."
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
               </label>
 
               <label className="grid gap-1 text-sm">
                 City
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={city} onChange={(e) => setCity(e.target.value)} />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Country (code)
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                  placeholder="EE"
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} placeholder="EE" />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Street (optional)
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={street}
-                  onChange={(e) => setStreet(e.target.value)}
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={street} onChange={(e) => setStreet(e.target.value)} />
               </label>
 
               <label className="grid gap-1 text-sm">
                 Postal code (optional)
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={postalCode}
-                  onChange={(e) => setPostalCode(e.target.value)}
-                />
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
               </label>
             </div>
 
@@ -770,11 +834,7 @@ export default function DashboardClient({ locale, business }: Props) {
 
               {logoPreview ? (
                 <div className="flex items-center gap-3">
-                  <img
-                    src={logoPreview}
-                    alt="Logo preview"
-                    className="h-14 w-14 rounded-2xl border border-slate-200 object-cover"
-                  />
+                  <img src={logoPreview} alt="Logo preview" className="h-14 w-14 rounded-2xl border border-slate-200 object-cover" />
                   <button
                     type="button"
                     className="text-sm underline text-slate-600"
@@ -807,40 +867,24 @@ export default function DashboardClient({ locale, business }: Props) {
 
         {/* Stats row */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard
-            title="Total bookings"
-            value={statsLoading ? "—" : String(stats.totalBookings)}
-            sub={statsLoading ? "Loading…" : "All time (not cancelled)"}
-            tone="blue"
-          />
+          <StatCard title="Total bookings" value={statsLoading ? "—" : String(stats.totalBookings)} sub={statsLoading ? "Loading…" : "All time (not cancelled)"} tone="blue" />
           <StatCard title="Revenue generated" sub={statsLoading ? "Loading…" : "Confirmed in the past"} tone="green">
             <div className="grid gap-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                  Weekly
-                </span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Weekly</span>
                 <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.weeklyRevenue}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                  Monthly
-                </span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Monthly</span>
                 <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.monthlyRevenue}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                  Yearly
-                </span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Yearly</span>
                 <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.yearlyRevenue}</span>
               </div>
             </div>
           </StatCard>
-          <StatCard
-            title="Customers"
-            value={statsLoading ? "—" : String(stats.uniqueCustomers)}
-            sub={statsLoading ? "Loading…" : "Unique customers"}
-            tone="purple"
-          />
+          <StatCard title="Customers" value={statsLoading ? "—" : String(stats.uniqueCustomers)} sub={statsLoading ? "Loading…" : "Unique customers"} tone="purple" />
         </div>
 
         {/* Share link card */}
@@ -854,11 +898,7 @@ export default function DashboardClient({ locale, business }: Props) {
                   <div className="truncate">{bookingUrl || bookingPath}</div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={copyLink}
-                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-                >
+                <button type="button" onClick={copyLink} className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">
                   {copied ? "Copied ✓" : "Copy link"}
                 </button>
               </div>
@@ -872,8 +912,16 @@ export default function DashboardClient({ locale, business }: Props) {
           </div>
         </section>
 
-        {/* ✅ NEW: Booking page images manager */}
+        {/* ✅ Booking website content */}
         <BookingGalleryManager />
+        <BookingDescriptionEditor
+          initial={bookingDesc}
+          onSaved={(next) => {
+            setBookingDesc(next);
+            setBiz((prev) => ({ ...prev, description: next || null }));
+            router.refresh();
+          }}
+        />
 
         {/* Panels */}
         <div className="mt-8 grid gap-6 lg:grid-cols-12">
@@ -917,3 +965,4 @@ export default function DashboardClient({ locale, business }: Props) {
     </main>
   );
 }
+
