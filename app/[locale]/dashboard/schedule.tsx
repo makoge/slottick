@@ -15,7 +15,7 @@ type DbBooking = {
   customerName: string;
   customerPhone: string;
   notes?: string | null;
-  status: "CONFIRMED" | "CANCELLED";
+  status: "CONFIRMED" | "CANCELLED" | "DONE";
 };
 
 function pad2(n: number) {
@@ -45,32 +45,58 @@ function toLocalParts(iso: string) {
   const dt = new Date(iso);
   return {
     date: toISODateLocal(dt),
-    time: `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`,
+    time: `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`
   };
+}
+function mondayISO(isoDate: string) {
+  const anchor = new Date(`${isoDate}T00:00:00`);
+  return toISODateLocal(startOfWeekMonday(anchor));
 }
 
 const weekdayLabel = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function SchedulePanel() {
   const [bookings, setBookings] = useState<DbBooking[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [mode, setMode] = useState<Mode>("today");
 
   const today = useMemo(() => todayISO(), []);
   const [selectedDate, setSelectedDate] = useState<string>(today);
+  const [weekStart, setWeekStart] = useState<string>(mondayISO(today));
 
   async function refresh() {
-    const res = await fetch("/api/bookings?scope=owner", { cache: "no-store" });
-    const data = await res.json().catch(() => ({}));
-    setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/bookings?scope=owner", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
     refresh();
+    // optional: auto-refresh so it updates without reload
+    const t = setInterval(refresh, 15_000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // normalize mode changes
   useEffect(() => {
-    if (mode === "today") setSelectedDate(today);
-    if (mode === "upcoming" && selectedDate < today) setSelectedDate(today);
+    if (mode === "today") {
+      setSelectedDate(today);
+      setWeekStart(mondayISO(today));
+      return;
+    }
+
+    // if upcoming and selectedDate is in the past, bring it to today
+    if (mode === "upcoming" && selectedDate < today) {
+      setSelectedDate(today);
+      setWeekStart(mondayISO(today));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, today]);
 
@@ -85,11 +111,23 @@ export default function SchedulePanel() {
       return sorted.filter((b) => toLocalParts(b.startsAt).date === today);
     }
 
-    // upcoming
+    // upcoming: today and future
     return sorted.filter((b) => toLocalParts(b.startsAt).date >= today);
   }, [bookings, mode, today]);
 
-  // ✅ counts map
+  // all upcoming dates list (sorted)
+  const upcomingDates = useMemo(() => {
+    const set = new Set<string>();
+    for (const b of filtered) set.add(toLocalParts(b.startsAt).date);
+    return [...set].sort();
+  }, [filtered]);
+
+  // if upcoming mode, keep week aligned with selectedDate
+  useEffect(() => {
+    setWeekStart(mondayISO(selectedDate));
+  }, [selectedDate]);
+
+  // counts for badges (across filtered, not only current week)
   const countsByDate = useMemo(() => {
     const map = new Map<string, number>();
     for (const b of filtered) {
@@ -99,26 +137,14 @@ export default function SchedulePanel() {
     return map;
   }, [filtered]);
 
-  // ✅ AUTO-SELECT next date with bookings (so Upcoming shows something)
-  useEffect(() => {
-    if (mode !== "upcoming") return;
-
-    const hasSelected = (countsByDate.get(selectedDate) ?? 0) > 0;
-    if (hasSelected) return;
-
-    const nextDate = [...countsByDate.keys()].sort()[0]; // earliest upcoming date
-    if (nextDate) setSelectedDate(nextDate);
-  }, [mode, countsByDate, selectedDate]);
-
-  // ✅ week should follow selectedDate (not always "this week")
+  // week buttons driven by weekStart (so we can navigate weeks)
   const week = useMemo(() => {
-    const anchor = new Date(`${selectedDate}T00:00:00`);
-    const monday = startOfWeekMonday(anchor);
+    const ws = new Date(`${weekStart}T00:00:00`);
     return Array.from({ length: 7 }).map((_, i) => {
-      const d = addDays(monday, i);
+      const d = addDays(ws, i);
       return { label: weekdayLabel[i], iso: toISODateLocal(d) };
     });
-  }, [selectedDate]);
+  }, [weekStart]);
 
   const dayBookings = useMemo(() => {
     return filtered.filter((b) => toLocalParts(b.startsAt).date === selectedDate);
@@ -126,12 +152,41 @@ export default function SchedulePanel() {
 
   const title = mode === "today" ? "Today" : mode === "upcoming" ? "Upcoming" : "All";
 
+  const totalUpcoming = useMemo(() => {
+    if (mode !== "upcoming") return 0;
+    return filtered.length;
+  }, [filtered.length, mode]);
+
+  function goWeek(deltaDays: number) {
+    const ws = new Date(`${weekStart}T00:00:00`);
+    const next = addDays(ws, deltaDays);
+    setWeekStart(toISODateLocal(next));
+
+    // keep selectedDate inside the visible week for nicer UX
+    const nextSelected = addDays(next, 0);
+    const nextIso = toISODateLocal(nextSelected);
+    if (mode === "upcoming" && nextIso < today) return; // don’t go back into past in upcoming mode
+    setSelectedDate(nextIso);
+  }
+
+  function jumpToNextBookedDay() {
+    // find the next date > selectedDate that has bookings
+    const next = upcomingDates.find((d) => d > selectedDate);
+    if (!next) return;
+    setSelectedDate(next);
+    setWeekStart(mondayISO(next));
+  }
+
   return (
     <section className="mt-6 rounded-2xl border border-slate-200 p-6 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Schedule</h2>
-          <p className="mt-1 text-sm text-slate-600">{title} appointments • Tap a day.</p>
+          <p className="mt-1 text-sm text-slate-600">
+            {title} appointments • Tap a day.
+            {mode === "upcoming" ? ` (${totalUpcoming} total)` : ""}
+            {loading ? " • Loading…" : ""}
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -139,7 +194,7 @@ export default function SchedulePanel() {
             [
               { id: "today", label: "Today" },
               { id: "upcoming", label: "Upcoming" },
-              { id: "all", label: "All" },
+              { id: "all", label: "All" }
             ] as const
           ).map((x) => {
             const active = mode === x.id;
@@ -150,7 +205,7 @@ export default function SchedulePanel() {
                 onClick={() => setMode(x.id)}
                 className={[
                   "rounded-xl border px-4 py-2 text-sm font-semibold",
-                  active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 hover:bg-slate-50",
+                  active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 hover:bg-slate-50"
                 ].join(" ")}
               >
                 {x.label}
@@ -160,7 +215,40 @@ export default function SchedulePanel() {
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      {/* Week nav */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => goWeek(-7)}
+            disabled={mode === "upcoming" && weekStart <= mondayISO(today)}
+            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <button
+            type="button"
+            onClick={() => goWeek(7)}
+            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50"
+          >
+            Next
+          </button>
+        </div>
+
+        {mode === "upcoming" ? (
+          <button
+            type="button"
+            onClick={jumpToNextBookedDay}
+            disabled={!upcomingDates.some((d) => d > selectedDate)}
+            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
+          >
+            Next booked day
+          </button>
+        ) : null}
+      </div>
+
+      {/* Week days */}
+      <div className="mt-4 flex flex-wrap gap-2">
         {week.map((d) => {
           const active = d.iso === selectedDate;
           const count = countsByDate.get(d.iso) ?? 0;
@@ -175,7 +263,7 @@ export default function SchedulePanel() {
               className={[
                 "relative rounded-xl border px-3 py-2 text-sm font-semibold",
                 disabled ? "opacity-40 cursor-not-allowed" : "",
-                active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 hover:bg-slate-50",
+                active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 hover:bg-slate-50"
               ].join(" ")}
             >
               <div className="flex items-center gap-2">
@@ -187,7 +275,7 @@ export default function SchedulePanel() {
                 <span
                   className={[
                     "absolute -right-1 -top-1 rounded-full px-2 py-0.5 text-xs font-bold",
-                    active ? "bg-white text-slate-900" : "bg-slate-900 text-white",
+                    active ? "bg-white text-slate-900" : "bg-slate-900 text-white"
                   ].join(" ")}
                 >
                   {count}
@@ -198,6 +286,7 @@ export default function SchedulePanel() {
         })}
       </div>
 
+      {/* Day list */}
       <div className="mt-5">
         <div className="mb-2 text-sm font-semibold text-slate-900">{selectedDate}</div>
 

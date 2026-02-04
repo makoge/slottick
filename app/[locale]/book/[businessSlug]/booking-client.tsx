@@ -45,7 +45,6 @@ type BusinessPublic = {
   slug: string;
   industry?: string | null;
 
-  // ✅ new field from Prisma: Business.description
   description?: string | null;
 
   city?: string | null;
@@ -56,7 +55,6 @@ type BusinessPublic = {
   website?: string | null;
   logoUrl?: string | null;
 
-  // booking header gallery (urls)
   galleryImages: string[];
 };
 
@@ -216,7 +214,7 @@ export default function BookingClient({
     };
   }, [businessSlug]);
 
-  // services
+  // services (✅ includes images)
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -241,7 +239,7 @@ export default function BookingClient({
                 s.depositEnabled && Number.isFinite(Number(s.depositValue))
                   ? Number(s.depositValue)
                   : undefined,
-              images: Array.isArray(s.images) ? s.images.map(String) : []
+              images: Array.isArray(s.images) ? s.images.map(String).filter(Boolean) : []
             }))
           : [];
 
@@ -268,9 +266,7 @@ export default function BookingClient({
 
       try {
         const qs = new URLSearchParams({ businessSlug, date });
-        const res = await fetch(`/api/bookings/availability?${qs.toString()}`, {
-          cache: "no-store"
-        });
+        const res = await fetch(`/api/bookings/availability?${qs.toString()}`, { cache: "no-store" });
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
 
@@ -284,9 +280,7 @@ export default function BookingClient({
               .filter((b: DbDayBooking) => b.startsAt && b.durationMin > 0)
           );
         }
-      } catch {
-        // ignore
-      }
+      } catch {}
     })();
 
     return () => {
@@ -418,16 +412,10 @@ export default function BookingClient({
     <main className="min-h-screen bg-white text-slate-900">
       {/* Top right language switch */}
       <div className="fixed right-4 top-4 z-40 flex gap-2">
-        <a
-          className="rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-white"
-          href={`/en/book/${businessSlug}`}
-        >
+        <a className="rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-white" href={`/en/book/${businessSlug}`}>
           EN
         </a>
-        <a
-          className="rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-white"
-          href={`/fr/book/${businessSlug}`}
-        >
+        <a className="rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-white" href={`/fr/book/${businessSlug}`}>
           FR
         </a>
       </div>
@@ -567,7 +555,6 @@ export default function BookingClient({
       {/* BODY */}
       <section className="bg-white">
         <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-10">
-          {/* Booking options: buttons on the right */}
           {!loadingCustomer ? (
             <div className="rounded-3xl bg-slate-50 p-5 sm:p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -586,16 +573,10 @@ export default function BookingClient({
 
                 {!customer ? (
                   <div className="flex flex-wrap gap-2 sm:justify-end">
-                    <a
-                      className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-                      href={createAccountHref}
-                    >
+                    <a className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" href={createAccountHref}>
                       Create account
                     </a>
-                    <a
-                      className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-                      href={loginHref}
-                    >
+                    <a className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50" href={loginHref}>
                       Log in
                     </a>
                   </div>
@@ -622,6 +603,8 @@ export default function BookingClient({
                   {services.map((s) => {
                     const active = s.id === serviceId;
                     const d = depositLabel(s);
+                    const imgs = Array.isArray(s.images) ? s.images.filter(Boolean) : [];
+                    const thumb = imgs[0];
 
                     return (
                       <button
@@ -634,29 +617,72 @@ export default function BookingClient({
                           setError(null);
                         }}
                         className={[
-                          "rounded-2xl bg-white p-4 text-left shadow-sm ring-1 transition hover:bg-slate-50",
+                          "overflow-hidden rounded-2xl bg-white text-left shadow-sm ring-1 transition hover:bg-slate-50",
                           active ? "ring-slate-900" : "ring-slate-200"
                         ].join(" ")}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="font-semibold">{s.name}</div>
-                            <div className="mt-1 text-sm text-slate-600">
-                              {s.durationMin} min • {formatMoney(s.price, s.currency)}
+                        {/* ✅ service thumbnail */}
+                        {thumb ? (
+                          <div className="relative h-36 w-full bg-slate-100">
+                            <img
+                              src={thumb}
+                              alt={`${s.name} photo`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                            <div className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-xs font-semibold">
+                              {imgs.length} photo{imgs.length === 1 ? "" : "s"}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className="p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="font-semibold">{s.name}</div>
+                              <div className="mt-1 text-sm text-slate-600">
+                                {s.durationMin} min • {formatMoney(s.price, s.currency)}
+                              </div>
+
+                              {d ? (
+                                <div className="mt-3 inline-flex w-fit rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                                  {d}
+                                </div>
+                              ) : null}
                             </div>
 
-                            {d ? (
-                              <div className="mt-3 inline-flex w-fit rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
-                                {d}
-                              </div>
+                            {active ? (
+                              <span className="shrink-0 rounded-full bg-slate-900 px-2 py-1 text-xs font-semibold text-white">
+                                Selected
+                              </span>
                             ) : null}
                           </div>
 
-                          {active ? (
-                            <span className="shrink-0 rounded-full bg-slate-900 px-2 py-1 text-xs font-semibold text-white">
-                              Selected
-                            </span>
-                          ) : null}
+                          {/* ✅ extra mini previews + lightbox */}
+                          {imgs.length > 0 ? (
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              {imgs.slice(0, 4).map((u) => (
+                                <button
+                                  key={u}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setLightboxUrl(u);
+                                  }}
+                                  className="overflow-hidden rounded-lg border border-slate-200"
+                                  title="View photo"
+                                >
+                                  <img src={u} alt="" className="h-10 w-10 object-cover" loading="lazy" />
+                                </button>
+                              ))}
+                              {imgs.length > 4 ? (
+                                <span className="text-xs font-semibold text-slate-600">+{imgs.length - 4}</span>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <div className="mt-3 text-xs text-slate-500">No photos yet.</div>
+                          )}
                         </div>
                       </button>
                     );
@@ -837,3 +863,4 @@ export default function BookingClient({
     </main>
   );
 }
+
