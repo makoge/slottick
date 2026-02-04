@@ -1,5 +1,7 @@
+// app/api/bookings/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getAuthedBusiness } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -16,6 +18,60 @@ function isIsoDate(v: string) {
   return Number.isFinite(d.getTime()) && v.includes("T");
 }
 
+function asISO(d: unknown) {
+  try {
+    if (d instanceof Date) return d.toISOString();
+    return new Date(String(d)).toISOString();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * ✅ GET /api/bookings?scope=owner
+ * Used by dashboard BookingsPanel + stats
+ */
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const scope = url.searchParams.get("scope") || "";
+
+  if (scope !== "owner") {
+    return json({ error: "Unsupported scope" }, 400);
+  }
+
+  const authed = await getAuthedBusiness();
+  if (!authed) return json({ error: "Unauthorized" }, 401);
+
+  const rows = await prisma.booking.findMany({
+    where: { businessId: authed.id },
+    orderBy: [{ startsAt: "asc" }],
+    select: {
+      id: true,
+      startsAt: true,
+      durationMin: true,
+      serviceName: true,
+      price: true,
+      currency: true,
+      customerName: true,
+      customerPhone: true,
+      customerCountry: true,
+      notes: true,
+      status: true
+    }
+  });
+
+  const bookings = rows.map((b) => ({
+    ...b,
+    startsAt: asISO(b.startsAt) // ✅ serialize Date -> ISO string for client
+  }));
+
+  return json({ bookings });
+}
+
+/**
+ * ✅ POST /api/bookings
+ * Used by BookingClient
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({} as any));
@@ -32,13 +88,11 @@ export async function POST(req: Request) {
 
     const customerName = asString(body.customerName || body.fullName || body.name).trim();
     const customerPhone = asString(body.customerPhone || body.phone).trim();
-
-    // BookingClient sends customerEmail
     const customerEmail = asString(body.customerEmail || body.email).trim();
 
     const notes = body.notes == null ? null : asString(body.notes).trim() || null;
 
-    // Validate required fields + return exact missing list
+    // Validate required fields
     const missing: string[] = [];
     if (!businessSlug) missing.push("businessSlug");
     if (!serviceName) missing.push("serviceName");
@@ -52,11 +106,7 @@ export async function POST(req: Request) {
 
     if (missing.length) {
       return json(
-        {
-          error: "Missing fields",
-          missing,
-          receivedKeys: Object.keys(body ?? {})
-        },
+        { error: "Missing fields", missing, receivedKeys: Object.keys(body ?? {}) },
         400
       );
     }
@@ -65,7 +115,6 @@ export async function POST(req: Request) {
       return json({ error: "startsAt must be an ISO datetime string." }, 400);
     }
 
-    // Find business
     const business = await prisma.business.findUnique({
       where: { slug: businessSlug },
       select: { id: true, marketplaceEligibleAt: true }
@@ -73,13 +122,8 @@ export async function POST(req: Request) {
 
     if (!business) return json({ error: "Business not found." }, 404);
 
-    // Optional: block bookings if not eligible
-    // if (!business.marketplaceEligibleAt) return json({ error: "Business not public yet." }, 403);
-
-    // Try linking to actual Service by name (or allow serviceId if you ever add it)
-    const serviceId = body.serviceId
-      ? asString(body.serviceId).trim()
-      : null;
+    // Resolve service (optional)
+    const serviceId = body.serviceId ? asString(body.serviceId).trim() : null;
 
     let resolvedServiceId: string | null = null;
     let resolvedCategory: any = null;
@@ -104,7 +148,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Create booking
     const booking = await prisma.booking.create({
       data: {
         businessId: business.id,
@@ -128,7 +171,6 @@ export async function POST(req: Request) {
 
     return json({ booking }, 200);
   } catch (err: any) {
-    // Prisma unique constraint (double-booked slot)
     if (err?.code === "P2002") {
       return json({ error: "That slot is already booked." }, 409);
     }

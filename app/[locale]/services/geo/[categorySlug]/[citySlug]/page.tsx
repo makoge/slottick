@@ -1,5 +1,7 @@
+// app/[locale]/services/[countrySlug]/[citySlug]/[categorySlug]/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { locales } from "@/lib/i18n";
 import { TARGET_COUNTRIES, TARGET_CATEGORIES } from "@/lib/seo/targets";
 import { slugify } from "@/lib/seo/slug";
@@ -15,9 +17,10 @@ function baseUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL || "https://slottick.com").replace(/\/$/, "");
 }
 
+// Optional OG locale mapping (keep only what you support)
 function ogLocale(locale: string) {
-  const map: Record<string, string> = { en: "en_US", et: "et_EE" };
-  return map[locale] ?? undefined; // or remove entirely
+  const map: Record<string, string> = { en: "en_US", fr: "fr_FR" };
+  return map[locale];
 }
 
 function findCountry(countrySlug: string) {
@@ -30,6 +33,19 @@ function findCity(country: NonNullable<ReturnType<typeof findCountry>>, citySlug
 
 function findCategory(categorySlug: string) {
   return TARGET_CATEGORIES.find((c) => c.slug === categorySlug) ?? null;
+}
+
+// Map category slug -> Explore "category" param
+function exploreCategoryParam(categorySlug: string) {
+  const map: Record<string, string> = {
+    "beauty-salons": "Other",
+    "lash-techs": "Lash",
+    "hair-braiders": "Hair",
+    barbers: "Barber",
+    "nail-salons": "Nails",
+    massage: "Massage"
+  };
+  return map[categorySlug] ?? "Other";
 }
 
 export async function generateStaticParams() {
@@ -61,7 +77,6 @@ export async function generateMetadata({
   const { locale, countrySlug, citySlug, categorySlug } = await params;
 
   const urlBase = baseUrl();
-
   const country = findCountry(countrySlug);
   const city = country ? findCity(country, citySlug) : null;
   const category = findCategory(categorySlug);
@@ -71,15 +86,12 @@ export async function generateMetadata({
   }
 
   const categoryLabel = category.label;
+  const title = `${categoryLabel} in ${city} | Slottick`;
+  const description = `Find and book ${categoryLabel.toLowerCase()} in ${city}, ${country.name}. Compare businesses, check real availability, and book instantly.`;
 
-  const title = `${categoryLabel} in ${city} | Book services on Slottick`;
-  const description = `Find and book ${categoryLabel.toLowerCase()} in ${city}, ${country.name}. Compare businesses, check real availability, and book instantly on Slottick.`;
-
-  const canonical = `${urlBase}/${locale}/seo/${countrySlug}/${citySlug}/${categorySlug}`;
-
-  // ✅ hreflang (only if these pages exist for each locale)
+  const canonical = `${urlBase}/${locale}/services/${countrySlug}/${citySlug}/${categorySlug}`;
   const languages = Object.fromEntries(
-    locales.map((l) => [l, `${urlBase}/${l}/seo/${countrySlug}/${citySlug}/${categorySlug}`])
+    locales.map((l) => [l, `${urlBase}/${l}/services/${countrySlug}/${citySlug}/${categorySlug}`])
   );
 
   const ogImg = `${urlBase}/og.png`;
@@ -118,32 +130,27 @@ export async function generateMetadata({
   };
 }
 
-export default async function SeoLandingPage({ params }: { params: Promise<Params> }) {
+export default async function ServicesLandingPage({
+  params
+}: {
+  params: Promise<Params>;
+}) {
   const { locale, countrySlug, citySlug, categorySlug } = await params;
 
   const urlBase = baseUrl();
-
   const country = findCountry(countrySlug);
   const city = country ? findCity(country, citySlug) : null;
   const category = findCategory(categorySlug);
 
-  if (!country || !city || !category) {
-    return (
-      <main className="min-h-screen bg-white text-slate-900">
-        <div className="mx-auto max-w-3xl px-6 py-12">
-          <h1 className="text-2xl font-bold">Page not found</h1>
-        </div>
-      </main>
-    );
-  }
+  if (!country || !city || !category) notFound();
 
   const categoryLabel = category.label;
-  const canonical = `${urlBase}/${locale}/seo/${countrySlug}/${citySlug}/${categorySlug}`;
+  const canonical = `${urlBase}/${locale}/services/${countrySlug}/${citySlug}/${categorySlug}`;
 
-  // ✅ use absolute Explore URL (better for crawlers + JSON-LD)
+  // Explore (absolute for JSON-LD; use relative in Link)
   const exploreUrl = new URL(`/${locale}/explore`, urlBase);
   exploreUrl.searchParams.set("city", city);
-  exploreUrl.searchParams.set("category", categoryLabel);
+  exploreUrl.searchParams.set("category", exploreCategoryParam(categorySlug));
 
   const siblingCategories = TARGET_CATEGORIES.filter((c) => c.slug !== category.slug).slice(0, 10);
   const siblingCities = country.cities.filter((c) => c !== city).slice(0, 10);
@@ -157,15 +164,15 @@ export default async function SeoLandingPage({ params }: { params: Promise<Param
         name: `How do I book ${categoryLabel.toLowerCase()} in ${city}?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Use Slottick to filter by ${city} and ${categoryLabel}, pick a business, choose a time slot, and confirm instantly.`
+          text: `Open Slottick, filter by ${city} and ${categoryLabel}, pick a business, choose an available slot, and confirm instantly.`
         }
       },
       {
         "@type": "Question",
-        name: `Are there last-minute appointments available in ${city}?`,
+        name: `Are last-minute appointments available in ${city}?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Availability depends on each business. Slottick shows real-time openings based on the provider’s schedule.`
+          text: `Sometimes. Availability depends on each provider, and Slottick only shows time slots that are actually free.`
         }
       },
       {
@@ -173,7 +180,7 @@ export default async function SeoLandingPage({ params }: { params: Promise<Param
         name: `Can I compare businesses before booking?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Yes. Browse listings, compare options, then book directly through the business booking page.`
+          text: `Yes. Compare services and availability, then book directly from the business page.`
         }
       }
     ]
@@ -193,26 +200,26 @@ export default async function SeoLandingPage({ params }: { params: Promise<Param
     <>
       <main className="min-h-screen bg-white text-slate-900">
         <div className="mx-auto max-w-4xl px-6 py-12">
-          <p className="text-sm font-medium text-slate-600">Slottick • Local services</p>
+          <p className="text-sm font-medium text-slate-600">Slottick • Services</p>
 
           <h1 className="mt-2 text-3xl font-bold tracking-tight">
             {categoryLabel} in {city}
           </h1>
 
           <p className="mt-4 text-slate-600">
-            Looking for {categoryLabel.toLowerCase()} in {city}, {country.name}? Slottick helps you find
-            local businesses, compare services, and book instantly with real availability.
+            Find {categoryLabel.toLowerCase()} in {city}, {country.name}. Compare services and durations,
+            then book instantly using real availability.
           </p>
 
           <p className="mt-3 text-slate-600">
-            Filter by city and category, then pick a time slot that fits the provider’s schedule—without
-            back-and-forth messages.
+            My opinion: this page will rank better if it feels like a mini-guide, not a doorway page.
+            Keep the helpful “how to choose” text and internal links — it’s the difference.
           </p>
 
           <ul className="mt-5 list-disc space-y-2 pl-6 text-slate-700">
-            <li>Browse {categoryLabel.toLowerCase()} options in {city}</li>
-            <li>Check real availability (no guessing)</li>
-            <li>Book in minutes and get confirmation</li>
+            <li>See real available slots</li>
+            <li>Compare services, durations, pricing where listed</li>
+            <li>Book fast and get confirmation</li>
           </ul>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -237,7 +244,7 @@ export default async function SeoLandingPage({ params }: { params: Promise<Param
               {siblingCategories.map((c) => (
                 <Link
                   key={c.slug}
-                  href={`/${locale}/seo/${countrySlug}/${citySlug}/${c.slug}`}
+                  href={`/${locale}/services/${countrySlug}/${citySlug}/${c.slug}`}
                   className="text-sm underline text-slate-700 hover:text-slate-900"
                 >
                   {c.label} in {city}
@@ -252,7 +259,7 @@ export default async function SeoLandingPage({ params }: { params: Promise<Param
               {siblingCities.map((ct) => (
                 <Link
                   key={ct}
-                  href={`/${locale}/seo/${countrySlug}/${slugify(ct)}/${categorySlug}`}
+                  href={`/${locale}/services/${countrySlug}/${slugify(ct)}/${categorySlug}`}
                   className="text-sm underline text-slate-700 hover:text-slate-900"
                 >
                   {categoryLabel} in {ct}

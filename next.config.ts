@@ -18,7 +18,12 @@ const nextConfig: NextConfig = {
         source: "/",
         destination: "/en",
         permanent: true
-      }
+      },
+      {
+      source: "/:locale/seo/keyword/:slug",
+      destination: "/:locale/services/discover/:slug",
+      permanent: true
+    }
     ];
   }
 };

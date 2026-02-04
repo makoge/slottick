@@ -75,7 +75,7 @@ export const KEYWORD_PAGES = [
     explore: { category: "Hair", q: "twists" },
     faqs: [
       ["What keywords help?", "Try twists, two-strand twists, Senegalese twists, protective styles."],
-      ["Can I rebook easily?", "Yes—return anytime and choose another slot."],
+      ["Can I rebook easily?", "Yes, return anytime and choose another slot."],
     ],
   },
   {

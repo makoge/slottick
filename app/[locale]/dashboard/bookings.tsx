@@ -41,9 +41,10 @@ export default function BookingsPanel() {
   const [bookings, setBookings] = useState<DbBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   async function refresh() {
-    setLoading(true);
+    setRefreshing(true);
     try {
       const res = await fetch("/api/bookings?scope=owner", { cache: "no-store" });
       if (res.status === 401) {
@@ -54,38 +55,45 @@ export default function BookingsPanel() {
       setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
   useEffect(() => {
     refresh();
+
+    // ✅ auto-poll so bookings show without page refresh
+    const t = setInterval(refresh, 15_000);
+    return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sorted = useMemo(() => {
+  const { upcoming, past } = useMemo(() => {
     const now = Date.now();
-    return [...bookings]
-      .filter((b) => b.status !== "CANCELLED" && b.status !== "DONE")
-      .filter((b) => endsAtMs(b) >= now) // hide finished
+
+    const active = bookings.filter((b) => b.status !== "CANCELLED");
+    const upcoming = active
+      .filter((b) => b.status !== "DONE")
+      .filter((b) => endsAtMs(b) >= now) // still upcoming
       .sort((a, b) => String(a.startsAt).localeCompare(String(b.startsAt)));
+
+    const past = active
+      .filter((b) => b.status === "DONE" || endsAtMs(b) < now)
+      .sort((a, b) => String(b.startsAt).localeCompare(String(a.startsAt)));
+
+    return { upcoming, past };
   }, [bookings]);
 
   async function cancel(id: string) {
     setBusyId(id);
     try {
-      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/cancel`, {
-        method: "POST"
-      });
-
+      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/cancel`, { method: "POST" });
       if (res.status === 401) {
         router.replace(`/${locale}/login`);
         return;
       }
-
       if (res.ok) {
-        setBookings((prev) =>
-          prev.map((b) => (b.id === id ? { ...b, status: "CANCELLED" } : b))
-        );
+        setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: "CANCELLED" } : b)));
       }
     } finally {
       setBusyId(null);
@@ -95,88 +103,109 @@ export default function BookingsPanel() {
   async function done(id: string) {
     setBusyId(id);
     try {
-      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/done`, {
-        method: "POST"
-      });
-
+      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/done`, { method: "POST" });
       if (res.status === 401) {
         router.replace(`/${locale}/login`);
         return;
       }
-
       if (res.ok) {
-        setBookings((prev) =>
-          prev.map((b) => (b.id === id ? { ...b, status: "DONE" } : b))
-        );
+        setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: "DONE" } : b)));
       }
     } finally {
       setBusyId(null);
     }
   }
 
+  function BookingCard({ b }: { b: DbBooking }) {
+    const { date, time } = toLocalDateTimeParts(b.startsAt);
+    const busy = busyId === b.id;
+
+    return (
+      <div className="rounded-2xl border border-slate-200 p-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="font-semibold">
+              {date} • {time} — {b.customerName}
+            </div>
+            <div className="mt-1 text-sm text-slate-600">
+              {b.serviceName} • {b.durationMin} min • {formatMoney(b.price, b.currency as any)}
+            </div>
+            <div className="mt-1 text-sm text-slate-600">
+              {b.customerPhone}
+              {b.notes ? ` • Notes: ${b.notes}` : ""}
+            </div>
+          </div>
+
+          <div className="flex w-fit gap-2">
+            <button
+              type="button"
+              onClick={() => done(b.id)}
+              disabled={busy}
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+            >
+              {busy ? "Saving..." : "Done"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => cancel(b.id)}
+              disabled={busy}
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+            >
+              {busy ? "Cancelling..." : "Cancel"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <section className="mt-6 rounded-2xl border border-slate-200 p-6 shadow-sm">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Bookings</h2>
-        <span className="text-sm text-slate-600">
-          {loading ? "Loading..." : `${sorted.length} total`}
-        </span>
+
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-slate-600">
+            {loading ? "Loading..." : `${upcoming.length} upcoming`}
+          </span>
+
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={refreshing}
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
+          >
+            {refreshing ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
       </div>
 
       {loading ? (
         <p className="mt-3 text-sm text-slate-600">Loading bookings...</p>
-      ) : sorted.length === 0 ? (
+      ) : upcoming.length === 0 ? (
         <p className="mt-3 text-sm text-slate-600">
-          No bookings yet, share your link and the first one will appear here.
+          No upcoming bookings yet.
         </p>
       ) : (
         <div className="mt-4 grid gap-3">
-          {sorted.map((b) => {
-            const { date, time } = toLocalDateTimeParts(b.startsAt);
-            const busy = busyId === b.id;
-
-            return (
-              <div key={b.id} className="rounded-2xl border border-slate-200 p-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <div className="font-semibold">
-                      {date} • {time} — {b.customerName}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-600">
-                      {b.serviceName} • {b.durationMin} min •{" "}
-                      {formatMoney(b.price, b.currency as any)}
-                    </div>
-                    <div className="mt-1 text-sm text-slate-600">
-                      {b.customerPhone}
-                      {b.notes ? ` • Notes: ${b.notes}` : ""}
-                    </div>
-                  </div>
-
-                  <div className="flex w-fit gap-2">
-                    <button
-                      type="button"
-                      onClick={() => done(b.id)}
-                      disabled={busy}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
-                    >
-                      {busy ? "Saving..." : "Done"}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => cancel(b.id)}
-                      disabled={busy}
-                      className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
-                    >
-                      {busy ? "Cancelling..." : "Cancel"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {upcoming.map((b) => (
+            <BookingCard key={b.id} b={b} />
+          ))}
         </div>
       )}
+
+      {/* Past */}
+      {!loading && past.length > 0 ? (
+        <div className="mt-8">
+          <div className="text-sm font-semibold text-slate-700">Past</div>
+          <div className="mt-3 grid gap-3">
+            {past.slice(0, 10).map((b) => (
+              <BookingCard key={b.id} b={b} />
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

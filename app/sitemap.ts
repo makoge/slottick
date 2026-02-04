@@ -8,7 +8,7 @@ import { TARGET_COUNTRIES, TARGET_CATEGORIES } from "@/lib/seo/targets";
 import { slugify } from "@/lib/seo/slug";
 import { SEO_CITIES_20, SEO_INTENTS_10 } from "@/lib/seo/near-me-targets";
 
-// My opinion: don’t ship french URLs until pages are truly translated
+// My opinion: only index locales that are truly translated.
 const INDEX_LOCALES = ["en"] as const;
 
 function baseUrl() {
@@ -23,14 +23,13 @@ function safeSlug(v: unknown) {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const site = baseUrl();
   const now = new Date();
-
   const urls: MetadataRoute.Sitemap = [];
 
   const useLocales = locales.filter((l) =>
     (INDEX_LOCALES as readonly string[]).includes(l)
   );
 
-  // Static pages
+  // ✅ Static pages
   const staticPaths = ["", "/explore", "/privacy", "/terms", "/contact"];
   for (const locale of useLocales) {
     for (const path of staticPaths) {
@@ -44,27 +43,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // Guides (only if these routes exist)
-  const guideSlugs = ["bristol-beauty-salons", "bristol-hair-braiders", "lash-techs-bristol"];
+  // ✅ NEW Guides: /[locale]/guides/[locationSlug]/[serviceSlug]
+  // locationSlug should match SEO_CITIES_20 slugs (or whatever you use)
+  // serviceSlug should match your TARGET_CATEGORIES slugs (or a separate guide services list)
   for (const locale of useLocales) {
-    for (const g of guideSlugs) {
-      urls.push({
-        url: `${site}/${locale}/guides/${g}`,
-        lastModified: now,
-        changeFrequency: "monthly",
-        priority: 0.7
-      });
+    for (const loc of SEO_CITIES_20) {
+      for (const svc of TARGET_CATEGORIES) {
+        urls.push({
+          url: `${site}/${locale}/guides/${loc.slug}/${svc.slug}`,
+          lastModified: now,
+          changeFrequency: "monthly",
+          priority: 0.65
+        });
+      }
     }
   }
 
-  // Keyword pages: /[locale]/seo/keyword/[slug]
+  // ✅ Keyword discovery pages: /[locale]/services/discover/[slug]
   for (const locale of useLocales) {
     for (const p of KEYWORD_PAGES) {
       const slug = safeSlug((p as any).slug);
       if (!slug) continue;
 
       urls.push({
-        url: `${site}/${locale}/seo/keyword/${slug}`,
+        url: `${site}/${locale}/services/discover/${slug}`,
         lastModified: now,
         changeFrequency: "monthly",
         priority: 0.6
@@ -72,7 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // Geo pages (your earlier file): /[locale]/seo/[countrySlug]/[citySlug]/[categorySlug]
+  // ✅ Geo pages: /[locale]/services/[countrySlug]/[citySlug]/[categorySlug]
   for (const locale of useLocales) {
     for (const country of TARGET_COUNTRIES) {
       for (const city of country.cities) {
@@ -84,7 +86,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           if (!categorySlug) continue;
 
           urls.push({
-            url: `${site}/${locale}/seo/${country.slug}/${citySlug}/${categorySlug}`,
+            url: `${site}/${locale}/services/${country.slug}/${citySlug}/${categorySlug}`,
             lastModified: now,
             changeFrequency: "monthly",
             priority: 0.65
@@ -94,12 +96,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // Intent pages (your file): /[locale]/seo/[intent]/[city]
+  // ✅ Intent pages renamed: /[locale]/services/[intent]/[city]
   for (const locale of useLocales) {
     for (const intent of SEO_INTENTS_10) {
       for (const city of SEO_CITIES_20) {
         urls.push({
-          url: `${site}/${locale}/seo/${intent.slug}/${city.slug}`,
+          url: `${site}/${locale}/services/${intent.slug}/${city.slug}`,
           lastModified: now,
           changeFrequency: "monthly",
           priority: 0.6
@@ -108,7 +110,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // Explore country/category landings (only if this route exists in your app):
+  // ✅ Explore country/category landings (keep only if this route exists):
   // /[locale]/explore/country/[countrySlug]/[categorySlug]
   for (const locale of useLocales) {
     for (const country of TARGET_COUNTRIES) {
@@ -126,10 +128,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // Dynamic business URLs (only include if you actually have that route):
-  // You previously showed booking route: /[locale]/book/[slug]
-  // This sitemap currently uses /explore/business/... which might not exist.
-  // My opinion: sitemap should include the REAL booking pages.
+  // ✅ Booking pages: /[locale]/book/[slug]
   try {
     const businesses = await prisma.business.findMany({
       where: { marketplaceEligibleAt: { not: null } },
