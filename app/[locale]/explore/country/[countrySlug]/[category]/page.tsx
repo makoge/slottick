@@ -1,7 +1,7 @@
 // app/[locale]/explore/country/[countrySlug]/[category]/page.tsx
 import type { Metadata } from "next";
 import ExploreClient from "../../../explore-client";
-import { locales } from "@/lib/i18n";
+import { getMessages, locales } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
 import { ServiceCategory } from "@prisma/client";
 
@@ -105,12 +105,16 @@ export default async function Page({
 }) {
   const { locale, countrySlug, category } = await params;
 
+  // ✅ FIX: always load dict and pass it to ExploreClient
+  const dict = await getMessages(locale);
+
   const country = COUNTRY_LANDINGS.find((x) => x.slug === countrySlug);
   const cat = CATEGORY_LANDINGS.find((x) => x.slug === category);
 
   if (!country || !cat) {
     return (
       <ExploreClient
+        dict={dict}
         businesses={[]}
         industries={[]}
         heading="Explore"
@@ -158,7 +162,6 @@ export default async function Page({
       .filter(Boolean)
       .sort((a, b) => a.localeCompare(b));
   } catch {
-    // ✅ IMPORTANT: don't crash prerender/build
     businesses = [];
     industries = [];
   }
@@ -200,6 +203,7 @@ export default async function Page({
   return (
     <>
       <ExploreClient
+        dict={dict}
         businesses={businesses as any}
         industries={industries}
         heading={`${cat.title} in ${country.name}`}
