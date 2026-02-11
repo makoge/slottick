@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/lib/services";
+import { useMessages } from "@/lib/use-messages";
+import { t } from "@/lib/i18n";
+import { useParams } from "next/navigation";
 
 type Mode = "today" | "upcoming" | "all";
 
@@ -53,9 +56,25 @@ function mondayISO(isoDate: string) {
   return toISODateLocal(startOfWeekMonday(anchor));
 }
 
-const weekdayLabel = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
 export default function SchedulePanel() {
+  const params = useParams<{ locale?: string }>();
+const locale = params?.locale ?? "en";
+
+const messages = useMessages(locale);
+
+  const weekdayLabel = useMemo(
+    () => [
+      t(messages, "schedule.weekdays.mon"),
+      t(messages, "schedule.weekdays.tue"),
+      t(messages, "schedule.weekdays.wed"),
+      t(messages, "schedule.weekdays.thu"),
+      t(messages, "schedule.weekdays.fri"),
+      t(messages, "schedule.weekdays.sat"),
+      t(messages, "schedule.weekdays.sun")
+    ],
+    [messages]
+  );
+
   const [bookings, setBookings] = useState<DbBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,9 +97,8 @@ export default function SchedulePanel() {
 
   useEffect(() => {
     refresh();
-    // optional: auto-refresh so it updates without reload
-    const t = setInterval(refresh, 15_000);
-    return () => clearInterval(t);
+    const tmr = setInterval(refresh, 15_000);
+    return () => clearInterval(tmr);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -92,7 +110,6 @@ export default function SchedulePanel() {
       return;
     }
 
-    // if upcoming and selectedDate is in the past, bring it to today
     if (mode === "upcoming" && selectedDate < today) {
       setSelectedDate(today);
       setWeekStart(mondayISO(today));
@@ -111,23 +128,19 @@ export default function SchedulePanel() {
       return sorted.filter((b) => toLocalParts(b.startsAt).date === today);
     }
 
-    // upcoming: today and future
     return sorted.filter((b) => toLocalParts(b.startsAt).date >= today);
   }, [bookings, mode, today]);
 
-  // all upcoming dates list (sorted)
   const upcomingDates = useMemo(() => {
     const set = new Set<string>();
     for (const b of filtered) set.add(toLocalParts(b.startsAt).date);
     return [...set].sort();
   }, [filtered]);
 
-  // if upcoming mode, keep week aligned with selectedDate
   useEffect(() => {
     setWeekStart(mondayISO(selectedDate));
   }, [selectedDate]);
 
-  // counts for badges (across filtered, not only current week)
   const countsByDate = useMemo(() => {
     const map = new Map<string, number>();
     for (const b of filtered) {
@@ -137,20 +150,24 @@ export default function SchedulePanel() {
     return map;
   }, [filtered]);
 
-  // week buttons driven by weekStart (so we can navigate weeks)
   const week = useMemo(() => {
     const ws = new Date(`${weekStart}T00:00:00`);
     return Array.from({ length: 7 }).map((_, i) => {
       const d = addDays(ws, i);
       return { label: weekdayLabel[i], iso: toISODateLocal(d) };
     });
-  }, [weekStart]);
+  }, [weekStart, weekdayLabel]);
 
   const dayBookings = useMemo(() => {
     return filtered.filter((b) => toLocalParts(b.startsAt).date === selectedDate);
   }, [filtered, selectedDate]);
 
-  const title = mode === "today" ? "Today" : mode === "upcoming" ? "Upcoming" : "All";
+  const title =
+    mode === "today"
+      ? t(messages, "schedule.modes.today")
+      : mode === "upcoming"
+        ? t(messages, "schedule.modes.upcoming")
+        : t(messages, "schedule.modes.all");
 
   const totalUpcoming = useMemo(() => {
     if (mode !== "upcoming") return 0;
@@ -160,41 +177,52 @@ export default function SchedulePanel() {
   function goWeek(deltaDays: number) {
     const ws = new Date(`${weekStart}T00:00:00`);
     const next = addDays(ws, deltaDays);
-    setWeekStart(toISODateLocal(next));
+    const nextWeekStartIso = toISODateLocal(next);
 
-    // keep selectedDate inside the visible week for nicer UX
+    // opinion: guard before setting state to avoid “jumping” UX
+    if (mode === "upcoming" && nextWeekStartIso < mondayISO(today)) return;
+
+    setWeekStart(nextWeekStartIso);
+
     const nextSelected = addDays(next, 0);
     const nextIso = toISODateLocal(nextSelected);
-    if (mode === "upcoming" && nextIso < today) return; // don’t go back into past in upcoming mode
+    if (mode === "upcoming" && nextIso < today) return;
     setSelectedDate(nextIso);
   }
 
   function jumpToNextBookedDay() {
-    // find the next date > selectedDate that has bookings
     const next = upcomingDates.find((d) => d > selectedDate);
     if (!next) return;
     setSelectedDate(next);
     setWeekStart(mondayISO(next));
   }
 
+  function copyBookingText(b: DbBooking, time: string) {
+    navigator.clipboard
+      .writeText(`${b.customerName} — ${selectedDate} ${time} — ${b.serviceName}`)
+      .catch(() => {});
+  }
+
   return (
     <section className="mt-6 rounded-2xl border border-slate-200 p-6 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Schedule</h2>
+          <h2 className="text-lg font-semibold">{t(messages, "schedule.title")}</h2>
           <p className="mt-1 text-sm text-slate-600">
-            {title} appointments • Tap a day.
-            {mode === "upcoming" ? ` (${totalUpcoming} total)` : ""}
-            {loading ? " • Loading…" : ""}
+            {t(messages, "schedule.subtitle")
+              .replace("{title}", title)
+              .replace("{n}", String(totalUpcoming))}
+            {mode !== "upcoming" ? "" : ""}
+            {loading ? ` • ${t(messages, "common.loading")}` : ""}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           {(
             [
-              { id: "today", label: "Today" },
-              { id: "upcoming", label: "Upcoming" },
-              { id: "all", label: "All" }
+              { id: "today", label: t(messages, "schedule.modes.today") },
+              { id: "upcoming", label: t(messages, "schedule.modes.upcoming") },
+              { id: "all", label: t(messages, "schedule.modes.all") }
             ] as const
           ).map((x) => {
             const active = mode === x.id;
@@ -205,7 +233,9 @@ export default function SchedulePanel() {
                 onClick={() => setMode(x.id)}
                 className={[
                   "rounded-xl border px-4 py-2 text-sm font-semibold",
-                  active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 hover:bg-slate-50"
+                  active
+                    ? "border-slate-900 bg-slate-900 text-white"
+                    : "border-slate-200 hover:bg-slate-50"
                 ].join(" ")}
               >
                 {x.label}
@@ -224,14 +254,14 @@ export default function SchedulePanel() {
             disabled={mode === "upcoming" && weekStart <= mondayISO(today)}
             className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
           >
-            Prev
+            {t(messages, "schedule.actions.prev")}
           </button>
           <button
             type="button"
             onClick={() => goWeek(7)}
             className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50"
           >
-            Next
+            {t(messages, "schedule.actions.next")}
           </button>
         </div>
 
@@ -242,7 +272,7 @@ export default function SchedulePanel() {
             disabled={!upcomingDates.some((d) => d > selectedDate)}
             className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
           >
-            Next booked day
+            {t(messages, "schedule.actions.nextBookedDay")}
           </button>
         ) : null}
       </div>
@@ -263,12 +293,16 @@ export default function SchedulePanel() {
               className={[
                 "relative rounded-xl border px-3 py-2 text-sm font-semibold",
                 disabled ? "opacity-40 cursor-not-allowed" : "",
-                active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 hover:bg-slate-50"
+                active
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-200 hover:bg-slate-50"
               ].join(" ")}
             >
               <div className="flex items-center gap-2">
                 <span>{d.label}</span>
-                <span className={active ? "text-white/80" : "text-slate-500"}>{d.iso.slice(8, 10)}</span>
+                <span className={active ? "text-white/80" : "text-slate-500"}>
+                  {d.iso.slice(8, 10)}
+                </span>
               </div>
 
               {count > 0 ? (
@@ -292,7 +326,7 @@ export default function SchedulePanel() {
 
         {dayBookings.length === 0 ? (
           <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
-            No appointments for this day.
+            {t(messages, "schedule.emptyDay")}
           </div>
         ) : (
           <div className="grid gap-3">
@@ -306,7 +340,8 @@ export default function SchedulePanel() {
                         {time} • {b.customerName}
                       </div>
                       <div className="mt-1 text-sm text-slate-600">
-                        {b.serviceName} • {b.durationMin} min • {formatMoney(b.price, b.currency as any)}
+                        {b.serviceName} • {b.durationMin} {t(messages, "schedule.minutes")} •{" "}
+                        {formatMoney(b.price, b.currency as any)}
                       </div>
                       <div className="mt-1 text-sm text-slate-600">
                         {b.customerPhone}
@@ -317,13 +352,9 @@ export default function SchedulePanel() {
                     <button
                       className="w-fit rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
                       type="button"
-                      onClick={() => {
-                        navigator.clipboard
-                          .writeText(`${b.customerName} — ${selectedDate} ${time} — ${b.serviceName}`)
-                          .catch(() => {});
-                      }}
+                      onClick={() => copyBookingText(b, time)}
                     >
-                      Copy
+                      {t(messages, "common.copy")}
                     </button>
                   </div>
                 </div>

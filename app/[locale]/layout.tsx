@@ -3,8 +3,12 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
-import { locales } from "@/lib/i18n";
+import { notFound } from "next/navigation";
+
 import InstallPWAButton from "@/app/components/InstallPWAButton";
+import { getMessages, locales, defaultLocale, t, type Locale } from "@/lib/i18n";
+import LocaleSwitcher from "@/app/components/LocaleSwitcher";
+
 
 const SITE_NAME = "Slottick";
 const SITE_URL = "https://slottick.com"; // non-www, https
@@ -14,9 +18,13 @@ export function generateStaticParams() {
 }
 
 function ogLocale(locale: string) {
-  // OpenGraph locale expects region format (ex: en_US). If unknown, omit.
   const map: Record<string, string> = { en: "en_US", fr: "fr_FR" };
   return map[locale] ?? undefined;
+}
+
+function ensureLocale(locale: string): Locale {
+  if (locales.includes(locale as Locale)) return locale as Locale;
+  return defaultLocale;
 }
 
 export async function generateMetadata({
@@ -24,12 +32,26 @@ export async function generateMetadata({
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale: rawLocale } = await params;
+
+  // For metadata, don’t 404—fallback to default to avoid edge weirdness.
+  const locale = ensureLocale(rawLocale);
+
+  const messages = await getMessages(locale);
 
   const canonical = `${SITE_URL}/${locale}`;
-  const titleDefault = "Slottick — Booking management for service businesses";
+
+  // i18n-ready: if keys don’t exist yet, your t() returns the key,
+  // so we keep hard fallbacks to avoid ugly output.
+  const titleDefault =
+    t(messages, "meta.home.title") !== "meta.home.title"
+      ? t(messages, "meta.home.title")
+      : "Slottick — Booking management for service businesses";
+
   const description =
-    "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.";
+    t(messages, "meta.home.description") !== "meta.home.description"
+      ? t(messages, "meta.home.description")
+      : "Booking management platform for salons, barbers and service businesses. Share one link that always shows real availability.";
 
   return {
     metadataBase: new URL(SITE_URL),
@@ -44,9 +66,13 @@ export async function generateMetadata({
     },
     description,
 
-    // ✅ IMPORTANT: don’t emit hreflang until you truly translate the content.
-    // If you later translate, re-add: alternates: { canonical, languages: {...} }
-    alternates: { canonical },
+    
+    alternates: { canonical, 
+      languages: {
+    en: `${SITE_URL}/en`,
+    fr: `${SITE_URL}/fr`,
+  }, 
+},
 
     robots: {
       index: true,
@@ -103,7 +129,13 @@ export default async function LocaleLayout({
   children: ReactNode;
   params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
+  const { locale: rawLocale } = await params;
+
+  // For pages/layout, invalid locale should 404 (cleaner + safer)
+  if (!locales.includes(rawLocale as Locale)) notFound();
+  const locale = rawLocale as Locale;
+
+  const messages = await getMessages(locale);
 
   const webSiteJsonLd = {
     "@context": "https://schema.org",
@@ -129,16 +161,18 @@ export default async function LocaleLayout({
               href={`/${locale}`}
               className="text-lg font-semibold tracking-tight text-white"
             >
-              Slottick
+              {t(messages, "brand.name") === "brand.name" ? SITE_NAME : t(messages, "brand.name")}
             </Link>
+             
 
             <div className="flex items-center gap-3">
               <InstallPWAButton />
+              <LocaleSwitcher />
               <Link
                 href={`/${locale}/login`}
                 className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
               >
-                Login
+                {t(messages, "nav.login") === "nav.login" ? "Login" : t(messages, "nav.login")}
               </Link>
             </div>
           </div>
@@ -146,7 +180,6 @@ export default async function LocaleLayout({
 
         {/* MAIN */}
         <main className="bg-white">
-          {/* ✅ remove global py-16 to avoid double-padding (pages should control spacing) */}
           <div className="mx-auto max-w-6xl px-6 py-12">{children}</div>
         </main>
 
@@ -159,13 +192,13 @@ export default async function LocaleLayout({
 
             <nav className="flex gap-4 text-sm">
               <Link className="text-slate-300 hover:text-white" href={`/${locale}/privacy`}>
-                Privacy
+                {t(messages, "footer.privacy") === "footer.privacy" ? "Privacy" : t(messages, "footer.privacy")}
               </Link>
               <Link className="text-slate-300 hover:text-white" href={`/${locale}/terms`}>
-                Terms
+                {t(messages, "footer.terms") === "footer.terms" ? "Terms" : t(messages, "footer.terms")}
               </Link>
               <Link className="text-slate-300 hover:text-white" href={`/${locale}/contact`}>
-                Contact us
+                {t(messages, "footer.contact") === "footer.contact" ? "Contact us" : t(messages, "footer.contact")}
               </Link>
             </nav>
           </div>

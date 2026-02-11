@@ -4,6 +4,7 @@ import ExploreClient from "./explore-client";
 import { locales } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
 import { Industry, ServiceCategory } from "@prisma/client";
+import { getDictionary } from "@/lib/dictionaries"; // ✅ adjust path if yours differs
 
 export const revalidate = 3600;
 
@@ -16,7 +17,7 @@ function normalize(s: unknown) {
 }
 
 function ogLocale(locale: string) {
-  const map: Record<string, string> = { en: "en_US", et: "et_EE" };
+  const map: Record<string, string> = { en: "en_US", fr: "fr_FR", et: "et_EE" };
   return map[locale] ?? undefined;
 }
 
@@ -27,7 +28,7 @@ function hasFilters(sp: Record<string, string | string[] | undefined>) {
   return Boolean(q || city || industry);
 }
 
-/** URL/label -> Industry enum */
+/** URL/label -> Industry enum (accept enum keys + old EN/FR labels) */
 function toIndustryEnum(input: unknown): Industry | undefined {
   const raw = String(input ?? "").trim();
   if (!raw) return undefined;
@@ -35,29 +36,26 @@ function toIndustryEnum(input: unknown): Industry | undefined {
   if (Object.values(Industry).includes(raw as Industry)) return raw as Industry;
 
   const map: Record<string, Industry> = {
+    // EN
     "Beauty & care": Industry.BEAUTY_AND_CARE,
     "Wellness & lifestyle": Industry.WELLNESS_AND_LIFESTYLE,
     "Creative services": Industry.CREATIVE_SERVICES,
     "Home & local": Industry.HOME_AND_LOCAL,
-    "Education & professionals": Industry.EDUCATION_AND_PROFESSIONALS
+    "Education & professionals": Industry.EDUCATION_AND_PROFESSIONALS,
+
+    // FR
+    "Beauté & soins": Industry.BEAUTY_AND_CARE,
+    "Bien-être & lifestyle": Industry.WELLNESS_AND_LIFESTYLE,
+    "Services créatifs": Industry.CREATIVE_SERVICES,
+    "Maison & local": Industry.HOME_AND_LOCAL,
+    "Éducation & professionnels": Industry.EDUCATION_AND_PROFESSIONALS,
+    "Education & professionnels": Industry.EDUCATION_AND_PROFESSIONALS
   };
 
   return map[raw];
 }
 
-/** Industry enum -> pretty label for dropdown */
-function industryLabel(x: Industry) {
-  const labels: Record<Industry, string> = {
-    BEAUTY_AND_CARE: "Beauty & care",
-    WELLNESS_AND_LIFESTYLE: "Wellness & lifestyle",
-    CREATIVE_SERVICES: "Creative services",
-    HOME_AND_LOCAL: "Home & local",
-    EDUCATION_AND_PROFESSIONALS: "Education & professionals"
-  };
-  return labels[x] ?? String(x);
-}
-
-/** Try to interpret search text as a ServiceCategory enum (because it's enum in Prisma) */
+/** Try to interpret search text as a ServiceCategory enum */
 function toServiceCategoryFromQuery(q: string): ServiceCategory | undefined {
   const s = q.trim().toLowerCase();
   if (!s) return undefined;
@@ -74,6 +72,7 @@ function toServiceCategoryFromQuery(q: string): ServiceCategory | undefined {
     brow: ServiceCategory.BROWS,
     brows: ServiceCategory.BROWS,
     eyebrow: ServiceCategory.BROWS,
+    eyebrows: ServiceCategory.BROWS,
 
     hair: ServiceCategory.HAIR,
     haircut: ServiceCategory.HAIR,
@@ -87,15 +86,11 @@ function toServiceCategoryFromQuery(q: string): ServiceCategory | undefined {
     makeup: ServiceCategory.MAKEUP,
     skincare: ServiceCategory.SKINCARE,
     tattoo: ServiceCategory.TATTOO,
-    fitness: ServiceCategory.FITNESS,
 
     other: ServiceCategory.OTHER
   };
 
-  // direct hit
   if (map[s]) return map[s];
-
-  // fuzzy match (e.g. "hair stylist")
   const hit = Object.keys(map).find((k) => s.includes(k));
   return hit ? map[hit] : undefined;
 }
@@ -112,12 +107,15 @@ export async function generateMetadata({
 
   const siteName = "Slottick";
   const baseUrl = envBaseUrl();
+
   const canonical = `${baseUrl}/${locale}/explore`;
   const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}/explore`]));
 
-  const title = "Explore services near you";
+  const title = locale === "fr" ? "Explorer des services près de vous" : "Explore services near you";
   const description =
-    "Explore and book trusted businesses near you. Search by service name, filter by city and industry.";
+    locale === "fr"
+      ? "Explorez et réservez des entreprises fiables près de chez vous. Recherchez un service, filtrez par ville et secteur."
+      : "Explore and book trusted businesses near you. Search by service and filter by city and industry.";
 
   const filtered = hasFilters(sp);
 
@@ -155,14 +153,15 @@ export default async function Page({
   const { locale } = await params;
   const sp = await searchParams;
 
+  const dict = await getDictionary(locale); // ✅
+
   const qRaw = normalize(sp.q);
-  const q = qRaw.toLowerCase();
+  const qLower = qRaw.toLowerCase();
   const city = normalize(sp.city);
 
   const industryEnum = toIndustryEnum(normalize(sp.industry));
-  const serviceCategoryFromQ = toServiceCategoryFromQuery(q);
+  const serviceCategoryFromQ = toServiceCategoryFromQuery(qLower);
 
-  // ✅ Industries dropdown (pretty labels)
   const industriesRaw = await prisma.business.findMany({
     select: { industry: true },
     distinct: ["industry"]
@@ -171,8 +170,7 @@ export default async function Page({
   const industries = industriesRaw
     .map((x) => x.industry)
     .filter((x): x is Industry => Boolean(x))
-    .sort((a, b) => String(a).localeCompare(String(b)))
-    .map(industryLabel);
+    .sort((a, b) => String(a).localeCompare(String(b)));
 
   const businesses = await prisma.business.findMany({
     take: 500,
@@ -180,21 +178,18 @@ export default async function Page({
     where: {
       ...(city ? { city } : {}),
       ...(industryEnum ? { industry: industryEnum } : {}),
-      ...(q
+      ...(qLower
         ? {
             OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { city: { contains: q, mode: "insensitive" } },
-              { country: { contains: q, mode: "insensitive" } },
+              { name: { contains: qLower, mode: "insensitive" } },
+              { city: { contains: qLower, mode: "insensitive" } },
+              { country: { contains: qLower, mode: "insensitive" } },
               {
                 services: {
                   some: {
                     OR: [
-                      { name: { contains: q, mode: "insensitive" } },
-                      // ✅ enum-safe: only add this OR branch if we can map q -> enum
-                      ...(serviceCategoryFromQ
-                        ? [{ category: { equals: serviceCategoryFromQ } }]
-                        : [])
+                      { name: { contains: qLower, mode: "insensitive" } },
+                      ...(serviceCategoryFromQ ? [{ category: { equals: serviceCategoryFromQ } }] : [])
                     ]
                   }
                 }
@@ -243,10 +238,11 @@ export default async function Page({
     <>
       <ExploreClient
         businesses={businesses as any}
-        industries={industries.length ? industries : ["Beauty & care"]}
+        industries={industries.length ? (industries as any) : ([Industry.BEAUTY_AND_CARE] as any)}
         initialQ={qRaw}
         initialCity={normalize(sp.city)}
         initialIndustry={(normalize(sp.industry) || "All") as any}
+        dict={dict} // ✅ required by the fixed ExploreClient
       />
 
       <script

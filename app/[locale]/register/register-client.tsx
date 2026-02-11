@@ -3,14 +3,23 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/lib/use-locale";
+import { useMessages } from "@/lib/use-messages";
+import { t } from "@/lib/i18n";
 
-const INDUSTRY_OPTIONS = [
-  "Beauty & care",
-  "Wellness & lifestyle",
-  "Creative services",
-  "Home & local",
-  "Education & professionals"
-] as const;
+type IndustryKey =
+  | "BEAUTY_AND_CARE"
+  | "WELLNESS_AND_LIFESTYLE"
+  | "CREATIVE_SERVICES"
+  | "HOME_AND_LOCAL"
+  | "EDUCATION_AND_PROFESSIONALS";
+
+const INDUSTRY_OPTIONS: { key: IndustryKey; labelKey: string }[] = [
+  { key: "BEAUTY_AND_CARE", labelKey: "register.industry.beauty" },
+  { key: "WELLNESS_AND_LIFESTYLE", labelKey: "register.industry.wellness" },
+  { key: "CREATIVE_SERVICES", labelKey: "register.industry.creative" },
+  { key: "HOME_AND_LOCAL", labelKey: "register.industry.home" },
+  { key: "EDUCATION_AND_PROFESSIONALS", labelKey: "register.industry.education" }
+];
 
 function slugify(input: string) {
   return input
@@ -29,14 +38,13 @@ function isValidEmail(v: string) {
 export default function RegisterClient() {
   const locale = useLocale("en");
   const router = useRouter();
+  const messages = useMessages(locale); // ✅ pass locale so it loads correct json
 
   const [businessName, setBusinessName] = useState("");
-  const [industry, setIndustry] =
-    useState<(typeof INDUSTRY_OPTIONS)[number]>("Beauty & care");
+  const [industry, setIndustry] = useState<IndustryKey>("BEAUTY_AND_CARE"); // ✅ stable key
 
   const [city, setCity] = useState("Tallinn");
   const [country, setCountry] = useState("EE");
-
 
   const [street, setStreet] = useState("");
   const [postalCode, setPostalCode] = useState("");
@@ -51,7 +59,6 @@ export default function RegisterClient() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // ✅ logo upload (optional)
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
 
@@ -66,14 +73,9 @@ export default function RegisterClient() {
       const form = new FormData();
       form.append("file", logoFile);
 
-      const res = await fetch("/api/uploads/logo", {
-        method: "POST",
-        body: form
-      });
-
+      const res = await fetch("/api/uploads/logo", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Logo upload failed.");
-
+      if (!res.ok) throw new Error(data.error || t(messages, "register.errors.logoUploadFailed"));
       return data.url as string;
     } finally {
       setLogoUploading(false);
@@ -84,32 +86,24 @@ export default function RegisterClient() {
     const bn = businessName.trim();
     const ct = city.trim();
     const cc = country.trim();
-    const st = street.trim();
 
-    if (!bn) return "Business name is required.";
-    if (!finalSlug) return "Booking slug is required.";
-    if (!ct) return "City is required.";
-    if (!cc || cc.length < 2) return "Country code is required (e.g. EE).";
-    
+    if (!bn) return t(messages, "register.errors.businessNameRequired");
+    if (!finalSlug) return t(messages, "register.errors.slugRequired");
+    if (!ct) return t(messages, "register.errors.cityRequired");
+    if (!cc || cc.length < 2) return t(messages, "register.errors.countryRequired");
 
     const em = email.trim();
-    if (!em || !isValidEmail(em)) return "Please enter a valid email.";
+    if (!em || !isValidEmail(em)) return t(messages, "register.errors.emailInvalid");
 
-    if (password.length < 8) return "Password must be at least 8 characters.";
-    if (password !== confirmPassword) return "Passwords do not match.";
+    if (password.length < 8) return t(messages, "register.errors.passwordMin");
+    if (password !== confirmPassword) return t(messages, "register.errors.passwordMismatch");
 
-    // optional logo checks
     if (logoFile) {
-      const maxBytes = 2 * 1024 * 1024; // 2MB
-      if (logoFile.size > maxBytes) return "Logo too large (max 2MB).";
+      const maxBytes = 2 * 1024 * 1024;
+      if (logoFile.size > maxBytes) return t(messages, "register.errors.logoTooLarge");
 
-      const allowed = new Set([
-        "image/png",
-        "image/jpeg",
-        "image/webp",
-        "image/svg+xml"
-      ]);
-      if (!allowed.has(logoFile.type)) return "Unsupported logo file type.";
+      const allowed = new Set(["image/png", "image/jpeg", "image/webp", "image/svg+xml"]);
+      if (!allowed.has(logoFile.type)) return t(messages, "register.errors.logoType");
     }
 
     return null;
@@ -124,42 +118,37 @@ export default function RegisterClient() {
 
     setLoading(true);
     try {
-      // 1) upload logo (if any)
       const logoUrl = await uploadLogoIfAny();
 
-      // 2) create business
       const res = await fetch("/api/businesses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: businessName.trim(),
           slug: finalSlug,
-          industry,
+          industry, // ✅ stable enum key now
           city: city.trim(),
           country: country.trim(),
           street: street.trim(),
-          postalCode: postalCode.trim() || undefined, // ✅ optional
+          postalCode: postalCode.trim() || undefined,
           website: website.trim() || undefined,
           ownerEmail: email.trim(),
           ownerPassword: password,
-          logoUrl // ✅ optional
+          logoUrl
         })
       });
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) return alert(data.error || "Failed to create account.");
+      if (!res.ok) return alert(data.error || t(messages, "register.errors.createFailed"));
 
-      // ✅ redirect based on industry readiness
-      if (industry !== "Beauty & care") {
-        router.push(
-          `/${locale}/coming-soon?industry=${encodeURIComponent(industry)}`
-        );
+      if (industry !== "BEAUTY_AND_CARE") {
+        router.push(`/${locale}/coming-soon?industry=${encodeURIComponent(industry)}`);
         return;
       }
 
       router.push(`/${locale}/dashboard`);
     } catch (e: any) {
-      alert(e?.message || "Network error. Try again.");
+      alert(e?.message || t(messages, "register.errors.network"));
     } finally {
       setLoading(false);
     }
@@ -171,23 +160,19 @@ export default function RegisterClient() {
         <section className="rounded-3xl border border-slate-200 p-8 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-slate-600">Slottick</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">
-                Create your account
-              </h1>
-              <p className="mt-2 text-slate-600">
-                Create your business profile and get your booking link.
-              </p>
+              <p className="text-sm font-medium text-slate-600">{t(messages, "brand.name")}</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight">{t(messages, "register.title")}</h1>
+              <p className="mt-2 text-slate-600">{t(messages, "register.subtitle")}</p>
             </div>
 
             <div className="text-right">
               <a className="text-sm underline text-slate-600" href={`/${locale}`}>
-                Back
+                {t(messages, "register.back")}
               </a>
               <div className="mt-2 text-sm text-slate-600">
-                Already have an account?{" "}
+                {t(messages, "register.haveAccount")}{" "}
                 <a className="font-semibold underline" href={`/${locale}/login`}>
-                  Log in
+                  {t(messages, "register.login")}
                 </a>
               </div>
             </div>
@@ -196,26 +181,26 @@ export default function RegisterClient() {
           <form onSubmit={submit} className="mt-8 grid gap-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
-                Business name
+                {t(messages, "register.fields.businessName")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
-                  placeholder="e.g. Damino Studio"
+                  placeholder={t(messages, "register.placeholders.businessName")}
                   required
                 />
               </label>
 
               <label className="grid gap-1 text-sm">
-                Category
+                {t(messages, "register.fields.category")}
                 <select
                   className="rounded-xl border border-slate-200 px-3 py-2"
                   value={industry}
-                  onChange={(e) => setIndustry(e.target.value as any)}
+                  onChange={(e) => setIndustry(e.target.value as IndustryKey)}
                 >
-                  {INDUSTRY_OPTIONS.map((i) => (
-                    <option key={i} value={i}>
-                      {i}
+                  {INDUSTRY_OPTIONS.map((o) => (
+                    <option key={o.key} value={o.key}>
+                      {t(messages, o.labelKey)}
                     </option>
                   ))}
                 </select>
@@ -224,18 +209,18 @@ export default function RegisterClient() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
-                City
+                {t(messages, "register.fields.city")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  placeholder="Tallinn"
+                  placeholder={t(messages, "register.placeholders.city")}
                   required
                 />
               </label>
 
               <label className="grid gap-1 text-sm">
-                Country (code)
+                {t(messages, "register.fields.country")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
                   value={country}
@@ -246,33 +231,31 @@ export default function RegisterClient() {
               </label>
             </div>
 
-            {/* ✅ new fields after city & country */}
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
-                Street (optional)
+                {t(messages, "register.fields.street")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
                   value={street}
                   onChange={(e) => setStreet(e.target.value)}
-                  placeholder="e.g. Pärnu mnt 10"
-                  
+                  placeholder={t(messages, "register.placeholders.street")}
                 />
               </label>
 
               <label className="grid gap-1 text-sm">
-                Postal code (optional)
+                {t(messages, "register.fields.postalCode")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
-                  placeholder="e.g. 10145"
+                  placeholder={t(messages, "register.placeholders.postalCode")}
                 />
               </label>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
-                Website (optional)
+                {t(messages, "register.fields.website")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
                   value={website}
@@ -282,22 +265,21 @@ export default function RegisterClient() {
               </label>
 
               <label className="grid gap-1 text-sm">
-                Email (owner)
+                {t(messages, "register.fields.email")}
                 <input
                   type="email"
                   className="rounded-xl border border-slate-200 px-3 py-2"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@domain.com"
+                  placeholder={t(messages, "register.placeholders.email")}
                   required
                 />
               </label>
             </div>
 
-            {/* ✅ Logo upload (optional) */}
             <div className="grid gap-2">
               <label className="grid gap-1 text-sm">
-                Logo (optional)
+                {t(messages, "register.fields.logo")}
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/svg+xml"
@@ -310,7 +292,6 @@ export default function RegisterClient() {
                       setLogoPreview("");
                       return;
                     }
-
                     const url = URL.createObjectURL(f);
                     setLogoPreview(url);
                   }}
@@ -321,7 +302,7 @@ export default function RegisterClient() {
                 <div className="flex items-center gap-3">
                   <img
                     src={logoPreview}
-                    alt="Logo preview"
+                    alt={t(messages, "register.logoPreviewAlt")}
                     className="h-14 w-14 rounded-2xl border border-slate-200 object-cover"
                   />
                   <button
@@ -332,21 +313,19 @@ export default function RegisterClient() {
                       setLogoPreview("");
                     }}
                   >
-                    Remove
+                    {t(messages, "register.remove")}
                   </button>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">
-                  Shows on Explore after listing. Best: square, ≤ 2MB.
-                </p>
+                <p className="text-xs text-slate-500">{t(messages, "register.logoHint")}</p>
               )}
             </div>
 
             <div className="grid gap-1 text-sm">
               <div className="flex items-center justify-between">
-                <label>Booking slug</label>
+                <label>{t(messages, "register.fields.slug")}</label>
                 <span className="text-xs text-slate-500">
-                  Your link: /{locale}/book/{finalSlug || "your-slug"}
+                  {t(messages, "register.yourLink")} /{locale}/book/{finalSlug || "your-slug"}
                 </span>
               </div>
               <input
@@ -355,14 +334,12 @@ export default function RegisterClient() {
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder={suggestedSlug || "damino-studio"}
               />
-              <p className="text-xs text-slate-500">
-                Leave blank to use the auto-slug from your business name.
-              </p>
+              <p className="text-xs text-slate-500">{t(messages, "register.slugHint")}</p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
-                Password
+                {t(messages, "register.fields.password")}
                 <input
                   type="password"
                   className="rounded-xl border border-slate-200 px-3 py-2"
@@ -374,7 +351,7 @@ export default function RegisterClient() {
               </label>
 
               <label className="grid gap-1 text-sm">
-                Confirm password
+                {t(messages, "register.fields.confirmPassword")}
                 <input
                   type="password"
                   className="rounded-xl border border-slate-200 px-3 py-2"
@@ -392,15 +369,13 @@ export default function RegisterClient() {
               className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
             >
               {logoUploading
-                ? "Uploading logo..."
+                ? t(messages, "register.states.uploadingLogo")
                 : loading
-                  ? "Creating..."
-                  : "Create account"}
+                  ? t(messages, "register.states.creating")
+                  : t(messages, "register.states.createAccount")}
             </button>
 
-            <p className="text-xs text-slate-500">
-              Next: add your services + availability and share your booking link.
-            </p>
+            <p className="text-xs text-slate-500">{t(messages, "register.nextHint")}</p>
           </form>
         </section>
       </div>

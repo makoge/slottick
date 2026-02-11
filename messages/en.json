@@ -1,18 +1,616 @@
 {
+  "brand": { "name": "Slottick" },
+
+  "nav": { "login": "Login" },
+
+  "footer": {
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact us"
+  },
+
+  "meta": {
+    "home": {
+      "title": "Booking management platform for service businesses",
+      "description": "Manage services, staff availability and online bookings in one place. Share one link that always shows your real schedule—built for salons, barbers, beauty and wellness."
+    },
+    "explore": {
+      "title": "Explore services near you",
+      "description": "Explore and book trusted businesses near you. Search by service and filter by city and industry."
+    }
+  },
+
+  "common": {
+    "loading": "Loading…",
+    "loadingDots": "Loading...",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved ✓",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "remove": "Remove",
+    "copy": "Copy",
+    "copied": "Copied ✓",
+    "back": "Back",
+    "unknown": "Unknown",
+    "optional": "(optional)"
+  },
+
   "home": {
-    "brand": "Slotta",
-    "tagline": "Booking for lash techs",
-    "headline": "Take bookings without the back-and-forth.",
-    "subheadline": "Let clients pick a service, choose a time, and pay a deposit — all in one link.",
-    "ctaPrimary": "Try the booking flow",
-    "ctaSecondary": "Open dashboard",
-    "features": {
-      "servicesTitle": "Services",
-      "servicesDesc": "Classic, Hybrid, Volume, Refills — set durations + prices.",
-      "availabilityTitle": "Availability",
-      "availabilityDesc": "Weekly schedule + breaks + buffer time, no double-booking.",
-      "depositsTitle": "Deposits",
-      "depositsDesc": "Reduce no-shows with deposits and clear cancellation rules."
+    "jsonld": {
+      "softwareDesc": "Booking management platform for service businesses. Set services and availability once and share a booking link that shows real-time availability.",
+      "pageName": "Slottick Home"
+    },
+
+    "hero": {
+      "badge": "Booking management for service businesses",
+      "h1Line1": "Booking management platform",
+      "h1Line2": "that protects your time.",
+      "lead": "Slottick turns your availability into a shareable booking website. Clients book your real schedule, no back-and-forth, no double booking.",
+      "ctaPrimary": "Create your booking page",
+      "ctaSecondary": "Explore Services",
+      "checks": [
+        "Services, durations & pricing",
+        "Availability rules & breaks",
+        "Buffer time between clients",
+        "One booking link for your bio",
+        "Real-time schedule (no double booking)"
+      ]
+    },
+
+    "faq": {
+      "badge": "FAQ",
+      "title": "Why do service businesses need a booking system?",
+      "lead": "Short answers to the questions your customers (and you) feel every week.",
+      "items": [
+        {
+          "q": "What problems does a booking system solve?",
+          "a": "It stops back-and-forth messages, prevents double booking, and keeps your schedule accurate in real time."
+        },
+        {
+          "q": "Can it reduce no-shows?",
+          "a": "Yes. Confirmations and reminders make clients show up more often, and your time stays protected."
+        },
+        {
+          "q": "Why not just take bookings in Instagram DMs?",
+          "a": "DMs do not understand your availability. A booking system only shows slots that actually fit your schedule, breaks, and buffer."
+        },
+        {
+          "q": "Do I need a website to use Slottick?",
+          "a": "No. You get one shareable booking link you can put on Instagram bio, WhatsApp, Google Business Profile, or anywhere."
+        },
+        {
+          "q": "What if I change my schedule later?",
+          "a": "Your booking page updates automatically, clients always see your latest availability."
+        },
+        {
+          "q": "Is it good for salons, barbers, beauty and wellness?",
+          "a": "Yes. Any business that sells time (appointments) benefits: hair, nails, lash, massage, fitness, clinics, and more."
+        }
+      ]
+    },
+
+    "preview": {
+      "badge": "Dashboard preview",
+      "businessName": "Lash Studio Tallinn",
+      "liveDemo": "Live demo",
+      "stats": [
+        { "t": "Total bookings", "v": "28", "s": "This month" },
+        { "t": "Revenue", "v": "€1,240", "s": "Confirmed" },
+        { "t": "Customers", "v": "19", "s": "Returning: 6" }
+      ],
+      "linkTitle": "Your booking link",
+      "copy": "Copy",
+      "shareHint": "Share on Instagram bio, WhatsApp, website.",
+      "upcomingTitle": "Upcoming bookings",
+      "today": "Today",
+      "bookings": [
+        { "header": "10:30 • Maria K.", "service": "Lash refill • 60 min", "price": "€55" },
+        { "header": "12:00 • Anna P.", "service": "Classic lashes • 90 min", "price": "€70" },
+        { "header": "15:30 • Kristi S.", "service": "Brow shape • 30 min", "price": "€25" }
+      ],
+      "note": "Clients only see real available slots — no double booking."
+    },
+
+    "why": {
+  "badge": "Why Slottick",
+  "title": "Why choose Slottick as your booking system?",
+  "lead": "Less time in DMs, fewer mistakes, and a cleaner way for clients to book you.",
+  "items": [
+    {
+      "q": "It manages your time automatically",
+      "a": "Set working hours, breaks, buffer time, and services once. Slottick only shows slots that fit your real schedule—no double bookings, no back-and-forth."
+    },
+    {
+      "q": "It helps market your business",
+      "a": "Your booking page works everywhere: Instagram bio, WhatsApp, Google Business Profile, ads. Clients book instantly without messaging first."
+    },
+    {
+      "q": "You can get new clients through Slottick",
+      "a": "Get discovered in the Slottick Explore marketplace so new customers can find and book you even if they’ve never heard of you."
+    },
+    {
+      "q": "No website? No problem.",
+      "a": "Slottick acts like your booking website. One clean link shows your services, prices, and live availability, always up to date."
+    },
+    {
+      "q": "Simple, fast, and easy to use",
+      "a": "Clients book in seconds. You manage everything from one dashboard—no complicated setup, no tech knowledge required."
+    }
+  ],
+  "visual": {
+    "kicker": "How it feels",
+    "title": "One link → bookings → dashboard",
+    "desc": "Time protection + marketing in one system.",
+    "panelTitle": "Slottick Flow",
+    "aria": "Illustration showing booking link, booking page, explore marketplace, and dashboard stats",
+    "shareableLink": "Shareable Link",
+    "bookingPage": "Booking Page",
+    "bookSlot": "Book a time slot",
+    "exploreMarket": "Explore Market",
+    "discover": "New clients discover you",
+    "dashboard": "Dashboard",
+    "totalBookings": "Total bookings",
+    "revenue": "Revenue (W / M / Y)",
+    "customers": "Customers",
+    "namesCountries": "Names + countries from bookings",
+    "pillars": [
+      { "k": "Time", "v": "Real availability" },
+      { "k": "Marketing", "v": "One link everywhere" },
+      { "k": "Growth", "v": "Explore marketplace" }
+    ]
+  }
+},
+
+
+    "how": {
+      "items": [
+        {
+          "title": "Set services and rules",
+          "desc": "Add services, durations, pricing, working hours, breaks and buffer time."
+        },
+        {
+          "title": "Share one booking link",
+          "desc": "Put it on your website, Google Business Profile, and Instagram bio."
+        },
+        {
+          "title": "Get booked correctly",
+          "desc": "Clients choose a service and time slot that matches your schedule."
+        }
+      ]
+    },
+
+    "for": {
+      "title": "Built for appointment-based businesses",
+      "desc": "Perfect for salons, barbers, lash and nail studios, massage therapists, beauty clinics, personal trainers, and any service business that sells time."
+    },
+
+    "cta": {
+      "title": "Your availability is your business.",
+      "desc": "Set your schedule once. Share one link. Get booked without chaos.",
+      "primary": "Create your booking page",
+      "secondary": "Explore Services"
+    }
+  },
+
+  "register": {
+    "brandLabel": "Slottick",
+
+    "title": "Create your account",
+    "subtitle": "Create your business profile and get your booking link.",
+    "back": "Back",
+    "haveAccount": "Already have an account?",
+    "login": "Log in",
+
+    "fields": {
+      "businessName": "Business name",
+      "category": "Category",
+      "city": "City",
+      "country": "Country (code)",
+      "street": "Street (optional)",
+      "postalCode": "Postal code (optional)",
+      "website": "Website (optional)",
+      "email": "Email (owner)",
+      "logo": "Logo (optional)",
+      "slug": "Booking slug",
+      "password": "Password",
+      "confirmPassword": "Confirm password"
+    },
+
+    "placeholders": {
+      "businessName": "e.g. Damino Studio",
+      "city": "Tallinn",
+      "country": "EE",
+      "street": "e.g. Pärnu mnt 10",
+      "postalCode": "e.g. 10145",
+      "website": "https://...",
+      "email": "you@domain.com",
+      "password": "••••••••",
+      "slug": "damino-studio"
+    },
+
+    "industry": {
+      "beauty": "Beauty & care",
+      "wellness": "Wellness & lifestyle",
+      "creative": "Creative services",
+      "home": "Home & local",
+      "education": "Education & professionals"
+    },
+
+    "logoPreviewAlt": "Logo preview",
+    "remove": "Remove",
+    "logoHint": "Shows on Explore after listing. Best: square, ≤ 2MB.",
+
+    "yourLink": "Your link:",
+    "slugHint": "Leave blank to use the auto-slug from your business name.",
+
+    "states": {
+      "uploadingLogo": "Uploading logo…",
+      "creating": "Creating…",
+      "createAccount": "Create account"
+    },
+
+    "nextHint": "Next: add your services + availability and share your booking link.",
+
+    "errors": {
+      "businessNameRequired": "Business name is required.",
+      "slugRequired": "Booking slug is required.",
+      "cityRequired": "City is required.",
+      "countryRequired": "Country code is required (e.g. EE).",
+      "emailInvalid": "Please enter a valid email.",
+      "passwordMin": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "logoTooLarge": "Logo too large (max 2MB).",
+      "logoType": "Unsupported logo file type.",
+      "logoUploadFailed": "Logo upload failed.",
+      "createFailed": "Failed to create account.",
+      "network": "Network error. Try again."
+    }
+  },
+
+  "dashboard": {
+    "title": "Dashboard",
+
+    "actions": {
+      "editProfile": "Edit profile",
+      "openBookingPage": "Open booking page",
+      "refreshStats": "Refresh stats",
+      "refreshingStats": "Refreshing…",
+      "logout": "Log out"
+    },
+
+    "header": {
+      "industryFallback": "Industry"
+    },
+
+    "profile": {
+      "title": "Business profile",
+      "subtitle": "Update your public info. Changes reflect on your booking page.",
+
+      "fields": {
+        "name": "Business name",
+        "website": "Website (optional)",
+        "city": "City",
+        "country": "Country (code)",
+        "street": "Street (optional)",
+        "postalCode": "Postal code (optional)",
+        "logo": "Logo (optional)"
+      },
+      "desc": {
+    "title": "Booking page description",
+    "subtitle": "Shows on your booking hero. Keep it local + clear (max 600 words).",
+    "placeholder": "Example: We’re a Tallinn-based nail studio specializing in...",
+    "words": "{n}/600 words",
+    "tooLong": "Too long — max 600 words.",
+    "saveFailed": "Failed to save",
+    "saving": "Saving…"
+  },
+
+      "placeholders": {
+        "website": "https://...",
+        "country": "EE"
+      },
+
+      "logo": {
+        "previewAlt": "Logo preview",
+        "remove": "Remove",
+        "hint": "Best: square, ≤ 2MB."
+      },
+
+      "save": {
+        "saving": "Saving…",
+        "uploadingLogo": "Uploading logo…",
+        "saveChanges": "Save changes"
+      },
+
+      "errors": {
+        "nameRequired": "Business name is required.",
+        "cityRequired": "City is required.",
+        "countryRequired": "Country code is required (e.g. EE).",
+        "websiteInvalid": "Website looks invalid.",
+        "updateFailed": "Failed to update profile.",
+        "network": "Network error. Try again."
+      }
+    },
+
+    "stats": {
+      "totalBookings": {
+        "title": "Total bookings",
+        "subLoading": "Loading…",
+        "sub": "All time (not cancelled)"
+      },
+      "revenue": {
+        "title": "Revenue generated",
+        "subLoading": "Loading…",
+        "sub": "Confirmed in the past",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "mixed": "Mixed"
+      },
+      "customers": {
+        "title": "Customers",
+        "subLoading": "Loading…",
+        "sub": "Unique customers"
+      }
+    },
+
+    "share": {
+      "title": "Your shareable booking link",
+      "copyLink": "Copy link",
+      "copied": "Copied ✓",
+      "shareHint": "Share on Instagram bio, WhatsApp, your website, anywhere.",
+      "tip": "Tip: Keep your availability updated, your booking page always reflects changes.",
+      "copyFailed": "Copy failed — please copy manually."
+    },
+
+     "gallery": {
+      "title": "Booking page images",
+      "lead": "First image = hero. Next two = side images. These show on your booking page.",
+
+      "actions": {
+        "upload": "Upload images",
+        "uploading": "Uploading…",
+        "refresh": "Refresh",
+        "up": "Up",
+        "down": "Down",
+        "remove": "Remove"
+      },
+
+      "errors": {
+        "load": "Failed to load gallery",
+        "upload": "Upload failed",
+        "delete": "Delete failed",
+        "reorder": "Reorder failed"
+      },
+
+      "preview": {
+        "hero": "Hero image preview",
+        "side1": "Side image 1",
+        "side2": "Side image 2",
+        "heroAlt": "Hero preview",
+        "sideAlt1": "Side preview 1",
+        "sideAlt2": "Side preview 2"
+      },
+
+      "list": {
+        "title": "Your images",
+        "loading": "Loading…",
+        "empty": "No images yet. Upload 3 for the full layout.",
+        "hero": "Hero",
+        "side1": "Side 1",
+        "side2": "Side 2",
+        "imageN": "Image {n}"
+      }
+    },
+
+    "description": {
+      "title": "Booking page description",
+      "lead": "Shows on your booking hero. Keep it local + clear (max 600 words).",
+      "placeholder": "Example: We’re a Tallinn-based nail studio specializing in...",
+      "words": "{count}/600 words",
+
+      "actions": {
+        "save": "Save",
+        "clear": "Clear"
+      },
+
+      "states": {
+        "saving": "Saving…"
+      },
+
+      "errors": {
+        "tooLong": "Too long — max 600 words.",
+        "saveFailed": "Failed to save",
+        "saveFailedApi": "Failed to save description"
+      }
+    },
+
+"panels": {
+  "schedule": {
+    "title": "Schedule overview",
+    "subtitle": "See your timeline and upcoming slots.",
+    "lead": "See your timeline and upcoming slots."
+  },
+  "bookings": {
+    "title": "Bookings",
+    "subtitle": "Track requests, confirmations, and status.",
+    "lead": "Track requests, confirmations, and status."
+  },
+  "availability": {
+    "title": "Availability",
+    "subtitle": "Set your working hours and breaks.",
+    "lead": "Set your working hours and breaks."
+  },
+  "services": {
+    "title": "Services & pricing",
+    "subtitle": "Add services, duration, and price.",
+    "lead": "Add services, duration, and price."
+  }
+}
+
+  },
+
+  
+  "availability": {
+    "title": "Availability",
+    "lead": "Set your working days and hours. This controls what clients can book.",
+    "states": {
+      "loading": "Loading…",
+      "saving": "Saving…",
+      "saved": "Saved ✓",
+      "save": "Save"
+    },
+    "errors": {
+      "invalidTimezone": "Invalid timezone. Example: Europe/Tallinn",
+      "saveFailed": "Save failed"
+    },
+    "timezone": {
+      "title": "Timezone",
+      "label": "Timezone (IANA)",
+      "hint": "Example: Europe/Tallinn, Africa/Douala, America/New York",
+      "useDetected": "Use detected: {tz}",
+      "invalid": "Invalid timezone"
+    },
+    "workingDays": {
+      "title": "Working days",
+      "days": { "sun": "Sun", "mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu", "fri": "Fri", "sat": "Sat" }
+    },
+    "hours": { "start": "Start time", "end": "End time" },
+    "break": { "start": "Break start (optional)", "end": "Break end (optional)" },
+    "rules": {
+      "slotStep": "Slot step (minutes)",
+      "buffer": "Buffer between bookings (minutes)"
+    }
+  },
+
+  "schedule": {
+  "title": "Schedule",
+  "subtitle": "{title} appointments • Tap a day.",
+  "subtitleUpcomingExtra": "({total} total)",
+  "subtitleLoadingExtra": "• Loading…",
+
+  "modes": {
+    "today": "Today",
+    "upcoming": "Upcoming",
+    "all": "All"
+  },
+
+  "actions": {
+    "prev": "Prev",
+    "next": "Next",
+    "nextBookedDay": "Next booked day"
+  },
+
+  "emptyDay": "No appointments for this day.",
+  "minutes": "min",
+
+  "weekdays": {
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat",
+    "sun": "Sun"
+  }
+},
+
+  "bookings": {
+    "title": "Bookings",
+    "minutes": "min",
+    "notes": "Notes",
+    "upcomingCount": "{n} upcoming",
+    "loadingShort": "Loading…",
+    "loading": "Loading bookings…",
+    "emptyUpcoming": "No upcoming bookings yet.",
+    "pastTitle": "Past",
+    "buttons": {
+      "refresh": "Refresh",
+      "refreshing": "Refreshing…",
+      "done": "Done",
+      "cancel": "Cancel",
+      "saving": "Saving…",
+      "cancelling": "Cancelling…"
+    }
+  },
+
+  "services": {
+    "title": "Services",
+    "lead": "Add your services with category, duration and price. Category helps Explore search + SEO. Optional: require a deposit. Add photos so customers see your work.",
+    "minutes": "min",
+
+    "status": { "loading": "Loading…", "saving": "Saving…", "saved": "Saved ✓" },
+
+    "errors": {
+      "loadFailed": "Failed to load services",
+      "saveFailed": "Failed to save services",
+      "networkLoad": "Network error loading services",
+      "networkSave": "Network error saving services",
+      "uploadFailed": "Upload failed"
+    },
+
+    "categories": {
+      "Hair": "Hair",
+      "Barber": "Barber",
+      "Lash": "Lash",
+      "Brows": "Brows",
+      "Nails": "Nails",
+      "Manicure": "Manicure",
+      "Pedicure": "Pedicure",
+      "Makeup": "Makeup",
+      "Skincare": "Skincare",
+      "Massage": "Massage",
+      "Tattoo": "Tattoo",
+      "Waxing": "Waxing",
+      "Facial": "Facial",
+      "Other": "Other"
+    },
+
+    "form": {
+      "name": "Service name",
+      "namePlaceholder": "Haircut",
+      "category": "Category",
+      "duration": "Duration (minutes)",
+      "price": "Price",
+      "currency": "Currency"
+    },
+
+    "actions": { "add": "Add service", "delete": "Delete", "remove": "Remove" },
+
+    "edit": { "name": "Name", "category": "Category", "duration": "Duration" },
+
+    "photos": {
+      "title": "Work photos (optional)",
+      "workTitle": "Work photos (optional)",
+      "add": "Add photo",
+      "uploading": "Uploading…",
+      "hint": "Add 3–6 real photos per service. It boosts trust fast.",
+      "none": "No photos yet.",
+      "altNew": "Service photo",
+      "altWork": "{name} work photo"
+    },
+
+    "deposit": {
+      "require": "Require deposit for booking",
+      "requireShort": "Require deposit",
+      "type": "Type",
+      "value": "Value",
+      "shown": "Shown to clients",
+      "percentOption": "Percent (%)",
+      "amountOption": "Fixed amount",
+      "percentLabel": "Percent",
+      "amountLabel": "Amount",
+      "labelPercent": "Deposit: {n}%",
+      "labelAmount": "Deposit: {amount}",
+      "none": "No deposit"
+    },
+
+    "list": {
+      "loading": "Loading services…",
+      "empty": "No services yet, add your first one."
     }
   }
 }

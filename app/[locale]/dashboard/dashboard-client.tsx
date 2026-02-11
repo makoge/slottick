@@ -9,6 +9,9 @@ import ServicesEditor from "./services";
 import BookingsPanel from "./bookings";
 import SchedulePanel from "./schedule";
 
+import { useMessages } from "@/lib/use-messages";
+import { t } from "@/lib/i18n";
+
 type Props = {
   locale: string;
   business: {
@@ -113,7 +116,9 @@ function isValidUrlOrEmpty(v: string) {
 
 /* ----------------------------- Gallery Manager ----------------------------- */
 
-function BookingGalleryManager() {
+function BookingGalleryManager({ locale }: { locale: string }) {
+  const messages = useMessages(locale);
+
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -125,10 +130,10 @@ function BookingGalleryManager() {
     try {
       const res = await fetch("/api/uploads/gallery", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Failed to load gallery");
+      if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.gallery.errors.loadFailed"));
       setImages(Array.isArray(data.images) ? data.images : []);
     } catch (e: any) {
-      setErr(e?.message || "Failed to load gallery");
+      setErr(e?.message || t(messages, "dashboard.gallery.errors.loadFailed"));
     } finally {
       setLoading(false);
     }
@@ -136,6 +141,7 @@ function BookingGalleryManager() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function uploadFiles(files: FileList | null) {
@@ -153,7 +159,7 @@ function BookingGalleryManager() {
         });
 
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || `Upload failed (${res.status})`);
+        if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.gallery.errors.uploadFailed"));
 
         const img = data?.image;
         if (img?.id && img?.url) {
@@ -161,7 +167,7 @@ function BookingGalleryManager() {
         }
       }
     } catch (e: any) {
-      setErr(e?.message || "Upload failed");
+      setErr(e?.message || t(messages, "dashboard.gallery.errors.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -176,10 +182,10 @@ function BookingGalleryManager() {
         method: "DELETE"
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Delete failed");
+      if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.gallery.errors.deleteFailed"));
       setImages(Array.isArray(data.images) ? data.images : []);
     } catch (e: any) {
-      setErr(e?.message || "Delete failed");
+      setErr(e?.message || t(messages, "dashboard.gallery.errors.deleteFailed"));
       setImages(prev);
     }
   }
@@ -201,10 +207,10 @@ function BookingGalleryManager() {
         body: JSON.stringify({ order: next.map((x) => x.id) })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Reorder failed");
+      if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.gallery.errors.reorderFailed"));
       setImages(Array.isArray(data.images) ? data.images : next);
     } catch (e: any) {
-      setErr(e?.message || "Reorder failed");
+      setErr(e?.message || t(messages, "dashboard.gallery.errors.reorderFailed"));
       load(); // authoritative reload
     }
   }
@@ -217,15 +223,13 @@ function BookingGalleryManager() {
     <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold">Booking page images</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            First image = hero. Next two = side images. These show on your booking page.
-          </p>
+          <h2 className="text-base font-semibold">{t(messages, "dashboard.gallery.title")}</h2>
+          <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.gallery.lead")}</p>
         </div>
 
         <div className="flex items-center gap-2">
           <label className="inline-flex cursor-pointer items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
-            {uploading ? "Uploading…" : "Upload images"}
+            {uploading ? t(messages, "dashboard.gallery.states.uploading") : t(messages, "dashboard.gallery.actions.upload")}
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
@@ -242,15 +246,13 @@ function BookingGalleryManager() {
             onClick={load}
             disabled={loading || uploading}
           >
-            Refresh
+            {t(messages, "dashboard.gallery.actions.refresh")}
           </button>
         </div>
       </div>
 
       {err ? (
-        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-          {err}
-        </div>
+        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{err}</div>
       ) : null}
 
       {/* Preview */}
@@ -258,10 +260,10 @@ function BookingGalleryManager() {
         <div className="lg:col-span-8">
           <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
             {hero ? (
-              <img src={hero} alt="Hero preview" className="h-full w-full object-cover" />
+              <img src={hero} alt={t(messages, "dashboard.gallery.preview.heroAlt")} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
-                Hero image preview
+                {t(messages, "dashboard.gallery.preview.heroEmpty")}
               </div>
             )}
           </div>
@@ -270,20 +272,20 @@ function BookingGalleryManager() {
         <div className="grid gap-4 lg:col-span-4">
           <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
             {side1 ? (
-              <img src={side1} alt="Side preview 1" className="h-full w-full object-cover" />
+              <img src={side1} alt={t(messages, "dashboard.gallery.preview.side1Alt")} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
-                Side image 1
+                {t(messages, "dashboard.gallery.preview.side1Empty")}
               </div>
             )}
           </div>
 
           <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
             {side2 ? (
-              <img src={side2} alt="Side preview 2" className="h-full w-full object-cover" />
+              <img src={side2} alt={t(messages, "dashboard.gallery.preview.side2Alt")} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
-                Side image 2
+                {t(messages, "dashboard.gallery.preview.side2Empty")}
               </div>
             )}
           </div>
@@ -292,27 +294,37 @@ function BookingGalleryManager() {
 
       {/* List */}
       <div className="mt-6">
-        <div className="text-sm font-medium text-slate-700">Your images</div>
+        <div className="text-sm font-medium text-slate-700">{t(messages, "dashboard.gallery.list.title")}</div>
 
         {loading ? (
           <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-            Loading…
+            {t(messages, "dashboard.gallery.states.loading")}
           </div>
         ) : images.length === 0 ? (
           <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-            No images yet. Upload 3 for the full layout.
+            {t(messages, "dashboard.gallery.list.empty")}
           </div>
         ) : (
           <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {images.map((img, idx) => (
               <li key={img.id} className="rounded-2xl border border-slate-200 bg-white p-3">
                 <div className="aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                  <img src={img.url} alt={`Gallery image ${idx + 1}`} className="h-full w-full object-cover" />
+                  <img
+                    src={img.url}
+                    alt={t(messages, "dashboard.gallery.list.imageAlt").replace("{n}", String(idx + 1))}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
 
                 <div className="mt-3 flex items-center justify-between gap-2">
                   <div className="text-xs text-slate-500">
-                    {idx === 0 ? "Hero" : idx === 1 ? "Side 1" : idx === 2 ? "Side 2" : `Image ${idx + 1}`}
+                    {idx === 0
+                      ? t(messages, "dashboard.gallery.list.hero")
+                      : idx === 1
+                        ? t(messages, "dashboard.gallery.list.side1")
+                        : idx === 2
+                          ? t(messages, "dashboard.gallery.list.side2")
+                          : t(messages, "dashboard.gallery.list.imageN").replace("{n}", String(idx + 1))}
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -322,7 +334,7 @@ function BookingGalleryManager() {
                       disabled={idx === 0 || uploading}
                       onClick={() => move(img.id, -1)}
                     >
-                      Up
+                      {t(messages, "dashboard.gallery.actions.up")}
                     </button>
                     <button
                       type="button"
@@ -330,7 +342,7 @@ function BookingGalleryManager() {
                       disabled={idx === images.length - 1 || uploading}
                       onClick={() => move(img.id, 1)}
                     >
-                      Down
+                      {t(messages, "dashboard.gallery.actions.down")}
                     </button>
                     <button
                       type="button"
@@ -338,7 +350,7 @@ function BookingGalleryManager() {
                       disabled={uploading}
                       onClick={() => remove(img.id)}
                     >
-                      Remove
+                      {t(messages, "dashboard.gallery.actions.remove")}
                     </button>
                   </div>
                 </div>
@@ -354,12 +366,16 @@ function BookingGalleryManager() {
 /* -------------------------- Description Editor (NEW) ------------------------- */
 
 function BookingDescriptionEditor({
+  locale,
   initial,
   onSaved
 }: {
+  locale: string;
   initial: string;
   onSaved: (next: string) => void;
 }) {
+  const messages = useMessages(locale);
+
   const [value, setValue] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
@@ -372,7 +388,7 @@ function BookingDescriptionEditor({
     const trimmed = value.trim();
 
     if (trimmed && words > 600) {
-      setErr("Too long — max 600 words.");
+      setErr(t(messages, "dashboard.description.errors.tooLong"));
       return;
     }
 
@@ -385,12 +401,12 @@ function BookingDescriptionEditor({
       });
 
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Failed to save description");
+      if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.description.errors.saveFailed"));
 
       const next = String(data?.business?.description ?? trimmed ?? "");
       onSaved(next);
     } catch (e: any) {
-      setErr(e?.message || "Failed to save");
+      setErr(e?.message || t(messages, "dashboard.description.errors.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -400,10 +416,8 @@ function BookingDescriptionEditor({
     <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold">Booking page description</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Shows on your booking hero. Keep it local + clear (max 600 words).
-          </p>
+          <h2 className="text-base font-semibold">{t(messages, "dashboard.description.title")}</h2>
+          <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.description.lead")}</p>
         </div>
 
         <button
@@ -412,27 +426,29 @@ function BookingDescriptionEditor({
           disabled={saving || words > 600}
           className="w-fit rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t(messages, "dashboard.description.states.saving") : t(messages, "dashboard.description.actions.save")}
         </button>
       </div>
 
       {err ? (
-        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-          {err}
-        </div>
+        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{err}</div>
       ) : null}
 
       <div className="mt-4 grid gap-2">
         <textarea
           className="min-h-[140px] w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-300"
-          placeholder="Example: We’re a Tallinn-based nail studio specializing in..."
+          placeholder={t(messages, "dashboard.description.placeholder")}
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span className={words > 600 ? "font-semibold text-rose-700" : ""}>{words}/600 words</span>
+          <span className={words > 600 ? "font-semibold text-rose-700" : ""}>
+            {t(messages, "dashboard.description.words")
+              .replace("{n}", String(words))
+              .replace("{max}", "600")}
+          </span>
           <button type="button" className="underline" onClick={() => setValue("")}>
-            Clear
+            {t(messages, "dashboard.description.actions.clear")}
           </button>
         </div>
       </div>
@@ -444,6 +460,7 @@ function BookingDescriptionEditor({
 
 export default function DashboardClient({ locale, business }: Props) {
   const router = useRouter();
+  const messages = useMessages(locale);
 
   // local copy
   const [biz, setBiz] = useState<Props["business"]>(business);
@@ -489,7 +506,7 @@ export default function DashboardClient({ locale, business }: Props) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
-      alert("Copy failed — please copy manually.");
+      alert(t(messages, "dashboard.errors.copyFailed"));
     }
   }
 
@@ -544,7 +561,7 @@ export default function DashboardClient({ locale, business }: Props) {
       const sum = rows.reduce((acc, b) => acc + Number(b.price || 0), 0);
 
       if (rows.length === 0) return { label: "0", currency: "EUR", mixed: false };
-      if (!single) return { label: "Mixed", currency: "EUR", mixed: true };
+      if (!single) return { label: t(messages, "dashboard.stats.mixed"), currency: "EUR", mixed: true };
 
       return { label: formatMoney(sum, single as any), currency: single, mixed: false };
     }
@@ -559,8 +576,8 @@ export default function DashboardClient({ locale, business }: Props) {
       if (!key) continue;
 
       const lastAt = new Date(b.startsAt).getTime();
-      const nm = b.customerName?.trim() || "Unknown";
-      const ct = (b.customerCountry ?? "").trim() || "Unknown";
+      const nm = b.customerName?.trim() || t(messages, "dashboard.stats.unknown");
+      const ct = (b.customerCountry ?? "").trim() || t(messages, "dashboard.stats.unknown");
 
       const existing = customerMap.get(key);
       if (!existing || lastAt > existing.lastAt) customerMap.set(key, { name: nm, country: ct, lastAt });
@@ -579,7 +596,7 @@ export default function DashboardClient({ locale, business }: Props) {
       yearlyRevenue: yearly.label,
       recentCustomers
     };
-  }, [bookings]);
+  }, [bookings, messages]);
 
   function startEdit() {
     setProfileError("");
@@ -616,8 +633,8 @@ export default function DashboardClient({ locale, business }: Props) {
       const res = await fetch("/api/uploads/logo", { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) throw new Error(data?.error || `Logo upload failed (${res.status})`);
-      if (!data?.url || typeof data.url !== "string") throw new Error("Logo upload failed (missing url).");
+      if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.profile.errors.logoUploadFailed"));
+      if (!data?.url || typeof data.url !== "string") throw new Error(t(messages, "dashboard.profile.errors.logoMissingUrl"));
 
       return data.url;
     } finally {
@@ -633,10 +650,10 @@ export default function DashboardClient({ locale, business }: Props) {
     const c = city.trim();
     const cc = country.trim().toUpperCase();
 
-    if (!n) return setProfileError("Business name is required.");
-    if (!c) return setProfileError("City is required.");
-    if (!cc || cc.length < 2) return setProfileError("Country code is required (e.g. EE).");
-    if (!isValidUrlOrEmpty(website)) return setProfileError("Website looks invalid.");
+    if (!n) return setProfileError(t(messages, "dashboard.profile.errors.nameRequired"));
+    if (!c) return setProfileError(t(messages, "dashboard.profile.errors.cityRequired"));
+    if (!cc || cc.length < 2) return setProfileError(t(messages, "dashboard.profile.errors.countryRequired"));
+    if (!isValidUrlOrEmpty(website)) return setProfileError(t(messages, "dashboard.profile.errors.websiteInvalid"));
 
     setSavingProfile(true);
     try {
@@ -662,7 +679,7 @@ export default function DashboardClient({ locale, business }: Props) {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setProfileError(data?.error || "Failed to update profile.");
+        setProfileError(data?.error || t(messages, "dashboard.profile.errors.updateFailed"));
         return;
       }
 
@@ -686,7 +703,7 @@ export default function DashboardClient({ locale, business }: Props) {
       setEditing(false);
       router.refresh();
     } catch (e: any) {
-      setProfileError(e?.message || "Network error. Try again.");
+      setProfileError(e?.message || t(messages, "dashboard.profile.errors.network"));
     } finally {
       setSavingProfile(false);
     }
@@ -700,7 +717,7 @@ export default function DashboardClient({ locale, business }: Props) {
           <div className="flex items-start gap-4">
             <div className="h-14 w-14 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               {biz.logoUrl ? (
-                <img src={biz.logoUrl} alt="Business logo" className="h-full w-full object-cover" />
+                <img src={biz.logoUrl} alt={t(messages, "dashboard.header.logoAlt")} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-400">
                   {biz.name?.charAt(0)?.toUpperCase() || "S"}
@@ -709,10 +726,10 @@ export default function DashboardClient({ locale, business }: Props) {
             </div>
 
             <div>
-              <p className="text-sm font-medium text-slate-600">Dashboard</p>
+              <p className="text-sm font-medium text-slate-600">{t(messages, "dashboard.header.kicker")}</p>
               <h1 className="mt-2 text-3xl font-bold tracking-tight">{biz.name}</h1>
               <p className="mt-1 text-sm text-slate-600">
-                <span className="font-semibold text-slate-900">{biz.industry ?? "Industry"}</span>
+                <span className="font-semibold text-slate-900">{biz.industry ?? t(messages, "dashboard.header.industryFallback")}</span>
                 {biz.city ? ` • ${biz.city}` : ""}
                 {biz.country ? `, ${biz.country}` : ""}
                 {" • "}
@@ -727,7 +744,7 @@ export default function DashboardClient({ locale, business }: Props) {
               onClick={startEdit}
               className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
             >
-              Edit profile
+              {t(messages, "dashboard.actions.editProfile")}
             </button>
 
             <a
@@ -736,7 +753,7 @@ export default function DashboardClient({ locale, business }: Props) {
               target="_blank"
               rel="noreferrer"
             >
-              Open booking page
+              {t(messages, "dashboard.actions.openBookingPage")}
             </a>
 
             <button
@@ -745,7 +762,7 @@ export default function DashboardClient({ locale, business }: Props) {
               className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-60"
               disabled={statsLoading}
             >
-              {statsLoading ? "Refreshing…" : "Refresh stats"}
+              {statsLoading ? t(messages, "dashboard.actions.refreshing") : t(messages, "dashboard.actions.refreshStats")}
             </button>
 
             <button
@@ -753,7 +770,7 @@ export default function DashboardClient({ locale, business }: Props) {
               className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
               type="button"
             >
-              Log out
+              {t(messages, "dashboard.actions.logout")}
             </button>
           </div>
         </div>
@@ -763,12 +780,12 @@ export default function DashboardClient({ locale, business }: Props) {
           <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-base font-semibold">Business profile</h2>
-                <p className="mt-1 text-sm text-slate-500">Update your public info. Changes reflect on your booking page.</p>
+                <h2 className="text-base font-semibold">{t(messages, "dashboard.profile.title")}</h2>
+                <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.profile.lead")}</p>
               </div>
 
               <button type="button" onClick={cancelEdit} className="text-sm font-semibold text-slate-600 underline">
-                Cancel
+                {t(messages, "dashboard.profile.actions.cancel")}
               </button>
             </div>
 
@@ -780,32 +797,32 @@ export default function DashboardClient({ locale, business }: Props) {
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1 text-sm">
-                Business name
+                {t(messages, "dashboard.profile.fields.name")}
                 <input className="rounded-xl border border-slate-200 px-3 py-2" value={name} onChange={(e) => setName(e.target.value)} />
               </label>
 
               <label className="grid gap-1 text-sm">
-                Website (optional)
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." />
+                {t(messages, "dashboard.profile.fields.website")}
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder={t(messages, "dashboard.profile.placeholders.website")} />
               </label>
 
               <label className="grid gap-1 text-sm">
-                City
+                {t(messages, "dashboard.profile.fields.city")}
                 <input className="rounded-xl border border-slate-200 px-3 py-2" value={city} onChange={(e) => setCity(e.target.value)} />
               </label>
 
               <label className="grid gap-1 text-sm">
-                Country (code)
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} placeholder="EE" />
+                {t(messages, "dashboard.profile.fields.country")}
+                <input className="rounded-xl border border-slate-200 px-3 py-2" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} placeholder={t(messages, "dashboard.profile.placeholders.country")} />
               </label>
 
               <label className="grid gap-1 text-sm">
-                Street (optional)
+                {t(messages, "dashboard.profile.fields.street")}
                 <input className="rounded-xl border border-slate-200 px-3 py-2" value={street} onChange={(e) => setStreet(e.target.value)} />
               </label>
 
               <label className="grid gap-1 text-sm">
-                Postal code (optional)
+                {t(messages, "dashboard.profile.fields.postalCode")}
                 <input className="rounded-xl border border-slate-200 px-3 py-2" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
               </label>
             </div>
@@ -813,7 +830,7 @@ export default function DashboardClient({ locale, business }: Props) {
             {/* Logo upload */}
             <div className="mt-5 grid gap-2">
               <label className="grid gap-1 text-sm">
-                Logo (optional)
+                {t(messages, "dashboard.profile.fields.logo")}
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/svg+xml"
@@ -834,7 +851,7 @@ export default function DashboardClient({ locale, business }: Props) {
 
               {logoPreview ? (
                 <div className="flex items-center gap-3">
-                  <img src={logoPreview} alt="Logo preview" className="h-14 w-14 rounded-2xl border border-slate-200 object-cover" />
+                  <img src={logoPreview} alt={t(messages, "dashboard.profile.logoPreviewAlt")} className="h-14 w-14 rounded-2xl border border-slate-200 object-cover" />
                   <button
                     type="button"
                     className="text-sm underline text-slate-600"
@@ -844,11 +861,11 @@ export default function DashboardClient({ locale, business }: Props) {
                       setRemoveLogo(true);
                     }}
                   >
-                    Remove
+                    {t(messages, "dashboard.profile.actions.removeLogo")}
                   </button>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">Best: square, ≤ 2MB.</p>
+                <p className="text-xs text-slate-500">{t(messages, "dashboard.profile.logoHint")}</p>
               )}
             </div>
 
@@ -859,7 +876,11 @@ export default function DashboardClient({ locale, business }: Props) {
                 onClick={saveProfile}
                 className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
               >
-                {logoUploading ? "Uploading logo…" : savingProfile ? "Saving…" : "Save changes"}
+                {logoUploading
+                  ? t(messages, "dashboard.profile.states.uploadingLogo")
+                  : savingProfile
+                    ? t(messages, "dashboard.profile.states.saving")
+                    : t(messages, "dashboard.profile.actions.saveChanges")}
               </button>
             </div>
           </section>
@@ -867,54 +888,81 @@ export default function DashboardClient({ locale, business }: Props) {
 
         {/* Stats row */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard title="Total bookings" value={statsLoading ? "—" : String(stats.totalBookings)} sub={statsLoading ? "Loading…" : "All time (not cancelled)"} tone="blue" />
-          <StatCard title="Revenue generated" sub={statsLoading ? "Loading…" : "Confirmed in the past"} tone="green">
+          <StatCard
+            title={t(messages, "dashboard.stats.totalBookings.title")}
+            value={statsLoading ? "—" : String(stats.totalBookings)}
+            sub={statsLoading ? t(messages, "common.loading") : t(messages, "dashboard.stats.totalBookings.sub")}
+            tone="blue"
+          />
+
+          <StatCard
+            title={t(messages, "dashboard.stats.revenue.title")}
+            sub={statsLoading ? t(messages, "common.loading") : t(messages, "dashboard.stats.revenue.sub")}
+            tone="green"
+          >
             <div className="grid gap-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Weekly</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  {t(messages, "dashboard.stats.revenue.weekly")}
+                </span>
                 <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.weeklyRevenue}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Monthly</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  {t(messages, "dashboard.stats.revenue.monthly")}
+                </span>
                 <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.monthlyRevenue}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">Yearly</span>
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                  {t(messages, "dashboard.stats.revenue.yearly")}
+                </span>
                 <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.yearlyRevenue}</span>
               </div>
             </div>
           </StatCard>
-          <StatCard title="Customers" value={statsLoading ? "—" : String(stats.uniqueCustomers)} sub={statsLoading ? "Loading…" : "Unique customers"} tone="purple" />
+
+          <StatCard
+            title={t(messages, "dashboard.stats.customers.title")}
+            value={statsLoading ? "—" : String(stats.uniqueCustomers)}
+            sub={statsLoading ? t(messages, "common.loading") : t(messages, "dashboard.stats.customers.sub")}
+            tone="purple"
+          />
         </div>
 
         {/* Share link card */}
         <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-600">Your shareable booking link</div>
+              <div className="text-sm font-medium text-slate-600">{t(messages, "dashboard.share.title")}</div>
 
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="min-w-0 flex-1 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 ring-1 ring-slate-200">
                   <div className="truncate">{bookingUrl || bookingPath}</div>
                 </div>
 
-                <button type="button" onClick={copyLink} className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">
-                  {copied ? "Copied ✓" : "Copy link"}
+                <button
+                  type="button"
+                  onClick={copyLink}
+                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+                >
+                  {copied ? t(messages, "dashboard.share.copied") : t(messages, "dashboard.share.copy")}
                 </button>
               </div>
 
-              <div className="mt-2 text-sm text-slate-500">Share on Instagram bio, WhatsApp, your website, anywhere.</div>
+              <div className="mt-2 text-sm text-slate-500">{t(messages, "dashboard.share.help")}</div>
             </div>
           </div>
 
           <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-600">
-            Tip: Keep your availability updated, your booking page always reflects changes.
+            {t(messages, "dashboard.share.tip")}
           </div>
         </section>
 
         {/* ✅ Booking website content */}
-        <BookingGalleryManager />
+        <BookingGalleryManager locale={locale} />
         <BookingDescriptionEditor
+          locale={locale}
           initial={bookingDesc}
           onSaved={(next) => {
             setBookingDesc(next);
@@ -928,16 +976,16 @@ export default function DashboardClient({ locale, business }: Props) {
           <div className="lg:col-span-7">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
-                <h2 className="text-base font-semibold">Schedule overview</h2>
-                <p className="mt-1 text-sm text-slate-500">See your timeline and upcoming slots.</p>
+                <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.schedule.title")}</h2>
+                <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.schedule.lead")}</p>
               </div>
               <SchedulePanel />
             </div>
 
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
-                <h2 className="text-base font-semibold">Bookings</h2>
-                <p className="mt-1 text-sm text-slate-500">Track requests, confirmations, and status.</p>
+                <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.bookings.title")}</h2>
+                <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.bookings.lead")}</p>
               </div>
               <BookingsPanel />
             </div>
@@ -946,16 +994,16 @@ export default function DashboardClient({ locale, business }: Props) {
           <div className="space-y-6 lg:col-span-5">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
-                <h2 className="text-base font-semibold">Availability</h2>
-                <p className="mt-1 text-sm text-slate-500">Set your working hours and breaks.</p>
+                <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.availability.title")}</h2>
+                <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.availability.lead")}</p>
               </div>
               <AvailabilityEditor />
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
-                <h2 className="text-base font-semibold">Services & pricing</h2>
-                <p className="mt-1 text-sm text-slate-500">Add services, duration, and price.</p>
+                <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.services.title")}</h2>
+                <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.services.lead")}</p>
               </div>
               <ServicesEditor />
             </div>
@@ -965,4 +1013,3 @@ export default function DashboardClient({ locale, business }: Props) {
     </main>
   );
 }
-

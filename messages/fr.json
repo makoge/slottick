@@ -1,18 +1,589 @@
 {
+  "brand": { "name": "Slottick" },
+
+  "nav": { "login": "Connexion" },
+
+  "footer": {
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "contact": "Nous contacter"
+  },
+
+  "meta": {
+    "home": {
+      "title": "Plateforme de gestion de réservations pour les services",
+      "description": "Gérez vos services, la disponibilité du personnel et les réservations en ligne au même endroit. Partagez un lien unique qui affiche toujours votre vrai planning — idéal pour salons, barbiers, beauté et bien-être."
+    },
+    "explore": {
+      "title": "Explorer des services près de chez vous",
+      "description": "Explorez et réservez des entreprises fiables près de chez vous. Recherchez un service et filtrez par ville et secteur."
+    }
+  },
+
+  "common": {
+  "loading": "Chargement…",
+  "loadingDots": "Chargement...",
+  "refresh": "Actualiser",
+  "refreshing": "Actualisation…",
+  "save": "Enregistrer",
+  "saving": "Enregistrement…",
+  "saved": "Enregistré ✓",
+  "cancel": "Annuler",
+  "clear": "Effacer",
+  "remove": "Retirer",
+  "copy": "Copier",
+  "copied": "Copié ✓",
+  "back": "Retour",
+  "unknown": "Inconnu",
+  "optional": "(optionnel)",
+  "up": "Monter",
+  "down": "Descendre"
+},
+
+
   "home": {
-    "brand": "Slotta",
-    "tagline": "Réservation pour les techniciennes de cils",
-    "headline": "Des réservations sans aller-retour.",
-    "subheadline": "Les clientes choisissent un service, un horaire, et paient un acompte — via un seul lien.",
-    "ctaPrimary": "Tester la réservation",
-    "ctaSecondary": "Ouvrir le tableau de bord",
-    "features": {
-      "servicesTitle": "Prestations",
-      "servicesDesc": "Classique, Hybride, Volume, Remplissages — durée + prix.",
-      "availabilityTitle": "Disponibilités",
-      "availabilityDesc": "Planning hebdo + pauses + marge, sans double réservation.",
-      "depositsTitle": "Acomptes",
-      "depositsDesc": "Moins d’absences grâce aux acomptes et des règles claires."
+    "jsonld": {
+      "softwareDesc": "Plateforme de gestion de réservations pour les services. Définissez services et disponibilités puis partagez un lien de réservation avec disponibilité en temps réel.",
+      "pageName": "Accueil Slottick"
+    },
+
+    "hero": {
+      "badge": "Gestion des réservations pour les services",
+      "h1Line1": "Plateforme de réservation",
+      "h1Line2": "qui protège votre temps.",
+      "lead": "Slottick transforme vos disponibilités en un site de réservation partageable. Les clients réservent sur votre vrai planning, sans allers-retours, sans double réservation.",
+      "ctaPrimary": "Créer votre page de réservation",
+      "ctaSecondary": "Explorer les services",
+      "checks": [
+        "Services, durées et tarifs",
+        "Règles de disponibilité et pauses",
+        "Temps tampon entre clients",
+        "Un lien unique pour votre bio",
+        "Planning en temps réel (pas de double réservation)"
+      ]
+    },
+
+    "faq": {
+      "badge": "FAQ",
+      "title": "Pourquoi les entreprises de services ont besoin d’un système de réservation ?",
+      "lead": "Réponses courtes aux questions que vos clients (et vous) ressentez chaque semaine.",
+      "items": [
+        {
+          "q": "Quels problèmes un système de réservation résout-il ?",
+          "a": "Il évite les allers-retours, empêche les doubles réservations et garde votre planning à jour en temps réel."
+        },
+        {
+          "q": "Peut-il réduire les absences ?",
+          "a": "Oui. Les confirmations et rappels aident les clients à venir plus souvent, et votre temps reste protégé."
+        },
+        {
+          "q": "Pourquoi ne pas prendre les réservations via Instagram DM ?",
+          "a": "Les DM ne comprennent pas votre disponibilité. Un système de réservation ne montre que les créneaux qui respectent votre planning, vos pauses et votre temps tampon."
+        },
+        {
+          "q": "Ai-je besoin d’un site web pour utiliser Slottick ?",
+          "a": "Non. Vous obtenez un lien de réservation unique à mettre sur votre bio Instagram, WhatsApp, Google Business Profile, ou ailleurs."
+        },
+        {
+          "q": "Et si je change mon planning plus tard ?",
+          "a": "Votre page de réservation se met à jour automatiquement, les clients voient toujours votre dernière disponibilité."
+        },
+        {
+          "q": "Est-ce adapté aux salons, barbiers, beauté et bien-être ?",
+          "a": "Oui. Toute activité qui vend du temps (rendez-vous) en profite : cheveux, ongles, cils, massage, fitness, cliniques, etc."
+        }
+      ]
+    },
+
+    "preview": {
+      "badge": "Aperçu du tableau de bord",
+      "businessName": "Lash Studio Tallinn",
+      "liveDemo": "Démo",
+      "stats": [
+        { "t": "Réservations totales", "v": "28", "s": "Ce mois-ci" },
+        { "t": "Revenu", "v": "€1,240", "s": "Confirmé" },
+        { "t": "Clients", "v": "19", "s": "Récurrents : 6" }
+      ],
+      "linkTitle": "Votre lien de réservation",
+      "copy": "Copier",
+      "shareHint": "Partagez sur bio Instagram, WhatsApp, site web.",
+      "upcomingTitle": "Réservations à venir",
+      "today": "Aujourd’hui",
+      "bookings": [
+        { "header": "10:30 • Maria K.", "service": "Retouche cils • 60 min", "price": "€55" },
+        { "header": "12:00 • Anna P.", "service": "Cils classiques • 90 min", "price": "€70" },
+        { "header": "15:30 • Kristi S.", "service": "Sourcils • 30 min", "price": "€25" }
+      ],
+      "note": "Les clients ne voient que les vrais créneaux disponibles — pas de double réservation."
+    },
+    
+    "why": {
+  "badge": "Pourquoi Slottick",
+  "title": "Pourquoi choisir Slottick comme système de réservation ?",
+  "lead": "Moins de temps en messages, moins d’erreurs, et une façon plus propre pour vos clients de réserver.",
+  "items": [
+    {
+      "q": "Il gère votre temps automatiquement",
+      "a": "Définissez horaires, pauses, temps tampon et services une seule fois. Slottick ne montre que les créneaux compatibles avec votre vrai planning — pas de doubles réservations, pas d’allers-retours."
+    },
+    {
+      "q": "Il aide à promouvoir votre activité",
+      "a": "Votre page de réservation marche partout : bio Instagram, WhatsApp, Google Business Profile, publicités. Les clients réservent sans vous écrire d’abord."
+    },
+    {
+      "q": "Vous gagnez de nouveaux clients via Slottick",
+      "a": "Soyez découvert dans le marketplace Explorer de Slottick pour que de nouveaux clients puissent vous trouver et réserver même s’ils ne vous connaissent pas encore."
+    },
+    {
+      "q": "Pas de site web ? Pas de souci.",
+      "a": "Slottick devient votre site de réservation. Un lien propre affiche services, prix et disponibilités en direct, toujours à jour."
+    },
+    {
+      "q": "Simple, rapide et facile",
+      "a": "Les clients réservent en quelques secondes. Vous gérez tout depuis un seul tableau de bord — sans setup compliqué."
+    }
+  ],
+  "visual": {
+    "kicker": "L’expérience",
+    "title": "Un lien → réservations → tableau de bord",
+    "desc": "Protection du temps + marketing dans un seul système.",
+    "panelTitle": "Flux Slottick",
+    "aria": "Illustration montrant le lien de réservation, la page de réservation, le marketplace Explorer et les stats du tableau de bord",
+    "shareableLink": "Lien partageable",
+    "bookingPage": "Page de réservation",
+    "bookSlot": "Réserver un créneau",
+    "exploreMarket": "Marketplace Explorer",
+    "discover": "De nouveaux clients vous découvrent",
+    "dashboard": "Tableau de bord",
+    "totalBookings": "Réservations totales",
+    "revenue": "Revenu (S / M / A)",
+    "customers": "Clients",
+    "namesCountries": "Noms + pays depuis les réservations",
+    "pillars": [
+      { "k": "Temps", "v": "Disponibilités réelles" },
+      { "k": "Marketing", "v": "Un lien partout" },
+      { "k": "Croissance", "v": "Marketplace Explorer" }
+    ]
+  }
+},
+
+    "how": {
+      "items": [
+        {
+          "title": "Définissez services et règles",
+          "desc": "Ajoutez services, durées, tarifs, horaires, pauses et temps tampon."
+        },
+        {
+          "title": "Partagez un lien unique",
+          "desc": "Mettez-le sur votre site, Google Business Profile et bio Instagram."
+        },
+        {
+          "title": "Soyez réservé correctement",
+          "desc": "Les clients choisissent un service et un créneau qui correspond à votre planning."
+        }
+      ]
+    },
+
+    "for": {
+      "title": "Conçu pour les entreprises sur rendez-vous",
+      "desc": "Parfait pour salons, barbiers, studios cils/ongles, masseurs, cliniques beauté, coachs, et tout service qui vend du temps."
+    },
+
+    "cta": {
+      "title": "Votre disponibilité, c’est votre business.",
+      "desc": "Définissez votre planning une fois. Partagez un lien. Recevez des réservations sans chaos.",
+      "primary": "Créer votre page de réservation",
+      "secondary": "Explorer les services"
+    }
+  },
+
+  "register": {
+    "brandLabel": "Slottick",
+
+    "title": "Créer votre compte",
+    "subtitle": "Créez votre profil d’entreprise et obtenez votre lien de réservation.",
+    "back": "Retour",
+    "haveAccount": "Vous avez déjà un compte ?",
+    "login": "Se connecter",
+
+    "fields": {
+      "businessName": "Nom de l’entreprise",
+      "category": "Catégorie",
+      "city": "Ville",
+      "country": "Pays (code)",
+      "street": "Rue (optionnel)",
+      "postalCode": "Code postal (optionnel)",
+      "website": "Site web (optionnel)",
+      "email": "Email (propriétaire)",
+      "logo": "Logo (optionnel)",
+      "slug": "Slug de réservation",
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe"
+    },
+
+    "placeholders": {
+      "businessName": "ex : Damino Studio",
+      "city": "Tallinn",
+      "country": "EE",
+      "street": "ex : Pärnu mnt 10",
+      "postalCode": "ex : 10145",
+      "website": "https://...",
+      "email": "vous@domaine.com",
+      "password": "••••••••",
+      "slug": "damino-studio"
+    },
+
+    "industry": {
+      "beauty": "Beauté & soins",
+      "wellness": "Bien-être & lifestyle",
+      "creative": "Services créatifs",
+      "home": "Maison & local",
+      "education": "Éducation & professionnels"
+    },
+
+    "logoPreviewAlt": "Aperçu du logo",
+    "remove": "Retirer",
+    "logoHint": "S’affiche sur Explorer après mise en ligne. Idéal : carré, ≤ 2 Mo.",
+
+    "yourLink": "Votre lien :",
+    "slugHint": "Laissez vide pour utiliser le slug automatique basé sur le nom.",
+
+    "states": {
+      "uploadingLogo": "Téléversement du logo…",
+      "creating": "Création…",
+      "createAccount": "Créer le compte"
+    },
+
+    "nextHint": "Ensuite : ajoutez vos services + disponibilités et partagez votre lien de réservation.",
+
+    "errors": {
+      "businessNameRequired": "Le nom de l’entreprise est obligatoire.",
+      "slugRequired": "Le slug de réservation est obligatoire.",
+      "cityRequired": "La ville est obligatoire.",
+      "countryRequired": "Le code pays est obligatoire (ex : EE).",
+      "emailInvalid": "Veuillez saisir un email valide.",
+      "passwordMin": "Le mot de passe doit contenir au moins 8 caractères.",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "logoTooLarge": "Logo trop volumineux (max 2 Mo).",
+      "logoType": "Type de fichier logo non supporté.",
+      "logoUploadFailed": "Échec du téléversement du logo.",
+      "createFailed": "Échec de la création du compte.",
+      "network": "Erreur réseau. Réessayez."
+    }
+  },
+
+  "dashboard": {
+    "title": "Tableau de bord",
+
+    "actions": {
+      "editProfile": "Modifier le profil",
+      "openBookingPage": "Ouvrir la page de réservation",
+      "refreshStats": "Actualiser les stats",
+      "refreshing": "Actualisation…",
+      "logout": "Se déconnecter"
+    },
+
+    "header": {
+      "badge": "Tableau de bord",
+      "industryFallback": "Secteur"
+    },
+
+    "profile": {
+      "title": "Profil entreprise",
+      "subtitle": "Mettez à jour vos infos publiques. Les changements s’affichent sur votre page de réservation.",
+
+      "fields": {
+        "businessName": "Nom de l’entreprise",
+        "website": "Site web (optionnel)",
+        "city": "Ville",
+        "country": "Pays (code)",
+        "street": "Rue (optionnel)",
+        "postalCode": "Code postal (optionnel)",
+        "logo": "Logo (optionnel)"
+      },
+
+      "logoHint": "Idéal : carré, ≤ 2 Mo.",
+
+      "saveButton": {
+        "uploading": "Téléversement du logo…",
+        "saving": "Enregistrement…",
+        "saveChanges": "Enregistrer"
+      }
+    },
+
+    "stats": {
+      "totalBookings": {
+        "title": "Réservations totales",
+        "subLoading": "Chargement…",
+        "sub": "Depuis le début (non annulées)"
+      },
+      "revenue": {
+        "title": "Revenu généré",
+        "subLoading": "Chargement…",
+        "sub": "Confirmées dans le passé",
+        "weekly": "Semaine",
+        "monthly": "Mois",
+        "yearly": "Année",
+        "mixed": "Mixte"
+      },
+      "customers": {
+        "title": "Clients",
+        "subLoading": "Chargement…",
+        "sub": "Clients uniques"
+      }
+    },
+      "share": {
+  "title": "Votre lien de réservation partageable",
+  "copyLink": "Copier le lien",
+  "copied": "Copié ✓",
+  "shareHint": "Partagez-le sur Instagram, WhatsApp, votre site web, partout.",
+  "help": "Partagez ce lien pour permettre aux clients de réserver.",
+  "tip": "Astuce : gardez vos disponibilités à jour, votre page de réservation reflète toujours les changements.",
+  "copyFailed": "Échec de la copie — veuillez copier manuellement."
+},
+
+    "gallery": {
+      "title": "Images de la page de réservation",
+      "lead": "La 1ère image = hero. Les 2 suivantes = images latérales. Elles s’affichent sur votre page de réservation.",
+
+      "actions": {
+        "upload": "Téléverser des images",
+        "uploading": "Téléversement…",
+        "refresh": "Actualiser",
+        "up": "Monter",
+        "down": "Descendre",
+        "remove": "Supprimer"
+      },
+
+      "errors": {
+        "load": "Impossible de charger la galerie",
+        "upload": "Échec du téléversement",
+        "delete": "Échec de la suppression",
+        "reorder": "Échec du réordonnancement"
+      },
+
+      "preview": {
+        "hero": "Aperçu de l’image hero",
+        "side1": "Image latérale 1",
+        "side2": "Image latérale 2",
+        "heroAlt": "Aperçu hero",
+        "sideAlt1": "Aperçu latéral 1",
+        "sideAlt2": "Aperçu latéral 2"
+      },
+
+      "list": {
+        "title": "Vos images",
+        "loading": "Chargement…",
+        "empty": "Aucune image. Téléversez-en 3 pour la mise en page complète.",
+        "hero": "Hero",
+        "side1": "Côté 1",
+        "side2": "Côté 2",
+        "imageN": "Image {n}"
+      }
+    },
+
+    "description": {
+      "title": "Description de la page de réservation",
+      "lead": "S’affiche sur le hero de votre page de réservation. Restez local + clair (max 600 mots).",
+      "placeholder": "Exemple : Nous sommes un studio d’ongles à Tallinn spécialisé dans…",
+      "words": "{count}/600 mots",
+
+      "actions": {
+        "save": "Enregistrer",
+        "clear": "Effacer"
+      },
+
+      "states": {
+        "saving": "Enregistrement…"
+      },
+
+      "errors": {
+        "tooLong": "Trop long — 600 mots max.",
+        "saveFailed": "Échec de l’enregistrement",
+        "saveFailedApi": "Échec de l’enregistrement de la description"
+      }
+    },
+
+"panels": {
+  "schedule": {
+    "title": "Aperçu du planning",
+    "subtitle": "Consultez votre planning et les créneaux à venir.",
+    "lead": "Consultez votre planning et les créneaux à venir."
+  },
+  "bookings": {
+    "title": "Réservations",
+    "subtitle": "Suivez les demandes, confirmations et statuts.",
+    "lead": "Suivez les demandes, confirmations et statuts."
+  },
+  "availability": {
+    "title": "Disponibilités",
+    "subtitle": "Définissez vos horaires de travail et vos pauses.",
+    "lead": "Définissez vos horaires de travail et vos pauses."
+  },
+  "services": {
+    "title": "Services et tarifs",
+    "subtitle": "Ajoutez des services, durées et prix.",
+    "lead": "Ajoutez des services, durées et prix."
+  }
+}
+
+
+  },
+
+  
+  "availability": {
+    "title": "Disponibilités",
+    "lead": "Définissez vos jours et heures de travail. Cela contrôle ce que les clients peuvent réserver.",
+    "states": {
+      "loading": "Chargement…",
+      "saving": "Enregistrement…",
+      "saved": "Enregistré ✓",
+      "save": "Enregistrer"
+    },
+    "errors": {
+      "invalidTimezone": "Fuseau horaire invalide. Exemple : Europe/Tallinn",
+      "saveFailed": "Échec de l’enregistrement"
+    },
+    "timezone": {
+      "title": "Fuseau horaire",
+      "label": "Fuseau horaire (IANA)",
+      "hint": "Exemple : Europe/Tallinn, Africa/Douala, America/New_York",
+      "useDetected": "Détecté : {tz}",
+      "invalid": "Fuseau horaire invalide"
+    },
+    "workingDays": {
+      "title": "Jours de travail",
+      "days": { "sun": "Dim", "mon": "Lun", "tue": "Mar", "wed": "Mer", "thu": "Jeu", "fri": "Ven", "sat": "Sam" }
+    },
+    "hours": { "start": "Heure de début", "end": "Heure de fin" },
+    "break": { "start": "Début de pause (optionnel)", "end": "Fin de pause (optionnel)" },
+    "rules": {
+      "slotStep": "Pas des créneaux (minutes)",
+      "buffer": "Tampon entre réservations (minutes)"
+    }
+  },
+  "schedule": {
+    "title": "Planning",
+    "subtitle": "{title} rendez-vous • Touchez un jour.",
+    "emptyDay": "Aucun rendez-vous ce jour.",
+    "minutes": "min",
+
+    "modes": {
+      "today": "Aujourd’hui",
+      "upcoming": "À venir",
+      "all": "Tout"
+    },
+
+    "actions": {
+      "prev": "Préc",
+      "next": "Suiv",
+      "nextBookedDay": "Prochain jour réservé"
+    },
+
+    "weekdays": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Jeu",
+      "fri": "Ven",
+      "sat": "Sam",
+      "sun": "Dim"
+    }
+  },
+
+  "bookings": {
+    "title": "Réservations",
+    "minutes": "min",
+    "notes": "Notes",
+    "upcomingCount": "{n} à venir",
+    "loadingShort": "Chargement…",
+    "loading": "Chargement des réservations…",
+    "emptyUpcoming": "Aucune réservation à venir.",
+    "pastTitle": "Passées",
+    "buttons": {
+      "refresh": "Actualiser",
+      "refreshing": "Actualisation…",
+      "done": "Terminé",
+      "cancel": "Annuler",
+      "saving": "Enregistrement…",
+      "cancelling": "Annulation…"
+    }
+  },
+
+  "services": {
+    "title": "Services",
+    "lead": "Ajoutez vos services avec catégorie, durée et prix. La catégorie aide Explorer + SEO. Optionnel : demander un acompte. Ajoutez des photos pour montrer votre travail.",
+    "minutes": "min",
+
+    "status": { "loading": "Chargement…", "saving": "Enregistrement…", "saved": "Enregistré ✓" },
+
+    "errors": {
+      "loadFailed": "Échec du chargement des services",
+      "saveFailed": "Échec de l’enregistrement des services",
+      "networkLoad": "Erreur réseau lors du chargement",
+      "networkSave": "Erreur réseau lors de l’enregistrement",
+      "uploadFailed": "Échec du téléversement"
+    },
+
+    "categories": {
+      "Hair": "Cheveux",
+      "Barber": "Barbier",
+      "Lash": "Cils",
+      "Brows": "Sourcils",
+      "Nails": "Ongles",
+      "Manicure": "Manucure",
+      "Pedicure": "Pédicure",
+      "Makeup": "Maquillage",
+      "Skincare": "Soins de la peau",
+      "Massage": "Massage",
+      "Tattoo": "Tatouage",
+      "Waxing": "Épilation",
+      "Facial": "Soin du visage",
+      "Other": "Autre"
+    },
+
+    "form": {
+      "name": "Nom du service",
+      "namePlaceholder": "Coupe",
+      "category": "Catégorie",
+      "duration": "Durée (minutes)",
+      "price": "Prix",
+      "currency": "Devise"
+    },
+
+    "actions": { "add": "Ajouter un service", "delete": "Supprimer", "remove": "Retirer" },
+
+    "edit": { "name": "Nom", "category": "Catégorie", "duration": "Durée" },
+
+    "photos": {
+      "title": "Photos (optionnel)",
+      "workTitle": "Photos (optionnel)",
+      "add": "Ajouter une photo",
+      "uploading": "Téléversement…",
+      "hint": "Ajoutez 3–6 vraies photos par service. Ça augmente la confiance rapidement.",
+      "none": "Pas encore de photos.",
+      "altNew": "Photo du service",
+      "altWork": "Photo du travail — {name}"
+    },
+
+    "deposit": {
+      "require": "Demander un acompte pour réserver",
+      "requireShort": "Demander un acompte",
+      "type": "Type",
+      "value": "Valeur",
+      "shown": "Affiché aux clients",
+      "percentOption": "Pourcentage (%)",
+      "amountOption": "Montant fixe",
+      "percentLabel": "Pourcentage",
+      "amountLabel": "Montant",
+      "labelPercent": "Acompte : {n}%",
+      "labelAmount": "Acompte : {amount}",
+      "none": "Pas d’acompte"
+    },
+
+    "list": {
+      "loading": "Chargement des services…",
+      "empty": "Aucun service, ajoutez le premier."
     }
   }
 }

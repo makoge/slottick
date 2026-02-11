@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/lib/services";
 import { useParams, useRouter } from "next/navigation";
+import { useMessages } from "@/lib/use-messages";
+import { t } from "@/lib/i18n";
 
 type DbBooking = {
   id: string;
@@ -38,6 +40,9 @@ export default function BookingsPanel() {
   const params = useParams<{ locale?: string }>();
   const locale = params?.locale ?? "en";
 
+  const messages = useMessages(locale);
+
+
   const [bookings, setBookings] = useState<DbBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -61,10 +66,8 @@ export default function BookingsPanel() {
 
   useEffect(() => {
     refresh();
-
-    // ✅ auto-poll so bookings show without page refresh
-    const t = setInterval(refresh, 15_000);
-    return () => clearInterval(t);
+    const tmr = setInterval(refresh, 15_000);
+    return () => clearInterval(tmr);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -74,7 +77,7 @@ export default function BookingsPanel() {
     const active = bookings.filter((b) => b.status !== "CANCELLED");
     const upcoming = active
       .filter((b) => b.status !== "DONE")
-      .filter((b) => endsAtMs(b) >= now) // still upcoming
+      .filter((b) => endsAtMs(b) >= now)
       .sort((a, b) => String(a.startsAt).localeCompare(String(b.startsAt)));
 
     const past = active
@@ -127,12 +130,15 @@ export default function BookingsPanel() {
             <div className="font-semibold">
               {date} • {time} — {b.customerName}
             </div>
+
             <div className="mt-1 text-sm text-slate-600">
-              {b.serviceName} • {b.durationMin} min • {formatMoney(b.price, b.currency as any)}
+              {b.serviceName} • {b.durationMin} {t(messages, "bookings.minutes")} •{" "}
+              {formatMoney(b.price, b.currency as any)}
             </div>
+
             <div className="mt-1 text-sm text-slate-600">
               {b.customerPhone}
-              {b.notes ? ` • Notes: ${b.notes}` : ""}
+              {b.notes ? ` • ${t(messages, "bookings.notes")}: ${b.notes}` : ""}
             </div>
           </div>
 
@@ -143,7 +149,7 @@ export default function BookingsPanel() {
               disabled={busy}
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
             >
-              {busy ? "Saving..." : "Done"}
+              {busy ? t(messages, "bookings.buttons.saving") : t(messages, "bookings.buttons.done")}
             </button>
 
             <button
@@ -152,7 +158,9 @@ export default function BookingsPanel() {
               disabled={busy}
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
             >
-              {busy ? "Cancelling..." : "Cancel"}
+              {busy
+                ? t(messages, "bookings.buttons.cancelling")
+                : t(messages, "bookings.buttons.cancel")}
             </button>
           </div>
         </div>
@@ -160,14 +168,16 @@ export default function BookingsPanel() {
     );
   }
 
+  const upcomingLabel = t(messages, "bookings.upcomingCount").replace("{n}", String(upcoming.length));
+
   return (
     <section className="mt-6 rounded-2xl border border-slate-200 p-6 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Bookings</h2>
+        <h2 className="text-lg font-semibold">{t(messages, "bookings.title")}</h2>
 
         <div className="flex items-center gap-3">
           <span className="text-sm text-slate-600">
-            {loading ? "Loading..." : `${upcoming.length} upcoming`}
+            {loading ? t(messages, "bookings.loadingShort") : upcomingLabel}
           </span>
 
           <button
@@ -176,17 +186,15 @@ export default function BookingsPanel() {
             disabled={refreshing}
             className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
           >
-            {refreshing ? "Refreshing..." : "Refresh"}
+            {refreshing ? t(messages, "bookings.buttons.refreshing") : t(messages, "bookings.buttons.refresh")}
           </button>
         </div>
       </div>
 
       {loading ? (
-        <p className="mt-3 text-sm text-slate-600">Loading bookings...</p>
+        <p className="mt-3 text-sm text-slate-600">{t(messages, "bookings.loading")}</p>
       ) : upcoming.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-600">
-          No upcoming bookings yet.
-        </p>
+        <p className="mt-3 text-sm text-slate-600">{t(messages, "bookings.emptyUpcoming")}</p>
       ) : (
         <div className="mt-4 grid gap-3">
           {upcoming.map((b) => (
@@ -195,10 +203,9 @@ export default function BookingsPanel() {
         </div>
       )}
 
-      {/* Past */}
       {!loading && past.length > 0 ? (
         <div className="mt-8">
-          <div className="text-sm font-semibold text-slate-700">Past</div>
+          <div className="text-sm font-semibold text-slate-700">{t(messages, "bookings.pastTitle")}</div>
           <div className="mt-3 grid gap-3">
             {past.slice(0, 10).map((b) => (
               <BookingCard key={b.id} b={b} />
@@ -209,3 +216,4 @@ export default function BookingsPanel() {
     </section>
   );
 }
+

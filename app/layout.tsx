@@ -10,6 +10,13 @@ const inter = Inter({
   display: "swap"
 });
 
+export const metadata = {
+  verification: {
+    bing: "F92AC11091A9F71912C4635E1FCF1FDE" 
+  }
+};
+
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="bg-white" suppressHydrationWarning>

@@ -2,13 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { Currency, Service, formatMoney } from "@/lib/services";
+import { useMessages } from "@/lib/use-messages";
+import { t } from "@/lib/i18n";
+import { useParams } from "next/navigation";
+
+
+
 
 const currencyOptions: Currency[] = ["EUR", "USD", "FCFA"];
 type DepositType = "PERCENT" | "AMOUNT";
 
 /**
- * Beauty & care service categories (used for Explore + SEO).
- * Opinion: keep this list curated (not free-text) to protect search quality.
+ * Opinion: keep categories curated for Explore + SEO quality.
+ * We store the VALUE in DB (English key), but DISPLAY via i18n label.
  */
 const SERVICE_CATEGORY_OPTIONS = [
   "Hair",
@@ -32,7 +38,7 @@ type ServiceCategory = (typeof SERVICE_CATEGORY_OPTIONS)[number];
 type DbService = {
   id: string;
   name: string;
-  category?: string | null; // ✅ NEW
+  category?: string | null;
   durationMin: number;
   price: number;
   currency: string;
@@ -66,21 +72,12 @@ function clamp(n: number, min: number, max: number) {
 }
 
 type ServiceWithDeposit = Service & {
-  category?: ServiceCategory; // ✅ NEW
+  category?: ServiceCategory;
   depositEnabled?: boolean;
   depositType?: DepositType;
   depositValue?: number;
   images?: string[];
 };
-
-function depositLabel(s: ServiceWithDeposit) {
-  if (!s.depositEnabled) return null;
-  const v = Number(s.depositValue || 0);
-  if (!v) return null;
-  return s.depositType === "PERCENT"
-    ? `Deposit: ${clamp(v, 1, 100)}%`
-    : `Deposit: ${formatMoney(clamp(v, 1, 1_000_000), s.currency)}`;
-}
 
 async function uploadServiceImage(file: File): Promise<string> {
   const form = new FormData();
@@ -99,6 +96,12 @@ async function uploadServiceImage(file: File): Promise<string> {
 }
 
 export default function ServicesEditor() {
+  const params = useParams<{ locale?: string }>();
+const locale = params?.locale ?? "en";
+
+const messages = useMessages(locale);
+  
+
   const [services, setServices] = useState<ServiceWithDeposit[]>([]);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -107,7 +110,7 @@ export default function ServicesEditor() {
 
   // add form
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<ServiceCategory>("Hair"); // ✅ NEW
+  const [category, setCategory] = useState<ServiceCategory>("Hair");
   const [durationMin, setDurationMin] = useState<number>(60);
   const [priceText, setPriceText] = useState<string>("50");
   const [currency, setCurrency] = useState<Currency>("EUR");
@@ -121,6 +124,26 @@ export default function ServicesEditor() {
   const [newImages, setNewImages] = useState<string[]>([]);
   const [uploadingNewImage, setUploadingNewImage] = useState(false);
 
+  function categoryLabel(cat: ServiceCategory) {
+    return t(messages, `services.categories.${cat}`);
+  }
+
+  function depositLabel(s: ServiceWithDeposit) {
+    if (!s.depositEnabled) return null;
+    const v = Number(s.depositValue || 0);
+    if (!v) return null;
+
+    if (s.depositType === "PERCENT") {
+      return t(messages, "services.deposit.labelPercent")
+        .replace("{n}", String(clamp(v, 1, 100)));
+    }
+
+    return t(messages, "services.deposit.labelAmount").replace(
+      "{amount}",
+      formatMoney(clamp(v, 1, 1_000_000), s.currency)
+    );
+  }
+
   async function load() {
     setLoading(true);
     setError(null);
@@ -130,7 +153,7 @@ export default function ServicesEditor() {
 
       if (!res.ok) {
         setServices([]);
-        setError(data.error || "Failed to load services");
+        setError(data.error || t(messages, "services.errors.loadFailed"));
         return;
       }
 
@@ -138,7 +161,7 @@ export default function ServicesEditor() {
         ? (data.services as DbService[]).map((s) => ({
             id: String(s.id),
             name: String(s.name ?? ""),
-            category: toServiceCategory(s.category), // ✅ NEW
+            category: toServiceCategory(s.category),
             durationMin: Number(s.durationMin ?? 0),
             price: Number(s.price ?? 0),
             currency: toCurrency(s.currency),
@@ -156,7 +179,7 @@ export default function ServicesEditor() {
 
       setServices(mapped);
     } catch {
-      setError("Network error loading services");
+      setError(t(messages, "services.errors.networkLoad"));
       setServices([]);
     } finally {
       setLoading(false);
@@ -172,6 +195,7 @@ export default function ServicesEditor() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function persist(next: ServiceWithDeposit[]) {
@@ -189,7 +213,7 @@ export default function ServicesEditor() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || "Failed to save services");
+        setError(data.error || t(messages, "services.errors.saveFailed"));
         return;
       }
 
@@ -197,7 +221,7 @@ export default function ServicesEditor() {
         const mapped: ServiceWithDeposit[] = (data.services as DbService[]).map((s) => ({
           id: String(s.id),
           name: String(s.name ?? ""),
-          category: toServiceCategory(s.category), // ✅ NEW
+          category: toServiceCategory(s.category),
           durationMin: Number(s.durationMin ?? 0),
           price: Number(s.price ?? 0),
           currency: toCurrency(s.currency),
@@ -217,7 +241,7 @@ export default function ServicesEditor() {
       setSaved(true);
       setTimeout(() => setSaved(false), 1200);
     } catch {
-      setError("Network error saving services");
+      setError(t(messages, "services.errors.networkSave"));
     } finally {
       setSaving(false);
     }
@@ -251,7 +275,7 @@ export default function ServicesEditor() {
       const url = await uploadServiceImage(file);
       setNewImages((prev) => Array.from(new Set([...prev, url])).slice(0, 12));
     } catch (e: any) {
-      setError(e?.message || "Upload failed");
+      setError(e?.message || t(messages, "services.errors.uploadFailed"));
     } finally {
       setUploadingNewImage(false);
     }
@@ -267,8 +291,7 @@ export default function ServicesEditor() {
     let depositValue: number | undefined = undefined;
     if (depositEnabled) {
       const raw = toPositiveInt(depositValueText, 0);
-      depositValue =
-        depositType === "PERCENT" ? clamp(raw, 1, 100) : clamp(raw, 1, 1_000_000);
+      depositValue = depositType === "PERCENT" ? clamp(raw, 1, 100) : clamp(raw, 1, 1_000_000);
       if (!depositValue) return;
     }
 
@@ -276,7 +299,7 @@ export default function ServicesEditor() {
       {
         id: crypto.randomUUID(),
         name: cleanName,
-        category, // ✅ NEW
+        category,
         durationMin: Math.max(5, Number(durationMin) || 5),
         price,
         currency,
@@ -306,41 +329,41 @@ export default function ServicesEditor() {
   return (
     <section className="rounded-2xl border border-slate-200 p-6 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Services</h2>
+        <h2 className="text-lg font-semibold">{t(messages, "services.title")}</h2>
         <span className="text-sm text-slate-600">
-          {loading ? "Loading..." : saving ? "Saving..." : saved ? "Saved ✓" : ""}
+          {loading
+            ? t(messages, "services.status.loading")
+            : saving
+              ? t(messages, "services.status.saving")
+              : saved
+                ? t(messages, "services.status.saved")
+                : ""}
         </span>
       </div>
 
-      <p className="mt-2 text-sm text-slate-600">
-        Add your services with category, duration and price. Category helps Explore search + SEO.
-        Optional: require a deposit. Add photos so customers see your work.
-      </p>
+      <p className="mt-2 text-sm text-slate-600">{t(messages, "services.lead")}</p>
 
       {error ? (
-        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
+        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       ) : null}
 
       {/* Add form */}
       <form onSubmit={addService} className="mt-5 grid gap-3 rounded-2xl bg-slate-50 p-4">
         <div className="grid min-w-0 gap-3 sm:grid-cols-2">
           <label className="grid min-w-0 gap-1 text-sm">
-            Service name
+            {t(messages, "services.form.name")}
             <input
               className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Haircut"
+              placeholder={t(messages, "services.form.namePlaceholder")}
               required
               disabled={loading || saving}
             />
           </label>
 
-          {/* ✅ NEW: Category selector */}
           <label className="grid min-w-0 gap-1 text-sm">
-            Category
+            {t(messages, "services.form.category")}
             <select
               className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
               value={category}
@@ -349,7 +372,7 @@ export default function ServicesEditor() {
             >
               {SERVICE_CATEGORY_OPTIONS.map((c) => (
                 <option key={c} value={c}>
-                  {c}
+                  {categoryLabel(c)}
                 </option>
               ))}
             </select>
@@ -358,7 +381,7 @@ export default function ServicesEditor() {
 
         <div className="grid min-w-0 gap-3 sm:grid-cols-2">
           <label className="grid min-w-0 gap-1 text-sm">
-            Duration (minutes)
+            {t(messages, "services.form.duration")}
             <input
               type="number"
               min={5}
@@ -372,7 +395,7 @@ export default function ServicesEditor() {
 
           <div className="grid min-w-0 gap-3 sm:grid-cols-[2fr_1fr]">
             <label className="grid min-w-0 gap-1 text-sm">
-              Price
+              {t(messages, "services.form.price")}
               <input
                 type="text"
                 inputMode="numeric"
@@ -385,7 +408,7 @@ export default function ServicesEditor() {
             </label>
 
             <label className="grid min-w-0 gap-1 text-sm">
-              Currency
+              {t(messages, "services.form.currency")}
               <select
                 className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-3 text-base font-medium"
                 value={currency}
@@ -405,10 +428,12 @@ export default function ServicesEditor() {
         {/* Work photos for new service */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-medium">Work photos (optional)</div>
+            <div className="text-sm font-medium">{t(messages, "services.photos.title")}</div>
 
             <label className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">
-              {uploadingNewImage ? "Uploading..." : "Add photo"}
+              {uploadingNewImage
+                ? t(messages, "services.photos.uploading")
+                : t(messages, "services.photos.add")}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
@@ -425,16 +450,14 @@ export default function ServicesEditor() {
           </div>
 
           {newImages.length === 0 ? (
-            <p className="mt-2 text-xs text-slate-600">
-              Add 3–6 real photos per service. It boosts trust fast.
-            </p>
+            <p className="mt-2 text-xs text-slate-600">{t(messages, "services.photos.hint")}</p>
           ) : (
             <div className="mt-3 grid grid-cols-3 gap-3">
               {newImages.map((url) => (
                 <div key={url} className="relative">
                   <img
                     src={url}
-                    alt="Work photo"
+                    alt={t(messages, "services.photos.altNew")}
                     className="h-24 w-full rounded-xl border border-slate-200 object-cover"
                   />
                   <button
@@ -442,7 +465,7 @@ export default function ServicesEditor() {
                     className="absolute right-2 top-2 rounded-lg bg-white/90 px-2 py-1 text-xs font-semibold"
                     onClick={() => setNewImages((prev) => prev.filter((x) => x !== url))}
                   >
-                    Remove
+                    {t(messages, "services.actions.remove")}
                   </button>
                 </div>
               ))}
@@ -460,25 +483,27 @@ export default function ServicesEditor() {
               disabled={loading || saving}
               className="h-4 w-4"
             />
-            Require deposit for booking
+            {t(messages, "services.deposit.require")}
           </label>
 
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <label className="grid gap-1 text-sm">
-              Type
+              {t(messages, "services.deposit.type")}
               <select
                 className="w-full rounded-xl border border-slate-200 px-3 py-2"
                 value={depositType}
                 onChange={(e) => setDepositType(e.target.value as DepositType)}
                 disabled={!depositEnabled || loading || saving}
               >
-                <option value="PERCENT">Percent (%)</option>
-                <option value="AMOUNT">Fixed amount</option>
+                <option value="PERCENT">{t(messages, "services.deposit.percentOption")}</option>
+                <option value="AMOUNT">{t(messages, "services.deposit.amountOption")}</option>
               </select>
             </label>
 
             <label className="grid gap-1 text-sm">
-              {depositType === "PERCENT" ? "Percent" : "Amount"}
+              {depositType === "PERCENT"
+                ? t(messages, "services.deposit.percentLabel")
+                : t(messages, "services.deposit.amountLabel")}
               <input
                 type="text"
                 inputMode="numeric"
@@ -492,16 +517,19 @@ export default function ServicesEditor() {
             </label>
 
             <div className="grid gap-1 text-sm">
-              <div>Shown to clients</div>
+              <div>{t(messages, "services.deposit.shown")}</div>
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 font-semibold">
                 {depositEnabled
                   ? depositType === "PERCENT"
-                    ? `Deposit: ${clamp(toPositiveInt(depositValueText, 0), 1, 100)}%`
-                    : `Deposit: ${formatMoney(
-                        clamp(toPositiveInt(depositValueText, 0), 1, 1_000_000),
-                        currency
-                      )}`
-                  : "No deposit"}
+                    ? t(messages, "services.deposit.labelPercent").replace(
+                        "{n}",
+                        String(clamp(toPositiveInt(depositValueText, 0), 1, 100))
+                      )
+                    : t(messages, "services.deposit.labelAmount").replace(
+                        "{amount}",
+                        formatMoney(clamp(toPositiveInt(depositValueText, 0), 1, 1_000_000), currency)
+                      )
+                  : t(messages, "services.deposit.none")}
               </div>
             </div>
           </div>
@@ -512,7 +540,7 @@ export default function ServicesEditor() {
           disabled={loading || saving || uploadingNewImage}
           className="w-full rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60 sm:w-fit"
         >
-          Add service
+          {t(messages, "services.actions.add")}
         </button>
       </form>
 
@@ -520,11 +548,11 @@ export default function ServicesEditor() {
       <div className="mt-5 grid gap-3">
         {loading ? (
           <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
-            Loading services...
+            {t(messages, "services.list.loading")}
           </div>
         ) : services.length === 0 ? (
           <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
-            No services yet, add your first one.
+            {t(messages, "services.list.empty")}
           </div>
         ) : (
           services.map((s) => {
@@ -538,9 +566,8 @@ export default function ServicesEditor() {
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="font-semibold">{s.name}</div>
 
-                      {/* ✅ Category chip */}
                       <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
-                        {s.category ?? "Other"}
+                        {categoryLabel((s.category ?? "Other") as ServiceCategory)}
                       </span>
 
                       {badge ? (
@@ -551,7 +578,7 @@ export default function ServicesEditor() {
                     </div>
 
                     <div className="mt-1 text-sm text-slate-600">
-                      {s.durationMin} min • {formatMoney(s.price, s.currency)}
+                      {s.durationMin} {t(messages, "services.minutes")} • {formatMoney(s.price, s.currency)}
                     </div>
                   </div>
 
@@ -561,14 +588,14 @@ export default function ServicesEditor() {
                     disabled={saving}
                     className="w-fit rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-60"
                   >
-                    Delete
+                    {t(messages, "services.actions.delete")}
                   </button>
                 </div>
 
-                {/* ✅ Inline edit: name + category + duration */}
+                {/* Inline edit */}
                 <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-3">
                   <label className="grid gap-1 text-sm">
-                    Name
+                    {t(messages, "services.edit.name")}
                     <input
                       className="w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
                       value={s.name}
@@ -588,7 +615,7 @@ export default function ServicesEditor() {
                   </label>
 
                   <label className="grid gap-1 text-sm">
-                    Category
+                    {t(messages, "services.edit.category")}
                     <select
                       className="w-full rounded-xl border border-slate-200 px-3 py-2"
                       value={s.category ?? "Other"}
@@ -607,14 +634,14 @@ export default function ServicesEditor() {
                     >
                       {SERVICE_CATEGORY_OPTIONS.map((c) => (
                         <option key={c} value={c}>
-                          {c}
+                          {categoryLabel(c)}
                         </option>
                       ))}
                     </select>
                   </label>
 
                   <label className="grid gap-1 text-sm">
-                    Duration
+                    {t(messages, "services.edit.duration")}
                     <input
                       type="number"
                       min={5}
@@ -640,10 +667,10 @@ export default function ServicesEditor() {
                 {/* Images per service */}
                 <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-medium">Work photos</div>
+                    <div className="text-sm font-medium">{t(messages, "services.photos.workTitle")}</div>
 
                     <label className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50">
-                      Add photo
+                      {t(messages, "services.photos.add")}
                       <input
                         type="file"
                         accept="image/png,image/jpeg,image/webp"
@@ -661,7 +688,7 @@ export default function ServicesEditor() {
                               Array.from(new Set([...(s.images ?? []), url])).slice(0, 12)
                             );
                           } catch (err: any) {
-                            setError(err?.message || "Upload failed");
+                            setError(err?.message || t(messages, "services.errors.uploadFailed"));
                           } finally {
                             e.currentTarget.value = "";
                           }
@@ -671,24 +698,22 @@ export default function ServicesEditor() {
                   </div>
 
                   {imgs.length === 0 ? (
-                    <p className="mt-2 text-xs text-slate-600">No photos yet.</p>
+                    <p className="mt-2 text-xs text-slate-600">{t(messages, "services.photos.none")}</p>
                   ) : (
                     <div className="mt-3 grid grid-cols-3 gap-3">
                       {imgs.map((url) => (
                         <div key={url} className="relative">
                           <img
                             src={url}
-                            alt={`${s.name} work`}
+                            alt={t(messages, "services.photos.altWork").replace("{name}", s.name)}
                             className="h-24 w-full rounded-xl border border-slate-200 object-cover"
                           />
                           <button
                             type="button"
                             className="absolute right-2 top-2 rounded-lg bg-white/90 px-2 py-1 text-xs font-semibold"
-                            onClick={() =>
-                              updateServiceImages(s.id, imgs.filter((x) => x !== url))
-                            }
+                            onClick={() => updateServiceImages(s.id, imgs.filter((x) => x !== url))}
                           >
-                            Remove
+                            {t(messages, "services.actions.remove")}
                           </button>
                         </div>
                       ))}
@@ -716,11 +741,11 @@ export default function ServicesEditor() {
                       disabled={saving}
                       className="h-4 w-4"
                     />
-                    Require deposit
+                    {t(messages, "services.deposit.requireShort")}
                   </label>
 
                   <label className="grid gap-1 text-sm">
-                    Type
+                    {t(messages, "services.deposit.type")}
                     <select
                       className="w-full rounded-xl border border-slate-200 px-3 py-2"
                       value={s.depositType ?? "PERCENT"}
@@ -740,28 +765,23 @@ export default function ServicesEditor() {
                       }
                       disabled={saving || !s.depositEnabled}
                     >
-                      <option value="PERCENT">Percent (%)</option>
-                      <option value="AMOUNT">Fixed amount</option>
+                      <option value="PERCENT">{t(messages, "services.deposit.percentOption")}</option>
+                      <option value="AMOUNT">{t(messages, "services.deposit.amountOption")}</option>
                     </select>
                   </label>
 
                   <label className="grid gap-1 text-sm">
-                    Value
+                    {t(messages, "services.deposit.value")}
                     <input
                       type="number"
                       min={1}
                       max={(s.depositType ?? "PERCENT") === "PERCENT" ? 100 : 1_000_000}
                       className="w-full rounded-xl border border-slate-200 px-3 py-2"
-                      value={Number(
-                        s.depositValue ??
-                          ((s.depositType ?? "PERCENT") === "PERCENT" ? 20 : 10)
-                      )}
+                      value={Number(s.depositValue ?? ((s.depositType ?? "PERCENT") === "PERCENT" ? 20 : 10))}
                       onChange={(e) => {
                         const raw = Number(e.target.value || 0);
                         const nextVal =
-                          (s.depositType ?? "PERCENT") === "PERCENT"
-                            ? clamp(raw, 1, 100)
-                            : clamp(raw, 1, 1_000_000);
+                          (s.depositType ?? "PERCENT") === "PERCENT" ? clamp(raw, 1, 100) : clamp(raw, 1, 1_000_000);
 
                         updateService(s.id, {
                           name: s.name,

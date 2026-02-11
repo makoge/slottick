@@ -3,16 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { AvailabilityRule, Weekday, defaultAvailability } from "@/lib/availability";
-
-const dayLabels: Record<Weekday, string> = {
-  0: "Sun",
-  1: "Mon",
-  2: "Tue",
-  3: "Wed",
-  4: "Thu",
-  5: "Fri",
-  6: "Sat"
-};
+import { useMessages } from "@/lib/use-messages";
+import { t } from "@/lib/i18n";
 
 function toggleDay(days: Weekday[], d: Weekday) {
   return days.includes(d)
@@ -26,7 +18,6 @@ function guessTZ() {
 
 function isValidTimeZone(tz: string) {
   try {
-    // throws on invalid tz in most runtimes
     Intl.DateTimeFormat("en-US", { timeZone: tz }).format(new Date());
     return true;
   } catch {
@@ -38,6 +29,21 @@ export default function AvailabilityEditor() {
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
   const locale = params?.locale ?? "en";
+
+  const dict = useMessages(locale);
+
+  const dayLabels = useMemo<Record<Weekday, string>>(
+    () => ({
+      0: t(dict, "availability.workingDays.days.sun"),
+      1: t(dict, "availability.workingDays.days.mon"),
+      2: t(dict, "availability.workingDays.days.tue"),
+      3: t(dict, "availability.workingDays.days.wed"),
+      4: t(dict, "availability.workingDays.days.thu"),
+      5: t(dict, "availability.workingDays.days.fri"),
+      6: t(dict, "availability.workingDays.days.sat")
+    }),
+    [dict]
+  );
 
   const detectedTZ = useMemo(() => guessTZ(), []);
 
@@ -51,7 +57,6 @@ export default function AvailabilityEditor() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load from DB (session cookie)
   useEffect(() => {
     let cancelled = false;
 
@@ -72,9 +77,8 @@ export default function AvailabilityEditor() {
 
         if (res.ok && data?.rule) {
           const incoming: AvailabilityRule = { ...defaultAvailability, ...data.rule };
-
-          // If no tz saved yet, use detected
           const tz = String((incoming as any).timezone ?? "").trim();
+
           setRule({
             ...incoming,
             timezone: tz ? tz : detectedTZ
@@ -104,7 +108,7 @@ export default function AvailabilityEditor() {
     const tz = String(rule.timezone ?? "").trim() || "UTC";
     if (!isValidTimeZone(tz)) {
       setSaving(false);
-      setError("Invalid timezone. Example: Europe/Tallinn");
+      setError(t(dict, "availability.errors.invalidTimezone"));
       return;
     }
 
@@ -123,14 +127,14 @@ export default function AvailabilityEditor() {
       }
 
       if (!res.ok) {
-        setError(data?.error || "Save failed");
+        setError(data?.error || t(dict, "availability.errors.saveFailed"));
         return;
       }
 
       setSaved(true);
       setTimeout(() => setSaved(false), 1200);
     } catch {
-      setError("Save failed");
+      setError(t(dict, "availability.errors.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -141,7 +145,7 @@ export default function AvailabilityEditor() {
   return (
     <section className="rounded-2xl border border-slate-200 p-6 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">Availability</h2>
+        <h2 className="text-lg font-semibold">{t(dict, "availability.title")}</h2>
 
         <button
           type="button"
@@ -149,47 +153,42 @@ export default function AvailabilityEditor() {
           disabled={saving || loading}
           className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
         >
-          {saved ? "Saved ✓" : saving ? "Saving..." : "Save"}
+          {saved
+            ? t(dict, "availability.states.saved")
+            : saving
+              ? t(dict, "availability.states.saving")
+              : t(dict, "availability.states.save")}
         </button>
       </div>
 
-      <p className="mt-2 text-sm text-slate-600">
-        Set your working days and hours. This controls what clients can book.
-      </p>
+      <p className="mt-2 text-sm text-slate-600">{t(dict, "availability.lead")}</p>
 
       {error ? (
-        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
+        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       ) : null}
 
       {loading ? (
         <div className="mt-4 rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
-          Loading…
+          {t(dict, "availability.states.loading")}
         </div>
       ) : (
         <div className="mt-5 grid gap-5">
-          {/* ✅ Timezone */}
+          {/* Timezone */}
           <div className="rounded-xl border border-slate-200 p-4">
-            <div className="text-sm font-medium">Timezone</div>
+            <div className="text-sm font-medium">{t(dict, "availability.timezone.title")}</div>
 
             <div className="mt-3 grid gap-2">
               <label className="grid gap-1 text-sm">
-                Timezone (IANA)
+                {t(dict, "availability.timezone.label")}
                 <input
                   value={rule.timezone}
-                  onChange={(e) =>
-                    setRule((r) => ({ ...r, timezone: e.target.value }))
-                  }
-                  placeholder="Europe/Tallinn"
+                  onChange={(e) => setRule((r) => ({ ...r, timezone: e.target.value }))}
                   className={[
                     "max-w-sm rounded-xl border px-3 py-2",
                     tzOk ? "border-slate-200" : "border-red-300"
                   ].join(" ")}
                 />
-                <span className="text-xs text-slate-500">
-                  Example: Europe/Tallinn, Africa/Douala, America/New York
-                </span>
+                <span className="text-xs text-slate-500">{t(dict, "availability.timezone.hint")}</span>
               </label>
 
               <div className="flex flex-wrap gap-2">
@@ -198,12 +197,12 @@ export default function AvailabilityEditor() {
                   className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50"
                   onClick={() => setRule((r) => ({ ...r, timezone: detectedTZ }))}
                 >
-                  Use detected: {detectedTZ}
+                  {t(dict, "availability.timezone.useDetected").replace("{tz}", detectedTZ)}
                 </button>
 
                 {!tzOk ? (
                   <span className="self-center text-sm text-red-600">
-                    Invalid timezone
+                    {t(dict, "availability.timezone.invalid")}
                   </span>
                 ) : null}
               </div>
@@ -212,7 +211,7 @@ export default function AvailabilityEditor() {
 
           {/* Working days */}
           <div>
-            <div className="text-sm font-medium">Working days</div>
+            <div className="text-sm font-medium">{t(dict, "availability.workingDays.title")}</div>
             <div className="mt-2 flex flex-wrap gap-2">
               {([0, 1, 2, 3, 4, 5, 6] as Weekday[]).map((d) => {
                 const active = rule.days.includes(d);
@@ -220,9 +219,7 @@ export default function AvailabilityEditor() {
                   <button
                     key={d}
                     type="button"
-                    onClick={() =>
-                      setRule((r) => ({ ...r, days: toggleDay(r.days, d) }))
-                    }
+                    onClick={() => setRule((r) => ({ ...r, days: toggleDay(r.days, d) }))}
                     className={[
                       "rounded-xl border px-3 py-2 text-sm font-semibold",
                       active
@@ -240,7 +237,7 @@ export default function AvailabilityEditor() {
           {/* Hours */}
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-sm">
-              Start time
+              {t(dict, "availability.hours.start")}
               <input
                 type="time"
                 value={rule.start}
@@ -250,7 +247,7 @@ export default function AvailabilityEditor() {
             </label>
 
             <label className="grid gap-1 text-sm">
-              End time
+              {t(dict, "availability.hours.end")}
               <input
                 type="time"
                 value={rule.end}
@@ -263,31 +260,21 @@ export default function AvailabilityEditor() {
           {/* Break */}
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-sm">
-              Break start (optional)
+              {t(dict, "availability.break.start")}
               <input
                 type="time"
                 value={rule.breakStart ?? ""}
-                onChange={(e) =>
-                  setRule((r) => ({
-                    ...r,
-                    breakStart: e.target.value || undefined
-                  }))
-                }
+                onChange={(e) => setRule((r) => ({ ...r, breakStart: e.target.value || undefined }))}
                 className="rounded-xl border border-slate-200 px-3 py-2"
               />
             </label>
 
             <label className="grid gap-1 text-sm">
-              Break end (optional)
+              {t(dict, "availability.break.end")}
               <input
                 type="time"
                 value={rule.breakEnd ?? ""}
-                onChange={(e) =>
-                  setRule((r) => ({
-                    ...r,
-                    breakEnd: e.target.value || undefined
-                  }))
-                }
+                onChange={(e) => setRule((r) => ({ ...r, breakEnd: e.target.value || undefined }))}
                 className="rounded-xl border border-slate-200 px-3 py-2"
               />
             </label>
@@ -296,34 +283,28 @@ export default function AvailabilityEditor() {
           {/* Slot step + buffer */}
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-sm">
-              Slot step (minutes)
+              {t(dict, "availability.rules.slotStep")}
               <input
                 type="number"
                 min={5}
                 step={5}
                 value={rule.slotStepMin}
                 onChange={(e) =>
-                  setRule((r) => ({
-                    ...r,
-                    slotStepMin: Number(e.target.value || 30)
-                  }))
+                  setRule((r) => ({ ...r, slotStepMin: Number(e.target.value || 30) }))
                 }
                 className="w-full max-w-[220px] rounded-xl border border-slate-200 px-3 py-2"
               />
             </label>
 
             <label className="grid gap-1 text-sm">
-              Buffer between bookings (minutes)
+              {t(dict, "availability.rules.buffer")}
               <input
                 type="number"
                 min={0}
                 step={5}
                 value={rule.bufferMin}
                 onChange={(e) =>
-                  setRule((r) => ({
-                    ...r,
-                    bufferMin: Number(e.target.value || 0)
-                  }))
+                  setRule((r) => ({ ...r, bufferMin: Number(e.target.value || 0) }))
                 }
                 className="w-full max-w-[220px] rounded-xl border border-slate-200 px-3 py-2"
               />
