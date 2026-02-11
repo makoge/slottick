@@ -612,5 +612,142 @@
       "loading": "Loading services…",
       "empty": "No services yet, add your first one."
     }
+  },
+  "explore": {
+  "brandLine": "Slottick • Explore",
+  "heading": "Book trusted businesses",
+  "intro": "Find services near you and book instantly.",
+  "help": "Search businesses by what you need (e.g. “massage”, “tattoo”, “manicure”) and filter by city and industry.",
+  "cta": {
+    "listBusiness": "List your business"
+  },
+
+  "filters": {
+    "search": "Search",
+    "searchPlaceholder": "e.g. massage, tattoo, nails, Tallinn...",
+    "city": "City",
+    "allCities": "All cities",
+    "industry": "Industry",
+    "all": "All"
+  },
+
+  "results": {
+    "showing": "Showing {n} businesses",
+    "empty": "No businesses found. Try another city, industry or search term."
+  },
+
+  "card": {
+    "industryFallback": "Industry",
+    "cityFallback": "—",
+    "reviews": "{n} reviews",
+    "book": "Book",
+    "logoAlt": "{name} logo"
+  },
+
+  "industries": {
+    "BEAUTY_AND_CARE": "Beauty & care",
+    "WELLNESS_AND_LIFESTYLE": "Wellness & lifestyle",
+    "CREATIVE_SERVICES": "Creative services",
+    "HOME_AND_LOCAL": "Home & local",
+    "EDUCATION_AND_PROFESSIONALS": "Education & professionals"
   }
+  },
+  "booking": {
+  "lightbox": {
+    "close": "Close",
+    "photoAlt": "Photo",
+    "viewPhoto": "View photo"
+  },
+
+  "hero": {
+    "industryFallback": "Service",
+    "noDescription": "No description added yet.",
+    "stepPill": "Step {step} of {total}",
+    "timezoneLabel": "Timezone:",
+    "visitWebsite": "Visit website",
+    "logoAlt": "{name} logo",
+    "mainPhotoAlt": "{name} main",
+    "photoAlt": "{name} photo {n}"
+  },
+
+  "options": {
+    "title": "Booking options",
+    "signedInAs": "Signed in as",
+    "guest": "You’re booking as guest.",
+    "createAccount": "Create account",
+    "login": "Log in"
+  },
+
+  "deposit": {
+    "amount": "Deposit required: {amount}",
+    "percent": "Deposit required: {n}%"
+  },
+
+  "common": {
+    "minutes": "{n} min"
+  },
+
+  "sections": {
+    "service": {
+      "title": "Choose a service",
+      "loading": "Loading services...",
+      "empty": "No services available yet.",
+      "selected": "Selected",
+      "noPhotos": "No photos yet.",
+      "photosCount": "{n} photos",
+      "servicePhotoAlt": "{name} photo"
+    },
+    "date": {
+      "title": "Pick a date",
+      "needService": "Select a service first.",
+      "label": "Date"
+    },
+    "time": {
+      "title": "Pick a time",
+      "needServiceDate": "Select a service and date first.",
+      "empty": "No available slots on this date."
+    },
+    "details": {
+      "title": "Your details",
+      "needAll": "Finish service + date + time first."
+    }
+  },
+
+  "form": {
+    "fullName": "Full name",
+    "fullNamePlaceholder": "Your name",
+    "phone": "Phone",
+    "phonePlaceholder": "+372...",
+    "emailLabel": "Email*",
+    "emailPlaceholder": "your@email.com",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "Any details...",
+    "confirm": "Confirm booking",
+    "confirming": "Confirming..."
+  },
+
+  "location": {
+    "title": "Location",
+    "noAddress": "Address not provided.",
+    "openMaps": "Open in Maps",
+    "mapTitle": "{name} map",
+    "ownerNoAddress": "The business owner hasn’t added an address yet."
+  },
+
+  "errors": {
+    "selectService": "Select a service.",
+    "selectDate": "Select a date.",
+    "selectTime": "Select a time.",
+    "enterName": "Enter your full name.",
+    "enterPhone": "Enter your phone.",
+    "emailRequired": "Email is required.",
+    "emailInvalid": "Enter a valid email.",
+    "justBooked": "That time was just booked. Pick another slot.",
+    "failed": "Booking failed",
+    "missingId": "Booking created but missing id.",
+    "network": "Network error. Try again."
+  }
+}
+
+
 }

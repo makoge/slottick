@@ -585,5 +585,142 @@
       "loading": "Chargement des services…",
       "empty": "Aucun service, ajoutez le premier."
     }
+  },
+  "explore": {
+  "brandLine": "Slottick • Explorer",
+  "heading": "Réservez des entreprises de confiance",
+  "intro": "Trouvez des services près de vous et réservez instantanément.",
+  "help": "Recherchez des entreprises selon votre besoin (ex. « massage », « tatouage », « manucure ») et filtrez par ville et secteur.",
+  "cta": {
+    "listBusiness": "Ajouter votre entreprise"
+  },
+
+  "filters": {
+    "search": "Recherche",
+    "searchPlaceholder": "ex. massage, tatouage, ongles, Tallinn...",
+    "city": "Ville",
+    "allCities": "Toutes les villes",
+    "industry": "Secteur",
+    "all": "Tous"
+  },
+
+  "results": {
+    "showing": "{n} entreprises affichées",
+    "empty": "Aucune entreprise trouvée. Essayez une autre ville, secteur ou mot-clé."
+  },
+
+  "card": {
+    "industryFallback": "Secteur",
+    "cityFallback": "—",
+    "reviews": "{n} avis",
+    "book": "Réserver",
+    "logoAlt": "Logo de {name}"
+  },
+
+  "industries": {
+    "BEAUTY_AND_CARE": "Beauté & soins",
+    "WELLNESS_AND_LIFESTYLE": "Bien-être & lifestyle",
+    "CREATIVE_SERVICES": "Services créatifs",
+    "HOME_AND_LOCAL": "Maison & local",
+    "EDUCATION_AND_PROFESSIONALS": "Éducation & professionnels"
   }
+},
+"booking": {
+  "lightbox": {
+    "close": "Fermer",
+    "photoAlt": "Photo",
+    "viewPhoto": "Voir la photo"
+  },
+
+  "hero": {
+    "industryFallback": "Service",
+    "noDescription": "Aucune description pour le moment.",
+    "stepPill": "Étape {step} sur {total}",
+    "timezoneLabel": "Fuseau horaire :",
+    "visitWebsite": "Visiter le site",
+    "logoAlt": "Logo de {name}",
+    "mainPhotoAlt": "Photo principale de {name}",
+    "photoAlt": "Photo {n} de {name}"
+  },
+
+  "options": {
+    "title": "Options de réservation",
+    "signedInAs": "Connecté en tant que",
+    "guest": "Vous réservez en tant qu’invité.",
+    "createAccount": "Créer un compte",
+    "login": "Connexion"
+  },
+
+  "deposit": {
+    "amount": "Acompte requis : {amount}",
+    "percent": "Acompte requis : {n}%"
+  },
+
+  "common": {
+    "minutes": "{n} min"
+  },
+
+  "sections": {
+    "service": {
+      "title": "Choisir un service",
+      "loading": "Chargement des services...",
+      "empty": "Aucun service disponible pour le moment.",
+      "selected": "Sélectionné",
+      "noPhotos": "Pas encore de photos.",
+      "photosCount": "{n} photos",
+      "servicePhotoAlt": "Photo de {name}"
+    },
+    "date": {
+      "title": "Choisir une date",
+      "needService": "Sélectionnez d’abord un service.",
+      "label": "Date"
+    },
+    "time": {
+      "title": "Choisir une heure",
+      "needServiceDate": "Sélectionnez d’abord un service et une date.",
+      "empty": "Aucun créneau disponible à cette date."
+    },
+    "details": {
+      "title": "Vos informations",
+      "needAll": "Terminez d’abord service + date + heure."
+    }
+  },
+
+  "form": {
+    "fullName": "Nom complet",
+    "fullNamePlaceholder": "Votre nom",
+    "phone": "Téléphone",
+    "phonePlaceholder": "+372...",
+    "emailLabel": "Email*",
+    "emailPlaceholder": "vous@email.com",
+    "notes": "Notes (optionnel)",
+    "notesPlaceholder": "Détails éventuels...",
+    "confirm": "Confirmer la réservation",
+    "confirming": "Confirmation..."
+  },
+
+  "location": {
+    "title": "Localisation",
+    "noAddress": "Adresse non renseignée.",
+    "openMaps": "Ouvrir dans Maps",
+    "mapTitle": "Carte de {name}",
+    "ownerNoAddress": "Le propriétaire n’a pas encore ajouté d’adresse."
+  },
+
+  "errors": {
+    "selectService": "Sélectionnez un service.",
+    "selectDate": "Sélectionnez une date.",
+    "selectTime": "Sélectionnez une heure.",
+    "enterName": "Entrez votre nom complet.",
+    "enterPhone": "Entrez votre numéro de téléphone.",
+    "emailRequired": "L’email est obligatoire.",
+    "emailInvalid": "Entrez un email valide.",
+    "justBooked": "Ce créneau vient d’être réservé. Choisissez un autre horaire.",
+    "failed": "Échec de la réservation",
+    "missingId": "Réservation créée mais identifiant manquant.",
+    "network": "Erreur réseau. Réessayez."
+  }
+}
+
+
 }

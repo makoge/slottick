@@ -11,6 +11,8 @@ import {
   slotRangeForService
 } from "@/lib/availability";
 import { Currency, Service, formatMoney } from "@/lib/services";
+import { useMessages } from "@/lib/use-messages";
+import { t } from "@/lib/i18n";
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -61,15 +63,6 @@ type BusinessPublic = {
 function toCurrency(x: unknown): Currency {
   const s = String(x ?? "EUR").toUpperCase();
   return s === "EUR" || s === "USD" || s === "FCFA" ? (s as Currency) : "EUR";
-}
-
-function depositLabel(s: Service) {
-  if (!s.depositEnabled) return null;
-  const v = Number(s.depositValue || 0);
-  if (!v) return null;
-  return s.depositType === "AMOUNT"
-    ? `Deposit required: ${formatMoney(v, s.currency)}`
-    : `Deposit required: ${v}%`;
 }
 
 function hhmmFromISOInTZ(iso: string, timeZone: string) {
@@ -138,6 +131,28 @@ export default function BookingClient({
   business: BusinessPublic;
 }) {
   const router = useRouter();
+
+  const messages = useMessages(locale);
+
+  const tr = (key: string, vars?: Record<string, string | number>) => {
+    let s = t(messages, key);
+    if (vars) {
+      for (const [k, v] of Object.entries(vars)) {
+        s = s.replaceAll(`{${k}}`, String(v));
+      }
+    }
+    return s;
+  };
+
+  function depositLabel(s: Service) {
+    if (!s.depositEnabled) return null;
+    const v = Number(s.depositValue || 0);
+    if (!v) return null;
+
+    return s.depositType === "AMOUNT"
+      ? tr("booking.deposit.amount", { amount: formatMoney(v, s.currency) })
+      : tr("booking.deposit.percent", { n: v });
+  }
 
   const [rule, setRule] = useState<AvailabilityRule>(defaultAvailability);
   const [services, setServices] = useState<Service[]>([]);
@@ -214,7 +229,7 @@ export default function BookingClient({
     };
   }, [businessSlug]);
 
-  // services (✅ includes images)
+  // services (includes images)
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -325,15 +340,15 @@ export default function BookingClient({
     if (submitting) return;
     setError(null);
 
-    if (!selectedService) return setError("Select a service.");
-    if (!date) return setError("Select a date.");
-    if (!time) return setError("Select a time.");
-    if (!fullName.trim()) return setError("Enter your full name.");
-    if (!phone.trim()) return setError("Enter your phone.");
+    if (!selectedService) return setError(tr("booking.errors.selectService"));
+    if (!date) return setError(tr("booking.errors.selectDate"));
+    if (!time) return setError(tr("booking.errors.selectTime"));
+    if (!fullName.trim()) return setError(tr("booking.errors.enterName"));
+    if (!phone.trim()) return setError(tr("booking.errors.enterPhone"));
 
     const emailTrim = customerEmail.trim();
-    if (!emailTrim) return setError("Email is required.");
-    if (!isValidEmail(emailTrim)) return setError("Enter a valid email.");
+    if (!emailTrim) return setError(tr("booking.errors.emailRequired"));
+    if (!isValidEmail(emailTrim)) return setError(tr("booking.errors.emailInvalid"));
 
     const tz = rule.timezone || "UTC";
 
@@ -342,7 +357,7 @@ export default function BookingClient({
     for (const b of dayBookings) {
       const blocked = new Set(slotRangeForService(hhmmFromISOInTZ(b.startsAt, tz), rule, b.durationMin));
       if (needed.some((x) => blocked.has(x))) {
-        return setError("That time was just booked. Pick another slot.");
+        return setError(tr("booking.errors.justBooked"));
       }
     }
 
@@ -369,16 +384,16 @@ export default function BookingClient({
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || "Booking failed");
+        setError(data.error || tr("booking.errors.failed"));
         return;
       }
 
       const id: string | undefined = data.booking?.id;
-      if (!id) return setError("Booking created but missing id.");
+      if (!id) return setError(tr("booking.errors.missingId"));
 
       router.push(`/${locale}/book/${businessSlug}/success?id=${encodeURIComponent(id)}`);
     } catch {
-      setError("Network error. Try again.");
+      setError(tr("booking.errors.network"));
     } finally {
       setSubmitting(false);
     }
@@ -412,10 +427,16 @@ export default function BookingClient({
     <main className="min-h-screen bg-white text-slate-900">
       {/* Top right language switch */}
       <div className="fixed right-4 top-4 z-40 flex gap-2">
-        <a className="rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-white" href={`/en/book/${businessSlug}`}>
+        <a
+          className="rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-white"
+          href={`/en/book/${businessSlug}`}
+        >
           EN
         </a>
-        <a className="rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-white" href={`/fr/book/${businessSlug}`}>
+        <a
+          className="rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-white"
+          href={`/fr/book/${businessSlug}`}
+        >
           FR
         </a>
       </div>
@@ -434,11 +455,11 @@ export default function BookingClient({
               onClick={() => setLightboxUrl(null)}
               className="absolute -top-12 right-0 rounded-xl bg-white/90 px-3 py-2 text-sm font-semibold"
             >
-              Close
+              {tr("booking.lightbox.close")}
             </button>
             <img
               src={lightboxUrl}
-              alt="Photo"
+              alt={tr("booking.lightbox.photoAlt")}
               className="max-h-[92vh] max-w-[94vw] rounded-2xl bg-white object-contain"
             />
           </div>
@@ -454,7 +475,7 @@ export default function BookingClient({
                 {business.logoUrl ? (
                   <img
                     src={business.logoUrl}
-                    alt={`${business.name} logo`}
+                    alt={tr("booking.hero.logoAlt", { name: business.name })}
                     className="h-14 w-14 rounded-2xl object-cover bg-white shadow-sm"
                   />
                 ) : (
@@ -466,7 +487,9 @@ export default function BookingClient({
                 <div className="min-w-0">
                   <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{business.name}</h1>
                   <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                    {business.industry ? String(business.industry).replace(/_/g, " ") : "Service"}
+                    {business.industry
+                      ? String(business.industry).replace(/_/g, " ")
+                      : tr("booking.hero.industryFallback")}
                     {addr ? ` • ${addr}` : ""}
                   </p>
                 </div>
@@ -476,17 +499,18 @@ export default function BookingClient({
                 {description ? (
                   <p className="max-w-2xl whitespace-pre-wrap text-slate-700">{description}</p>
                 ) : (
-                  <p className="max-w-2xl text-slate-500">No description added yet.</p>
+                  <p className="max-w-2xl text-slate-500">{tr("booking.hero.noDescription")}</p>
                 )}
 
                 <div className="flex flex-wrap gap-2">
                   <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
-                    {loading ? "Loading..." : `Step ${step} of 4`}
+                    {loading ? tr("common.loadingDots") : tr("booking.hero.stepPill", { step, total: 4 })}
                   </span>
 
                   {!loadingRule ? (
                     <span className="rounded-full bg-white px-3 py-1 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200">
-                      Timezone: <span className="font-semibold">{rule.timezone}</span>
+                      {tr("booking.hero.timezoneLabel")}{" "}
+                      <span className="font-semibold">{rule.timezone}</span>
                     </span>
                   ) : null}
 
@@ -497,7 +521,7 @@ export default function BookingClient({
                       rel="noreferrer"
                       className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100"
                     >
-                      Visit website
+                      {tr("booking.hero.visitWebsite")}
                     </a>
                   ) : null}
                 </div>
@@ -513,7 +537,7 @@ export default function BookingClient({
                 >
                   <img
                     src={heroImages[0]}
-                    alt={`${business.name} main`}
+                    alt={tr("booking.hero.mainPhotoAlt", { name: business.name })}
                     className="h-80 w-full object-cover sm:h-96 lg:h-[420px]"
                     loading="lazy"
                   />
@@ -527,7 +551,7 @@ export default function BookingClient({
                   >
                     <img
                       src={heroImages[1]}
-                      alt={`${business.name} photo 2`}
+                      alt={tr("booking.hero.photoAlt", { name: business.name, n: 2 })}
                       className="h-40 w-full object-cover sm:h-44 lg:h-[200px]"
                       loading="lazy"
                     />
@@ -540,7 +564,7 @@ export default function BookingClient({
                   >
                     <img
                       src={heroImages[2]}
-                      alt={`${business.name} photo 3`}
+                      alt={tr("booking.hero.photoAlt", { name: business.name, n: 3 })}
                       className="h-40 w-full object-cover sm:h-44 lg:h-[200px]"
                       loading="lazy"
                     />
@@ -559,25 +583,32 @@ export default function BookingClient({
             <div className="rounded-3xl bg-slate-50 p-5 sm:p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-800">Booking options</div>
+                  <div className="text-sm font-semibold text-slate-800">{tr("booking.options.title")}</div>
                   <div className="mt-1 text-sm text-slate-600">
                     {customer ? (
                       <>
-                        Signed in as <span className="font-semibold">{customer.email}</span>
+                        {tr("booking.options.signedInAs")}{" "}
+                        <span className="font-semibold">{customer.email}</span>
                       </>
                     ) : (
-                      "You’re booking as guest."
+                      tr("booking.options.guest")
                     )}
                   </div>
                 </div>
 
                 {!customer ? (
                   <div className="flex flex-wrap gap-2 sm:justify-end">
-                    <a className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800" href={createAccountHref}>
-                      Create account
+                    <a
+                      className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+                      href={createAccountHref}
+                    >
+                      {tr("booking.options.createAccount")}
                     </a>
-                    <a className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50" href={loginHref}>
-                      Log in
+                    <a
+                      className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+                      href={loginHref}
+                    >
+                      {tr("booking.options.login")}
                     </a>
                   </div>
                 ) : null}
@@ -592,12 +623,12 @@ export default function BookingClient({
           <div className="mt-8 grid gap-8">
             {/* 1) Service */}
             <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
-              <h2 className="text-lg font-semibold">Choose a service</h2>
+              <h2 className="text-lg font-semibold">{tr("booking.sections.service.title")}</h2>
 
               {loadingServices ? (
-                <p className="mt-3 text-sm text-slate-600">Loading services...</p>
+                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.service.loading")}</p>
               ) : services.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-600">No services available yet.</p>
+                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.service.empty")}</p>
               ) : (
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {services.map((s) => {
@@ -621,17 +652,16 @@ export default function BookingClient({
                           active ? "ring-slate-900" : "ring-slate-200"
                         ].join(" ")}
                       >
-                        {/* ✅ service thumbnail */}
                         {thumb ? (
                           <div className="relative h-36 w-full bg-slate-100">
                             <img
                               src={thumb}
-                              alt={`${s.name} photo`}
+                              alt={tr("booking.sections.service.servicePhotoAlt", { name: s.name })}
                               className="h-full w-full object-cover"
                               loading="lazy"
                             />
                             <div className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-xs font-semibold">
-                              {imgs.length} photo{imgs.length === 1 ? "" : "s"}
+                              {tr("booking.sections.service.photosCount", { n: imgs.length })}
                             </div>
                           </div>
                         ) : null}
@@ -641,7 +671,8 @@ export default function BookingClient({
                             <div className="min-w-0">
                               <div className="font-semibold">{s.name}</div>
                               <div className="mt-1 text-sm text-slate-600">
-                                {s.durationMin} min • {formatMoney(s.price, s.currency)}
+                                {tr("booking.common.minutes", { n: s.durationMin })} •{" "}
+                                {formatMoney(s.price, s.currency)}
                               </div>
 
                               {d ? (
@@ -653,12 +684,11 @@ export default function BookingClient({
 
                             {active ? (
                               <span className="shrink-0 rounded-full bg-slate-900 px-2 py-1 text-xs font-semibold text-white">
-                                Selected
+                                {tr("booking.sections.service.selected")}
                               </span>
                             ) : null}
                           </div>
 
-                          {/* ✅ extra mini previews + lightbox */}
                           {imgs.length > 0 ? (
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                               {imgs.slice(0, 4).map((u) => (
@@ -671,17 +701,21 @@ export default function BookingClient({
                                     setLightboxUrl(u);
                                   }}
                                   className="overflow-hidden rounded-lg border border-slate-200"
-                                  title="View photo"
+                                  title={tr("booking.lightbox.viewPhoto")}
                                 >
                                   <img src={u} alt="" className="h-10 w-10 object-cover" loading="lazy" />
                                 </button>
                               ))}
                               {imgs.length > 4 ? (
-                                <span className="text-xs font-semibold text-slate-600">+{imgs.length - 4}</span>
+                                <span className="text-xs font-semibold text-slate-600">
+                                  +{imgs.length - 4}
+                                </span>
                               ) : null}
                             </div>
                           ) : (
-                            <div className="mt-3 text-xs text-slate-500">No photos yet.</div>
+                            <div className="mt-3 text-xs text-slate-500">
+                              {tr("booking.sections.service.noPhotos")}
+                            </div>
                           )}
                         </div>
                       </button>
@@ -693,13 +727,13 @@ export default function BookingClient({
 
             {/* 2) Date */}
             <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
-              <h2 className="text-lg font-semibold">Pick a date</h2>
+              <h2 className="text-lg font-semibold">{tr("booking.sections.date.title")}</h2>
               {!serviceId ? (
-                <p className="mt-3 text-sm text-slate-600">Select a service first.</p>
+                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.date.needService")}</p>
               ) : (
                 <div className="mt-4">
                   <label className="grid gap-1 text-sm">
-                    Date
+                    {tr("booking.sections.date.label")}
                     <input
                       type="date"
                       value={date}
@@ -718,12 +752,12 @@ export default function BookingClient({
 
             {/* 3) Time */}
             <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
-              <h2 className="text-lg font-semibold">Pick a time</h2>
+              <h2 className="text-lg font-semibold">{tr("booking.sections.time.title")}</h2>
 
               {!serviceId || !date ? (
-                <p className="mt-3 text-sm text-slate-600">Select a service and date first.</p>
+                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.time.needServiceDate")}</p>
               ) : availableSlots.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-600">No available slots on this date.</p>
+                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.time.empty")}</p>
               ) : (
                 <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {availableSlots.map((tm) => {
@@ -751,61 +785,61 @@ export default function BookingClient({
 
             {/* 4) Details */}
             <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
-              <h2 className="text-lg font-semibold">Your details</h2>
+              <h2 className="text-lg font-semibold">{tr("booking.sections.details.title")}</h2>
 
               {!selectedService || !date || !time ? (
-                <p className="mt-3 text-sm text-slate-600">Finish service + date + time first.</p>
+                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.details.needAll")}</p>
               ) : (
                 <div className="mt-4 grid gap-4">
                   <div className="rounded-2xl bg-slate-50 p-4 text-sm">
                     <div className="font-semibold">{selectedService.name}</div>
                     <div className="mt-1 text-slate-600">
-                      {date} • {time} • {selectedService.durationMin} min •{" "}
+                      {date} • {time} • {tr("booking.common.minutes", { n: selectedService.durationMin })} •{" "}
                       {formatMoney(selectedService.price, selectedService.currency)}
                     </div>
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <label className="grid gap-1 text-sm">
-                      Full name
+                      {tr("booking.form.fullName")}
                       <input
                         className="rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        placeholder="Your name"
+                        placeholder={tr("booking.form.fullNamePlaceholder")}
                       />
                     </label>
 
                     <label className="grid gap-1 text-sm">
-                      Phone
+                      {tr("booking.form.phone")}
                       <input
                         className="rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+372..."
+                        placeholder={tr("booking.form.phonePlaceholder")}
                       />
                     </label>
                   </div>
 
                   <label className="grid gap-1 text-sm">
-                    Email*
+                    {tr("booking.form.emailLabel")}
                     <input
                       type="email"
                       required
                       className="rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
-                      placeholder="your@email.com"
+                      placeholder={tr("booking.form.emailPlaceholder")}
                     />
                   </label>
 
                   <label className="grid gap-1 text-sm">
-                    Notes (optional)
+                    {tr("booking.form.notes")}
                     <textarea
                       className="min-h-[110px] rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Any details..."
+                      placeholder={tr("booking.form.notesPlaceholder")}
                     />
                   </label>
 
@@ -815,7 +849,7 @@ export default function BookingClient({
                     className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
                     onClick={confirmBooking}
                   >
-                    {submitting ? "Confirming..." : "Confirm booking"}
+                    {submitting ? tr("booking.form.confirming") : tr("booking.form.confirm")}
                   </button>
                 </div>
               )}
@@ -825,8 +859,10 @@ export default function BookingClient({
             <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-semibold">Location</h2>
-                  <p className="mt-1 text-sm text-slate-600">{addr || "Address not provided."}</p>
+                  <h2 className="text-lg font-semibold">{tr("booking.location.title")}</h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {addr || tr("booking.location.noAddress")}
+                  </p>
                 </div>
 
                 {addr ? (
@@ -836,7 +872,7 @@ export default function BookingClient({
                     rel="noreferrer"
                     className="rounded-xl bg-white px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
                   >
-                    Open in Maps
+                    {tr("booking.location.openMaps")}
                   </a>
                 ) : null}
               </div>
@@ -844,7 +880,7 @@ export default function BookingClient({
               {addr ? (
                 <div className="mt-4 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100">
                   <iframe
-                    title={`${business.name} map`}
+                    title={tr("booking.location.mapTitle", { name: business.name })}
                     src={mapsEmbed}
                     className="h-80 w-full"
                     loading="lazy"
@@ -853,7 +889,7 @@ export default function BookingClient({
                 </div>
               ) : (
                 <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-                  The business owner hasn’t added an address yet.
+                  {tr("booking.location.ownerNoAddress")}
                 </div>
               )}
             </section>
