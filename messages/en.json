@@ -4,6 +4,7 @@
   "nav": { "login": "Login" },
 
   "footer": {
+    "blog": "Blog",
     "privacy": "Privacy",
     "terms": "Terms",
     "contact": "Contact us"

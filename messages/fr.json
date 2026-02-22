@@ -4,6 +4,7 @@
   "nav": { "login": "Connexion" },
 
   "footer": {
+    "blog": "Blog",
     "privacy": "Confidentialité",
     "terms": "Conditions",
     "contact": "Nous contacter"

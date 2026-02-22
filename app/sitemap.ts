@@ -7,9 +7,11 @@ import { KEYWORD_PAGES } from "@/lib/seo/keywords";
 import { TARGET_COUNTRIES, TARGET_CATEGORIES } from "@/lib/seo/targets";
 import { slugify } from "@/lib/seo/slug";
 import { SEO_CITIES_20, SEO_INTENTS_10 } from "@/lib/seo/near-me-targets";
+import { BLOG_POSTS } from "@/lib/blog/posts";
+import { LANDING_PAGES } from "@/lib/landing/pages";
 
 // My opinion: only index locales that are truly translated.
-const INDEX_LOCALES = ["en"] as const;
+const INDEX_LOCALES = ["en", "fr"] as const;
 
 function baseUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL || "https://slottick.com").replace(/\/$/, "");
@@ -28,9 +30,55 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const useLocales = locales.filter((l) =>
     (INDEX_LOCALES as readonly string[]).includes(l)
   );
-
-  // ✅ Static pages
+      // ✅ Static pages
   const staticPaths = ["", "/explore", "/privacy", "/terms", "/contact"];
+
+  
+    // ✅ Blog: /[locale]/blog + /[locale]/blog/[slug]
+  for (const locale of useLocales) {
+    // blog index
+    urls.push({
+      url: `${site}/${locale}/blog`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7
+    });
+
+    // blog posts
+    for (const post of BLOG_POSTS) {
+      const last = post.updatedAt ? new Date(post.updatedAt) : new Date(post.publishedAt);
+
+      urls.push({
+        url: `${site}/${locale}/blog/${post.slug}`,
+        lastModified: isNaN(last.getTime()) ? now : last,
+        changeFrequency: "monthly",
+        priority: 0.65
+      });
+    }
+  }
+
+    // ✅ Landing pages: /[locale]/landing + /[locale]/landing/[slug]
+  for (const locale of useLocales) {
+    // landing index
+    urls.push({
+      url: `${site}/${locale}/landing`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.55
+    });
+
+    // landing slugs
+    for (const page of LANDING_PAGES) {
+      urls.push({
+        url: `${site}/${locale}/landing/${page.slug}`,
+        lastModified: now,
+        changeFrequency: "monthly",
+        priority: 0.5
+      });
+    }
+  }
+
+  
   for (const locale of useLocales) {
     for (const path of staticPaths) {
       const isHome = path === "";
@@ -151,6 +199,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     // keep sitemap working even if DB fails
   }
+  const unique = new Map<string, MetadataRoute.Sitemap[number]>();
+  for (const u of urls) unique.set(u.url, u);
+  return Array.from(unique.values());
 
-  return urls;
+
 }
