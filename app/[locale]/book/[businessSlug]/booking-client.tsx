@@ -424,205 +424,256 @@ export default function BookingClient({
   const description = (business.description ?? "").trim();
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      {/* Top right language switch */}
-      <div className="fixed right-4 top-4 z-40 flex gap-2">
-        <a
-          className="rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-white"
-          href={`/en/book/${businessSlug}`}
-        >
-          EN
-        </a>
-        <a
-          className="rounded-full bg-white/90 px-3 py-1 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-white"
-          href={`/fr/book/${businessSlug}`}
-        >
-          FR
-        </a>
+  <main
+    className="
+      min-h-screen text-slate-900
+      bg-[radial-gradient(1200px_circle_at_15%_-10%,rgba(236,72,153,0.18),transparent_55%),radial-gradient(900px_circle_at_90%_0%,rgba(99,102,241,0.16),transparent_50%),linear-gradient(to_bottom,#0b1220_0%,#0b1220_18%,#ffffff_45%,#ffffff_100%)]
+    "
+  >
+    
+
+    {/* Lightbox */}
+    {lightboxUrl ? (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
+        onClick={() => setLightboxUrl(null)}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="relative max-h-[92vh] max-w-[94vw]" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setLightboxUrl(null)}
+            className="absolute -top-12 right-0 rounded-xl bg-white/85 px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-white/60 backdrop-blur hover:bg-white"
+          >
+            {tr("booking.lightbox.close")}
+          </button>
+          <img
+            src={lightboxUrl}
+            alt={tr("booking.lightbox.photoAlt")}
+            className="max-h-[92vh] max-w-[94vw] rounded-3xl bg-white object-contain shadow-2xl ring-1 ring-white/60"
+          />
+        </div>
+      </div>
+    ) : null}
+
+   {/* HERO */}
+<section className="relative w-screen left-1/2 -translate-x-1/2 overflow-hidden">
+  {/* FULL BACKGROUND IMAGE */}
+  <img
+    src={heroImages[0]}
+    alt=""
+    aria-hidden="true"
+    className="absolute inset-0 h-full w-full object-cover"
+  />
+
+  {/* OVERLAYS (readability + premium fade) */}
+  <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/20" />
+  <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-white" />
+
+  {/* CONTENT */}
+  <div className="relative w-full px-6 pt-16 pb-32 lg:px-20">
+    <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
+      {/* LEFT */}
+      <div className="lg:col-span-6">
+  {/* GLASS HEADER CARD (logo + name + pills only) */}
+  <div className="inline-block rounded-[28px] bg-white/10 p-5 ring-1 ring-white/25 backdrop-blur-xl shadow-[0_30px_80px_-60px_rgba(0,0,0,0.9)]">
+    <div className="flex items-start gap-4">
+      {business.logoUrl ? (
+        <div className="rounded-3xl bg-white/70 p-1 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.6)] ring-1 ring-white/60 backdrop-blur">
+          <img
+            src={business.logoUrl}
+            alt={tr("booking.hero.logoAlt", { name: business.name })}
+            className="h-14 w-14 rounded-[22px] object-cover"
+          />
+        </div>
+      ) : (
+        <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/70 text-sm font-semibold text-slate-500 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.6)] ring-1 ring-white/60 backdrop-blur">
+          {business.name?.charAt(0)?.toUpperCase() || "S"}
+        </div>
+      )}
+
+      <div className="min-w-0">
+        <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow sm:text-4xl">
+          {business.name}
+        </h1>
+
+        <p className="mt-2 text-sm text-white/80 sm:text-base">
+          {business.industry ? String(business.industry).replace(/_/g, " ") : tr("booking.hero.industryFallback")}
+          {addr ? ` • ${addr}` : ""}
+        </p>
+
+        <div className="mt-5 flex flex-wrap gap-2">
+          
+
+          {!loadingRule ? (
+            <span className="rounded-full bg-white/75 px-3 py-1 text-sm text-slate-900 shadow-sm ring-1 ring-white/60 backdrop-blur">
+              {tr("booking.hero.timezoneLabel")} <span className="font-semibold">{rule.timezone}</span>
+            </span>
+          ) : null}
+
+          {website ? (
+            <a
+              href={website}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full bg-white/75 px-3 py-1 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-white/60 backdrop-blur hover:bg-white"
+            >
+              {tr("booking.hero.visitWebsite")}
+            </a>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  </div>
+
+        <div className="mt-7 space-y-5">
+          {description ? (
+            <p className="max-w-2xl whitespace-pre-wrap text-white/85 drop-shadow">
+              {description}
+            </p>
+          ) : (
+            <p className="max-w-2xl text-white/70">{tr("booking.hero.noDescription")}</p>
+          )}
+        </div>
       </div>
 
-      {/* Lightbox */}
-      {lightboxUrl ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
-          onClick={() => setLightboxUrl(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="relative max-h-[92vh] max-w-[94vw]" onClick={(e) => e.stopPropagation()}>
+      {/* RIGHT */}
+      <div className="lg:col-span-6">
+        <div className="grid grid-cols-3 gap-4">
+          {/* instead of the big image card, use a glass info card */}
+          <div className="col-span-2 rounded-[28px] bg-white/10 p-6 ring-1 ring-white/25 backdrop-blur-md shadow-[0_30px_80px_-50px_rgba(0,0,0,0.8)]">
+            <div className="text-sm font-semibold text-white/90">Gallery</div>
+            <div className="mt-2 text-sm text-white/70">
+              Tap a photo to preview
+            </div>
+          </div>
+
+          <div className="grid gap-4">
             <button
               type="button"
-              onClick={() => setLightboxUrl(null)}
-              className="absolute -top-12 right-0 rounded-xl bg-white/90 px-3 py-2 text-sm font-semibold"
+              onClick={() => setLightboxUrl(heroImages[1])}
+              className="overflow-hidden rounded-[28px] bg-white/20 shadow-[0_30px_80px_-50px_rgba(0,0,0,0.8)] ring-1 ring-white/30 backdrop-blur transition hover:-translate-y-0.5"
             >
-              {tr("booking.lightbox.close")}
+              <img
+                src={heroImages[1]}
+                alt={tr("booking.hero.photoAlt", { name: business.name, n: 2 })}
+                className="h-40 w-full object-cover sm:h-44 lg:h-[200px]"
+                loading="lazy"
+              />
             </button>
-            <img
-              src={lightboxUrl}
-              alt={tr("booking.lightbox.photoAlt")}
-              className="max-h-[92vh] max-w-[94vw] rounded-2xl bg-white object-contain"
-            />
+
+            <button
+              type="button"
+              onClick={() => setLightboxUrl(heroImages[2])}
+              className="overflow-hidden rounded-[28px] bg-white/20 shadow-[0_30px_80px_-50px_rgba(0,0,0,0.8)] ring-1 ring-white/30 backdrop-blur transition hover:-translate-y-0.5"
+            >
+              <img
+                src={heroImages[2]}
+                alt={tr("booking.hero.photoAlt", { name: business.name, n: 3 })}
+                className="h-40 w-full object-cover sm:h-44 lg:h-[200px]"
+                loading="lazy"
+              />
+            </button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
+</section>
+
+    {/* BODY */}
+    <section className="bg-white">
+      <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-10">
+        {/* Customer box */}
+        {!loadingCustomer ? (
+  <div className="rounded-[28px] bg-slate-900 p-6 shadow-[0_25px_70px_-30px_rgba(15,23,42,0.7)] ring-1 ring-slate-800 sm:p-7">
+    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <div className="text-sm font-semibold tracking-wide text-white">
+          {tr("booking.options.title")}
+        </div>
+
+        <div className="mt-2 text-sm text-slate-300">
+          {customer ? (
+            <>
+              {tr("booking.options.signedInAs")}{" "}
+              <span className="font-semibold text-white">
+                {customer.email}
+              </span>
+            </>
+          ) : (
+            "Book faster by creating an account or login if you already have one."
+          )}
+        </div>
+      </div>
+
+      {!customer ? (
+        <div className="flex flex-wrap gap-3 sm:justify-end">
+          {/* PRIMARY BUTTON */}
+          <a
+            href={createAccountHref}
+            className="
+              rounded-2xl bg-white px-5 py-2.5 text-sm font-semibold
+              text-slate-900 shadow-md
+              hover:bg-slate-100 active:translate-y-[1px]
+            "
+          >
+            {tr("booking.options.createAccount")}
+          </a>
+
+          {/* SECONDARY BUTTON */}
+          <a
+            href={loginHref}
+            className="
+              rounded-2xl border border-white/40 px-5 py-2.5
+              text-sm font-semibold text-white
+              hover:bg-white/10 active:translate-y-[1px]
+            "
+          >
+            {tr("booking.options.login")}
+          </a>
         </div>
       ) : null}
+    </div>
+  </div>
+) : null}
 
-      {/* HERO */}
-      <section className="bg-gradient-to-b from-slate-50 to-white">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
-          <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
-            <div className="lg:col-span-6">
-              <div className="flex items-start gap-4">
-                {business.logoUrl ? (
-                  <img
-                    src={business.logoUrl}
-                    alt={tr("booking.hero.logoAlt", { name: business.name })}
-                    className="h-14 w-14 rounded-2xl object-cover bg-white shadow-sm"
-                  />
-                ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-sm font-semibold text-slate-400 shadow-sm">
-                    {business.name?.charAt(0)?.toUpperCase() || "S"}
-                  </div>
-                )}
-
-                <div className="min-w-0">
-                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{business.name}</h1>
-                  <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                    {business.industry
-                      ? String(business.industry).replace(/_/g, " ")
-                      : tr("booking.hero.industryFallback")}
-                    {addr ? ` • ${addr}` : ""}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-7 space-y-5">
-                {description ? (
-                  <p className="max-w-2xl whitespace-pre-wrap text-slate-700">{description}</p>
-                ) : (
-                  <p className="max-w-2xl text-slate-500">{tr("booking.hero.noDescription")}</p>
-                )}
-
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
-                    {loading ? tr("common.loadingDots") : tr("booking.hero.stepPill", { step, total: 4 })}
-                  </span>
-
-                  {!loadingRule ? (
-                    <span className="rounded-full bg-white px-3 py-1 text-sm text-slate-600 shadow-sm ring-1 ring-slate-200">
-                      {tr("booking.hero.timezoneLabel")}{" "}
-                      <span className="font-semibold">{rule.timezone}</span>
-                    </span>
-                  ) : null}
-
-                  {website ? (
-                    <a
-                      href={website}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-100"
-                    >
-                      {tr("booking.hero.visitWebsite")}
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-6">
-              <div className="grid grid-cols-3 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setLightboxUrl(heroImages[0])}
-                  className="col-span-2 overflow-hidden rounded-3xl bg-white shadow-md"
-                >
-                  <img
-                    src={heroImages[0]}
-                    alt={tr("booking.hero.mainPhotoAlt", { name: business.name })}
-                    className="h-80 w-full object-cover sm:h-96 lg:h-[420px]"
-                    loading="lazy"
-                  />
-                </button>
-
-                <div className="grid gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setLightboxUrl(heroImages[1])}
-                    className="overflow-hidden rounded-3xl bg-white shadow-md"
-                  >
-                    <img
-                      src={heroImages[1]}
-                      alt={tr("booking.hero.photoAlt", { name: business.name, n: 2 })}
-                      className="h-40 w-full object-cover sm:h-44 lg:h-[200px]"
-                      loading="lazy"
-                    />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setLightboxUrl(heroImages[2])}
-                    className="overflow-hidden rounded-3xl bg-white shadow-md"
-                  >
-                    <img
-                      src={heroImages[2]}
-                      alt={tr("booking.hero.photoAlt", { name: business.name, n: 3 })}
-                      className="h-40 w-full object-cover sm:h-44 lg:h-[200px]"
-                      loading="lazy"
-                    />
-                  </button>
-                </div>
-              </div>
-            </div>
+        {error ? (
+          <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">
+            {error}
           </div>
-        </div>
-      </section>
+        ) : null}
 
-      {/* BODY */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-10">
-          {!loadingCustomer ? (
-            <div className="rounded-3xl bg-slate-50 p-5 sm:p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-800">{tr("booking.options.title")}</div>
-                  <div className="mt-1 text-sm text-slate-600">
-                    {customer ? (
-                      <>
-                        {tr("booking.options.signedInAs")}{" "}
-                        <span className="font-semibold">{customer.email}</span>
-                      </>
-                    ) : (
-                      tr("booking.options.guest")
-                    )}
-                  </div>
-                </div>
+        {/* PREMIUM BOOKING PANEL */}
+        <div className="mt-8 rounded-[32px] bg-white/80 shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-100 backdrop-blur">
+          {/* Sticky stepper header */}
+          <div className="sticky top-0 z-20 rounded-t-[32px] bg-white/80 backdrop-blur-xl ring-1 ring-white/60">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-7">
+              <div className="text-sm font-semibold tracking-wide text-slate-900">
+                {tr("booking.sections.service.title")} • {tr("booking.sections.date.title")} •{" "}
+                {tr("booking.sections.time.title")} • {tr("booking.sections.details.title")}
+              </div>
 
-                {!customer ? (
-                  <div className="flex flex-wrap gap-2 sm:justify-end">
-                    <a
-                      className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-                      href={createAccountHref}
-                    >
-                      {tr("booking.options.createAccount")}
-                    </a>
-                    <a
-                      className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-                      href={loginHref}
-                    >
-                      {tr("booking.options.login")}
-                    </a>
-                  </div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
+                  {loading ? tr("common.loadingDots") : tr("booking.hero.stepPill", { step, total: 4 })}
+                </span>
+                {serviceId ? (
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                    {tr("booking.sections.service.selected")}
+                  </span>
                 ) : null}
               </div>
             </div>
-          ) : null}
+            <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+          </div>
 
-          {error ? (
-            <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
-          ) : null}
-
-          <div className="mt-8 grid gap-8">
+          <div className="grid gap-8 p-5 sm:p-7">
             {/* 1) Service */}
-            <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
+            <section className="rounded-[28px] bg-white/70 p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.18)] ring-1 ring-white/60 backdrop-blur sm:p-6">
               <h2 className="text-lg font-semibold">{tr("booking.sections.service.title")}</h2>
 
               {loadingServices ? (
@@ -648,8 +699,10 @@ export default function BookingClient({
                           setError(null);
                         }}
                         className={[
-                          "overflow-hidden rounded-2xl bg-white text-left shadow-sm ring-1 transition hover:bg-slate-50",
-                          active ? "ring-slate-900" : "ring-slate-200"
+                          "group overflow-hidden rounded-[24px] bg-white/80 text-left ring-1 backdrop-blur transition-all duration-200",
+                          active
+                            ? "ring-slate-900 shadow-[0_22px_60px_-40px_rgba(15,23,42,0.35)]"
+                            : "ring-slate-200 hover:-translate-y-0.5 hover:shadow-[0_22px_60px_-40px_rgba(15,23,42,0.25)]"
                         ].join(" ")}
                       >
                         {thumb ? (
@@ -657,10 +710,11 @@ export default function BookingClient({
                             <img
                               src={thumb}
                               alt={tr("booking.sections.service.servicePhotoAlt", { name: s.name })}
-                              className="h-full w-full object-cover"
+                              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                               loading="lazy"
                             />
-                            <div className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-xs font-semibold">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0" />
+                            <div className="absolute right-2 top-2 rounded-full bg-white/85 px-2 py-1 text-xs font-semibold shadow-sm ring-1 ring-white/60 backdrop-blur">
                               {tr("booking.sections.service.photosCount", { n: imgs.length })}
                             </div>
                           </div>
@@ -683,7 +737,7 @@ export default function BookingClient({
                             </div>
 
                             {active ? (
-                              <span className="shrink-0 rounded-full bg-slate-900 px-2 py-1 text-xs font-semibold text-white">
+                              <span className="shrink-0 rounded-full bg-gradient-to-r from-fuchsia-500 to-indigo-500 px-2 py-1 text-xs font-semibold text-white shadow-sm">
                                 {tr("booking.sections.service.selected")}
                               </span>
                             ) : null}
@@ -700,7 +754,7 @@ export default function BookingClient({
                                     e.stopPropagation();
                                     setLightboxUrl(u);
                                   }}
-                                  className="overflow-hidden rounded-lg border border-slate-200"
+                                  className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow"
                                   title={tr("booking.lightbox.viewPhoto")}
                                 >
                                   <img src={u} alt="" className="h-10 w-10 object-cover" loading="lazy" />
@@ -713,9 +767,7 @@ export default function BookingClient({
                               ) : null}
                             </div>
                           ) : (
-                            <div className="mt-3 text-xs text-slate-500">
-                              {tr("booking.sections.service.noPhotos")}
-                            </div>
+                            <div className="mt-3 text-xs text-slate-500">{tr("booking.sections.service.noPhotos")}</div>
                           )}
                         </div>
                       </button>
@@ -726,7 +778,7 @@ export default function BookingClient({
             </section>
 
             {/* 2) Date */}
-            <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
+            <section className="rounded-[28px] bg-white/70 p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.18)] ring-1 ring-white/60 backdrop-blur sm:p-6">
               <h2 className="text-lg font-semibold">{tr("booking.sections.date.title")}</h2>
               {!serviceId ? (
                 <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.date.needService")}</p>
@@ -742,7 +794,7 @@ export default function BookingClient({
                         setTime("");
                         setError(null);
                       }}
-                      className="w-full max-w-xs rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200"
+                      className="w-full max-w-xs rounded-2xl bg-white/90 px-3 py-2 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                       required
                     />
                   </label>
@@ -751,7 +803,7 @@ export default function BookingClient({
             </section>
 
             {/* 3) Time */}
-            <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
+            <section className="rounded-[28px] bg-white/70 p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.18)] ring-1 ring-white/60 backdrop-blur sm:p-6">
               <h2 className="text-lg font-semibold">{tr("booking.sections.time.title")}</h2>
 
               {!serviceId || !date ? (
@@ -771,8 +823,10 @@ export default function BookingClient({
                           setError(null);
                         }}
                         className={[
-                          "rounded-xl px-4 py-3 text-center text-sm font-semibold shadow-sm ring-1 hover:bg-slate-50",
-                          active ? "ring-slate-900" : "ring-slate-200"
+                          "rounded-2xl px-4 py-3 text-center text-sm font-semibold transition shadow-sm ring-1",
+                          active
+                            ? "bg-slate-900 text-white ring-slate-900"
+                            : "bg-white/90 text-slate-900 ring-slate-200 hover:-translate-y-0.5 hover:shadow-md"
                         ].join(" ")}
                       >
                         {tm}
@@ -784,14 +838,14 @@ export default function BookingClient({
             </section>
 
             {/* 4) Details */}
-            <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
+            <section className="rounded-[28px] bg-white/70 p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.18)] ring-1 ring-white/60 backdrop-blur sm:p-6">
               <h2 className="text-lg font-semibold">{tr("booking.sections.details.title")}</h2>
 
               {!selectedService || !date || !time ? (
                 <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.details.needAll")}</p>
               ) : (
                 <div className="mt-4 grid gap-4">
-                  <div className="rounded-2xl bg-slate-50 p-4 text-sm">
+                  <div className="rounded-[22px] bg-white/85 p-4 text-sm shadow-sm ring-1 ring-slate-100">
                     <div className="font-semibold">{selectedService.name}</div>
                     <div className="mt-1 text-slate-600">
                       {date} • {time} • {tr("booking.common.minutes", { n: selectedService.durationMin })} •{" "}
@@ -803,7 +857,7 @@ export default function BookingClient({
                     <label className="grid gap-1 text-sm">
                       {tr("booking.form.fullName")}
                       <input
-                        className="rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200"
+                        className="rounded-2xl bg-white/90 px-3 py-2 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         placeholder={tr("booking.form.fullNamePlaceholder")}
@@ -813,7 +867,7 @@ export default function BookingClient({
                     <label className="grid gap-1 text-sm">
                       {tr("booking.form.phone")}
                       <input
-                        className="rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200"
+                        className="rounded-2xl bg-white/90 px-3 py-2 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder={tr("booking.form.phonePlaceholder")}
@@ -826,7 +880,7 @@ export default function BookingClient({
                     <input
                       type="email"
                       required
-                      className="rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200"
+                      className="rounded-2xl bg-white/90 px-3 py-2 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder={tr("booking.form.emailPlaceholder")}
@@ -836,7 +890,7 @@ export default function BookingClient({
                   <label className="grid gap-1 text-sm">
                     {tr("booking.form.notes")}
                     <textarea
-                      className="min-h-[110px] rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200"
+                      className="min-h-[110px] rounded-2xl bg-white/90 px-3 py-2 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder={tr("booking.form.notesPlaceholder")}
@@ -846,57 +900,105 @@ export default function BookingClient({
                   <button
                     type="button"
                     disabled={submitting}
-                    className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
                     onClick={confirmBooking}
+                    className="
+                      rounded-2xl px-5 py-3 text-sm font-semibold text-white
+                      bg-gradient-to-r from-fuchsia-500 to-indigo-500
+                      shadow-[0_18px_40px_-18px_rgba(99,102,241,0.7)]
+                      hover:brightness-110 active:translate-y-[1px]
+                      disabled:opacity-60
+                    "
                   >
                     {submitting ? tr("booking.form.confirming") : tr("booking.form.confirm")}
                   </button>
                 </div>
               )}
             </section>
-
-            {/* MAP */}
-            <section className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold">{tr("booking.location.title")}</h2>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {addr || tr("booking.location.noAddress")}
-                  </p>
-                </div>
-
-                {addr ? (
-                  <a
-                    href={mapsOpen}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-xl bg-white px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-                  >
-                    {tr("booking.location.openMaps")}
-                  </a>
-                ) : null}
-              </div>
-
-              {addr ? (
-                <div className="mt-4 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100">
-                  <iframe
-                    title={tr("booking.location.mapTitle", { name: business.name })}
-                    src={mapsEmbed}
-                    className="h-80 w-full"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-                </div>
-              ) : (
-                <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-                  {tr("booking.location.ownerNoAddress")}
-                </div>
-              )}
-            </section>
           </div>
         </div>
-      </section>
-    </main>
-  );
-}
 
+        {/* MAP + REVIEWS */}
+<div className="mt-8 grid gap-6 lg:grid-cols-2">
+  
+  {/* MAP */}
+  <div className="rounded-[32px] bg-white/80 p-5 shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-100 backdrop-blur sm:p-7">
+    <div className="flex items-start justify-between gap-3">
+      <div>
+        <h2 className="text-lg font-semibold">
+          {tr("booking.location.title")}
+        </h2>
+        <p className="mt-1 text-sm text-slate-600">
+          {addr || tr("booking.location.noAddress")}
+        </p>
+      </div>
+
+      {addr ? (
+        <a
+          href={mapsOpen}
+          target="_blank"
+          rel="noreferrer"
+          className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+        >
+          {tr("booking.location.openMaps")}
+        </a>
+      ) : null}
+    </div>
+
+    {addr ? (
+      <div className="mt-4 overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-slate-100">
+        <iframe
+          title={tr("booking.location.mapTitle", { name: business.name })}
+          src={mapsEmbed}
+          className="h-80 w-full"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      </div>
+    ) : (
+      <div className="mt-4 rounded-[22px] bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-slate-100">
+        {tr("booking.location.ownerNoAddress")}
+      </div>
+    )}
+  </div>
+
+  {/* REVIEWS */}
+  <div className="rounded-[32px] bg-white/80 p-6 shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-100 backdrop-blur">
+    <div className="flex items-center justify-between">
+      <h2 className="text-lg font-semibold">Customer Reviews</h2>
+      <span className="text-sm text-slate-500">⭐ 4.9 (124)</span>
+    </div>
+
+    <div className="mt-6 space-y-5">
+      {/* SAMPLE REVIEW CARD */}
+      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+        <div className="flex items-center justify-between">
+          <div className="font-semibold text-sm">Sarah M.</div>
+          <div className="text-xs text-slate-500">2 days ago</div>
+        </div>
+        <div className="mt-2 text-sm text-slate-700">
+          Absolutely amazing service. Super professional and welcoming.
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+        <div className="flex items-center justify-between">
+          <div className="font-semibold text-sm">James K.</div>
+          <div className="text-xs text-slate-500">1 week ago</div>
+        </div>
+        <div className="mt-2 text-sm text-slate-700">
+          Clean environment, great attention to detail. Highly recommend.
+        </div>
+      </div>
+
+      <button className="mt-2 w-full rounded-2xl border border-slate-200 py-2 text-sm font-semibold hover:bg-slate-50">
+        View all reviews
+      </button>
+    </div>
+  </div>
+
+</div>
+      </div>
+    </section>
+  </main>
+);
+}

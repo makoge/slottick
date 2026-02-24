@@ -148,6 +148,8 @@ export default async function LocaleLayout({
       "query-input": "required name=search_term_string"
     }
   };
+  const normalizedLocale =
+  locale?.toLowerCase().startsWith("fr") ? "fr" : "en";
 
   return (
     <html lang={locale}>
@@ -191,10 +193,13 @@ export default async function LocaleLayout({
             </p>
 
             <nav className="flex gap-4 text-sm">
-              <Link className="text-slate-300 hover:text-white" href={`/$    {locale}/  blog`}>
+              <Link
+  className="text-slate-300 hover:text-white"
+                href={`/${normalizedLocale}/blog`}
+                >
                 {t(messages, "footer.blog") === "footer.blog"
-                ? "Blog"
-                : t(messages, "footer.blog")}
+                  ? "Blog"
+                 : t(messages, "footer.blog")}
               </Link>
               <Link className="text-slate-300 hover:text-white" href={`/${locale}/privacy`}>
                 {t(messages, "footer.privacy") === "footer.privacy" ? "Privacy" : t(messages, "footer.privacy")}
