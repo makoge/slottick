@@ -85,7 +85,7 @@ export async function generateMetadata({
   const description = tr(
     dict,
     "meta.home.description",
-    "Manage services, staff availability and online bookings in one place. Share one link that always shows your real schedule—built for salons, barbers, beauty and wellness."
+    "Manage services, staff availability and online bookings in one place. Share one link that always shows your real schedule, for service businesses like salons, beauty and wellness."
   );
 
   const ogImage = `${site}/og.png`;
@@ -138,8 +138,8 @@ export default async function Home({ params }: { params: Promise<Params> }) {
     "Services, durations & pricing",
     "Availability rules & breaks",
     "Buffer time between clients",
-    "One booking link for your bio",
-    "Real-time schedule (no double booking)"
+    "One booking link as your website",
+    "Track revenue, bookings, and client growth"
   ]);
 
   const faqItems = getArray<{ q: string; a: string }>(dict, "home.faq.items", []);
@@ -230,7 +230,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
               {tr(
                 dict,
                 "home.hero.lead",
-                "Slottick turns your availability into a shareable booking website. Clients book your real schedule, no back-and-forth, no double booking."
+                "Slottick turns your availability into a shareable booking website. Clients book your real schedule, no back-and-forth, no double booking. Manage clients, track revenue and grow smarter"
               )}
             </p>
 

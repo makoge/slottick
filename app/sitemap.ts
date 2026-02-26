@@ -2,12 +2,16 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 
+// app/sitemap.ts
+import type { MetadataRoute } from "next";
+import { prisma } from "@/lib/db";
+
 import { locales } from "@/lib/i18n";
 import { KEYWORD_PAGES } from "@/lib/seo/keywords";
 import { TARGET_COUNTRIES, TARGET_CATEGORIES } from "@/lib/seo/targets";
 import { slugify } from "@/lib/seo/slug";
 import { SEO_CITIES_20, SEO_INTENTS_10 } from "@/lib/seo/near-me-targets";
-import { BLOG_POSTS } from "@/lib/blog/posts";
+import { getAllBlogPosts } from "@/lib/blog/route";
 import { LANDING_PAGES } from "@/lib/landing/pages";
 
 // My opinion: only index locales that are truly translated.
@@ -30,13 +34,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const useLocales = locales.filter((l) =>
     (INDEX_LOCALES as readonly string[]).includes(l)
   );
-      // ✅ Static pages
+
   const staticPaths = ["", "/explore", "/privacy", "/terms", "/contact"];
 
-  
-    // ✅ Blog: /[locale]/blog + /[locale]/blog/[slug]
+  // ✅ Blog: /[locale]/blog + /[locale]/blog/[slug]
+  const blogPosts = getAllBlogPosts();
   for (const locale of useLocales) {
-    // blog index
     urls.push({
       url: `${site}/${locale}/blog`,
       lastModified: now,
@@ -44,10 +47,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7
     });
 
-    // blog posts
-    for (const post of BLOG_POSTS) {
+    for (const post of blogPosts) {
       const last = post.updatedAt ? new Date(post.updatedAt) : new Date(post.publishedAt);
-
       urls.push({
         url: `${site}/${locale}/blog/${post.slug}`,
         lastModified: isNaN(last.getTime()) ? now : last,
@@ -57,9 +58,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-    // ✅ Landing pages: /[locale]/landing + /[locale]/landing/[slug]
+  // ✅ Landing pages: /[locale]/landing + /[locale]/landing/[slug]
   for (const locale of useLocales) {
-    // landing index
     urls.push({
       url: `${site}/${locale}/landing`,
       lastModified: now,
@@ -67,7 +67,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.55
     });
 
-    // landing slugs
     for (const page of LANDING_PAGES) {
       urls.push({
         url: `${site}/${locale}/landing/${page.slug}`,
@@ -78,7 +77,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  
+  // ✅ Static pages
   for (const locale of useLocales) {
     for (const path of staticPaths) {
       const isHome = path === "";
@@ -91,9 +90,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // ✅ NEW Guides: /[locale]/guides/[locationSlug]/[serviceSlug]
-  // locationSlug should match SEO_CITIES_20 slugs (or whatever you use)
-  // serviceSlug should match your TARGET_CATEGORIES slugs (or a separate guide services list)
+  // ✅ Guides: /[locale]/guides/[locationSlug]/[serviceSlug]
   for (const locale of useLocales) {
     for (const loc of SEO_CITIES_20) {
       for (const svc of TARGET_CATEGORIES) {
@@ -144,7 +141,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // ✅ Intent pages renamed: /[locale]/services/[intent]/[city]
+  // ✅ Intent pages: /[locale]/services/[intent]/[city]
   for (const locale of useLocales) {
     for (const intent of SEO_INTENTS_10) {
       for (const city of SEO_CITIES_20) {
@@ -158,8 +155,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
-  // ✅ Explore country/category landings (keep only if this route exists):
-  // /[locale]/explore/country/[countrySlug]/[categorySlug]
+  // ✅ Explore country/category landings
   for (const locale of useLocales) {
     for (const country of TARGET_COUNTRIES) {
       for (const cat of TARGET_CATEGORIES) {
@@ -199,9 +195,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     // keep sitemap working even if DB fails
   }
+
   const unique = new Map<string, MetadataRoute.Sitemap[number]>();
   for (const u of urls) unique.set(u.url, u);
   return Array.from(unique.values());
-
-
 }
