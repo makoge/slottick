@@ -1,6 +1,3 @@
-// app/sitemap.ts
-import type { MetadataRoute } from "next";
-import { prisma } from "@/lib/db";
 
 // app/sitemap.ts
 import type { MetadataRoute } from "next";
