@@ -192,61 +192,66 @@ useEffect(() => {
   return (
     <div className="mx-auto max-w-3xl rounded-3xl bg-white p-6 shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-200">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Profit Calculator</h2>
-          <p className="mt-1 text-slate-600">Real profit per appointment, per hour, and monthly.</p>
-        </div>
+  <div>
+    <h2 className="text-2xl font-bold text-slate-900">Profit Calculator</h2>
+    <p className="mt-1 text-slate-600">
+      Real profit per appointment, per hour, and monthly.
+    </p>
+  </div>
 
-        <label className="grid gap-1">
-          <span className="text-sm font-medium text-slate-700">Currency</span>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value as any)}
-            className="h-11 rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 shadow-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10">
-            <option value="EUR">EUR (€)</option>
-            <option value="USD">USD ($)</option>
-            <option value="GBP">GBP (£)</option>
-            <option value="XOF">FCFA (XOF)</option>
-          </select>
-        </label>
-      </div>
-      <div className="flex items-end gap-2">
-  <button
-    type="button"
-    onClick={loadPreset}
-    disabled={loadingPreset || saving}
-    className="h-11 rounded-2xl bg-white px-4 text-sm font-semibold ring-1 ring-slate-200 disabled:opacity-50 text-slate-900"
-  >
-    {loadingPreset ? "Loading..." : "Load defaults"}
-  </button>
+  {/* right side controls */}
+  <div className="flex flex-wrap items-end justify-end gap-2">
+    <label className="grid gap-1 w-full sm:w-auto sm:mr-2">
+      <span className="text-sm font-medium text-slate-700">Currency</span>
+      <select
+        value={currency}
+        onChange={(e) => setCurrency(e.target.value as any)}
+        className="h-11 w-full sm:w-[170px] rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 shadow-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+      >
+        <option value="EUR">EUR (€)</option>
+        <option value="USD">USD ($)</option>
+        <option value="GBP">GBP (£)</option>
+        <option value="XOF">FCFA (XOF)</option>
+      </select>
+    </label>
 
-  <button
-    type="button"
-    onClick={savePreset}
-    disabled={saving || loadingPreset}
-    className="h-11 rounded-2xl bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-50"
-  >
-    {saving ? "Saving..." : "Save defaults"}
-  </button>
+    <button
+      type="button"
+      onClick={loadPreset}
+      disabled={loadingPreset || saving}
+      className="h-11 rounded-2xl bg-white px-4 text-sm font-semibold ring-1 ring-slate-200 disabled:opacity-50 text-slate-900"
+    >
+      {loadingPreset ? "Loading..." : "Load defaults"}
+    </button>
 
-  <button
-    type="button"
-    onClick={resetToSaved}
-    disabled={!savedPreset || saving || loadingPreset}
-    className="h-11 rounded-2xl bg-white px-4 text-sm font-semibold ring-1 ring-slate-200 disabled:opacity-50 text-slate-900"
-  >
-    Reset
-  </button>
+    <button
+      type="button"
+      onClick={savePreset}
+      disabled={saving || loadingPreset}
+      className="h-11 rounded-2xl bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-50"
+    >
+      {saving ? "Saving..." : "Save defaults"}
+    </button>
+
+    <button
+      type="button"
+      onClick={resetToSaved}
+      disabled={!savedPreset || saving || loadingPreset}
+      className="h-11 rounded-2xl bg-white px-4 text-sm font-semibold ring-1 ring-slate-200 disabled:opacity-50 text-slate-900"
+    >
+      Reset
+    </button>
+  </div>
 </div>
 
       {/* MAIN INPUTS */}
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <Field label="Service price" value={price} onChange={setPrice} />
-        <Field label="Duration (minutes)" value={minutes} onChange={setMinutes} />
+        <Field label="Service price" value={price} onChange={setPrice} required/>
+        <Field label="Duration (minutes)" value={minutes} onChange={setMinutes} required/>
         <Field label="Platform fee (%)" value={feePct} onChange={setFeePct} />
         <Field label="Tax (%)" value={taxPct} onChange={setTaxPct} />
-        <Field label="Monthly fixed costs" value={fixedMonthly} onChange={setFixedMonthly} />
-        <Field label="Appointments / month" value={apptsPerMonth} onChange={setApptsPerMonth} />
+        <Field label="Monthly fixed costs(rent, utilities)" value={fixedMonthly} onChange={setFixedMonthly} />
+        <Field label="Appointments(number of clients) / month" value={apptsPerMonth} onChange={setApptsPerMonth} />
         <Field label="Target profit / hour" value={targetHourly} onChange={setTargetHourly} />
       </div>
       {msg ? <div className="mt-3 text-sm text-slate-600">{msg}</div> : null}
@@ -312,7 +317,7 @@ useEffect(() => {
                 </label>
 
                 <label className="md:col-span-3">
-                  <div className="text-xs font-medium text-slate-700">Lasts for (clients)</div>
+                  <div className="text-xs font-medium text-slate-700">Lasts for how many clients</div>
                   <input
                     type="number"
                     className="mt-1 h-10 w-full rounded-2xl border border-slate-300 bg-white px-3 text-slate-900 shadow-sm focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
@@ -326,7 +331,7 @@ useEffect(() => {
                 </label>
 
                 <label className="md:col-span-2">
-                  <div className="text-xs font-medium text-slate-700">Uses now</div>
+                  <div className="text-xs font-medium text-slate-700">portion used now</div>
                   <input
                     type="number"
                     className="mt-1 h-10 w-full rounded-2xl border border-slate-300 bg-white px-3 text-slate-900 shadow-sm focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
@@ -415,14 +420,19 @@ function Field({
   label,
   value,
   onChange,
+  required,
 }: {
   label: string;
   value: number;
   onChange: (v: number) => void;
+  required?: boolean;
 }) {
   return (
     <label className="grid gap-1">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
+      <span className="text-sm font-medium text-slate-700">
+  {label}
+  {required && <span className="ml-1 text-rose-500">*</span>}
+</span>
       <input
         type="number"
         value={value}
