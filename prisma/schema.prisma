@@ -1,8 +1,8 @@
-
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -56,7 +56,7 @@ model Business {
   logoUrl String?
   heroTag String?
 
-   description String? @db.Text
+  description String? @db.Text
 
   ratingAvg   Float? @default(0)
   ratingCount Int?   @default(0)
@@ -84,10 +84,11 @@ model Business {
   // ✅ NEW: website/brand gallery images (for booking page header)
   galleryImages BusinessImage[]
 
-  stripeCustomerId     String?   @unique
-  stripeSubscriptionId String?   @unique
-  subscriptionStatus   String    @default("inactive")
-  currentPeriodEnd     DateTime?
+  stripeCustomerId       String?                 @unique
+  stripeSubscriptionId   String?                 @unique
+  subscriptionStatus     String                  @default("inactive")
+  currentPeriodEnd       DateTime?
+  profitCalculatorPreset ProfitCalculatorPreset?
 
   @@index([industry])
   @@index([city])
@@ -288,4 +289,22 @@ model CustomerSession {
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@index([customerId])
+}
+
+model ProfitCalculatorPreset {
+  businessId    String @id
+  currency      String @default("EUR")
+  price         Float  @default(0)
+  minutes       Int    @default(60)
+  feePct        Float  @default(0)
+  taxPct        Float  @default(0)
+  fixedMonthly  Float  @default(0)
+  apptsPerMonth Int    @default(0)
+  targetHourly  Float  @default(0)
+  productsJson  String @default("[]")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
