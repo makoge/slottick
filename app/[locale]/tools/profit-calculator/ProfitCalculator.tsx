@@ -255,7 +255,7 @@ useEffect(() => {
       <div className="mt-6 rounded-3xl bg-white p-4 ring-1 ring-slate-200">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <div className="text-sm font-semibold">Products used</div>
+            <div className="text-sm font-semibold text-slate-900">Products used</div>
             <div className="text-xs text-slate-600">
               Add each product and how many clients it lasts. We’ll calculate cost per appointment.
             </div>
@@ -287,7 +287,7 @@ useEffect(() => {
                 <label className="md:col-span-3">
                   <div className="text-xs font-medium text-slate-700">Name</div>
                   <input
-                    className="mt-1 h-10 w-full rounded-2xl border border-slate-200 px-3"
+                    className="mt-1 h-10 w-full rounded-2xl border border-slate-300 bg-white px-3 text-slate-900 shadow-sm focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                     value={p.name}
                     onChange={(e) =>
                       setProducts((xs) =>
@@ -301,7 +301,7 @@ useEffect(() => {
                   <div className="text-xs font-medium text-slate-700">Price</div>
                   <input
                     type="number"
-                    className="mt-1 h-10 w-full rounded-2xl border border-slate-200 px-3"
+                    className="mt-1 h-10 w-full rounded-2xl border border-slate-300 bg-white px-3 text-slate-900 shadow-sm focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                     value={p.price}
                     onChange={(e) =>
                       setProducts((xs) =>
@@ -329,7 +329,7 @@ useEffect(() => {
                   <div className="text-xs font-medium text-slate-700">Uses now</div>
                   <input
                     type="number"
-                    className="mt-1 h-10 w-full rounded-2xl border border-slate-200 px-3"
+                    className="mt-1 h-10 w-full rounded-2xl border border-slate-300 bg-white px-3 text-slate-900 shadow-sm focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                     value={p.usesNow}
                     onChange={(e) =>
                       setProducts((xs) =>
