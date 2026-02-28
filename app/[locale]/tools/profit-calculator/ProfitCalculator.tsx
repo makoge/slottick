@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 
 type ProductRow = {
   id: string;
@@ -32,6 +34,10 @@ export default function ProfitCalculator() {
   const [fixedMonthly, setFixedMonthly] = useState(0);
   const [apptsPerMonth, setApptsPerMonth] = useState(40);
   const [targetHourly, setTargetHourly] = useState(40);
+  const [loadingPreset, setLoadingPreset] = useState(true);
+const [saving, setSaving] = useState(false);
+const [savedPreset, setSavedPreset] = useState<any>(null);
+const [msg, setMsg] = useState<string | null>(null);
 
   // Products list
   const [products, setProducts] = useState<ProductRow[]>([
@@ -88,19 +94,106 @@ export default function ProfitCalculator() {
   }, [price, minutes, feePct, taxPct, fixedMonthly, apptsPerMonth, targetHourly, totalProductCost]);
 
 
-  type Status = { label: string; tone: "good" | "bad" };
+type Status = { label: string; tone: "good" | "bad" };
 
 const status: Status =
   calc.profitPerHour >= n(targetHourly)
     ? { label: "Good hourly rate", tone: "good" }
     : { label: "Underpricing (below target)", tone: "bad" };
 
+    async function loadPreset() {
+  setLoadingPreset(true);
+  setMsg(null);
+  try {
+    const res = await fetch("/api/tools/profit-preset", { cache: "no-store" });
+    const data = await res.json();
+
+    if (data?.preset) {
+      const p = data.preset;
+      setSavedPreset(p);
+
+      if (p.currency) setCurrency(p.currency);
+      if (typeof p.price === "number") setPrice(p.price);
+      if (typeof p.minutes === "number") setMinutes(p.minutes);
+      if (typeof p.feePct === "number") setFeePct(p.feePct);
+      if (typeof p.taxPct === "number") setTaxPct(p.taxPct);
+      if (typeof p.fixedMonthly === "number") setFixedMonthly(p.fixedMonthly);
+      if (typeof p.apptsPerMonth === "number") setApptsPerMonth(p.apptsPerMonth);
+      if (typeof p.targetHourly === "number") setTargetHourly(p.targetHourly);
+
+      if (Array.isArray(p.products)) setProducts(p.products);
+
+      setMsg("Loaded defaults");
+    } else {
+      setSavedPreset(null);
+      setMsg("No saved defaults yet");
+    }
+  } catch {
+    setMsg("Failed to load defaults");
+  } finally {
+    setLoadingPreset(false);
+  }
+}
+
+async function savePreset() {
+  setSaving(true);
+  setMsg(null);
+  try {
+    const res = await fetch("/api/tools/profit-preset", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        currency,
+        price,
+        minutes,
+        feePct,
+        taxPct,
+        fixedMonthly,
+        apptsPerMonth,
+        targetHourly,
+        products,
+      }),
+    });
+
+    if (!res.ok) throw new Error("save failed");
+
+    setMsg("Saved defaults");
+    await loadPreset();
+  } catch {
+    setMsg("Failed to save");
+  } finally {
+    setSaving(false);
+  }
+}
+
+function resetToSaved() {
+  if (!savedPreset) return;
+  const p = savedPreset;
+
+  setCurrency(p.currency ?? "EUR");
+  setPrice(p.price ?? 0);
+  setMinutes(p.minutes ?? 60);
+  setFeePct(p.feePct ?? 0);
+  setTaxPct(p.taxPct ?? 0);
+  setFixedMonthly(p.fixedMonthly ?? 0);
+  setApptsPerMonth(p.apptsPerMonth ?? 0);
+  setTargetHourly(p.targetHourly ?? 0);
+  setProducts(Array.isArray(p.products) ? p.products : []);
+
+  setMsg("Reset to saved defaults");
+}
+
+useEffect(() => {
+  loadPreset();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
 
   return (
     <div className="mx-auto max-w-3xl rounded-3xl bg-white p-6 shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-200">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Profit Calculator</h2>
+          <h2 className="text-2xl font-bold text-slate-900">Profit Calculator</h2>
           <p className="mt-1 text-slate-600">Real profit per appointment, per hour, and monthly.</p>
         </div>
 
@@ -109,8 +202,7 @@ const status: Status =
           <select
             value={currency}
             onChange={(e) => setCurrency(e.target.value as any)}
-            className="h-11 rounded-2xl border border-slate-200 bg-white px-4"
-          >
+            className="h-11 rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 shadow-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10">
             <option value="EUR">EUR (€)</option>
             <option value="USD">USD ($)</option>
             <option value="GBP">GBP (£)</option>
@@ -118,6 +210,34 @@ const status: Status =
           </select>
         </label>
       </div>
+      <div className="flex items-end gap-2">
+  <button
+    type="button"
+    onClick={loadPreset}
+    disabled={loadingPreset || saving}
+    className="h-11 rounded-2xl bg-white px-4 text-sm font-semibold ring-1 ring-slate-200 disabled:opacity-50 text-slate-900"
+  >
+    {loadingPreset ? "Loading..." : "Load defaults"}
+  </button>
+
+  <button
+    type="button"
+    onClick={savePreset}
+    disabled={saving || loadingPreset}
+    className="h-11 rounded-2xl bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-50"
+  >
+    {saving ? "Saving..." : "Save defaults"}
+  </button>
+
+  <button
+    type="button"
+    onClick={resetToSaved}
+    disabled={!savedPreset || saving || loadingPreset}
+    className="h-11 rounded-2xl bg-white px-4 text-sm font-semibold ring-1 ring-slate-200 disabled:opacity-50 text-slate-900"
+  >
+    Reset
+  </button>
+</div>
 
       {/* MAIN INPUTS */}
       <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -129,6 +249,7 @@ const status: Status =
         <Field label="Appointments / month" value={apptsPerMonth} onChange={setApptsPerMonth} />
         <Field label="Target profit / hour" value={targetHourly} onChange={setTargetHourly} />
       </div>
+      {msg ? <div className="mt-3 text-sm text-slate-600">{msg}</div> : null}
 
       {/* PRODUCTS */}
       <div className="mt-6 rounded-3xl bg-white p-4 ring-1 ring-slate-200">
@@ -194,7 +315,7 @@ const status: Status =
                   <div className="text-xs font-medium text-slate-700">Lasts for (clients)</div>
                   <input
                     type="number"
-                    className="mt-1 h-10 w-full rounded-2xl border border-slate-200 px-3"
+                    className="mt-1 h-10 w-full rounded-2xl border border-slate-300 bg-white px-3 text-slate-900 shadow-sm focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                     value={p.lastsFor}
                     onChange={(e) =>
                       setProducts((xs) =>
