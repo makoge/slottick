@@ -341,7 +341,7 @@ useEffect(() => {
 
                 <div className="md:col-span-2">
                   <div className="text-xs font-medium text-slate-700">Cost / appt</div>
-                  <div className="mt-1 h-10 rounded-2xl bg-white px-3 text-sm font-semibold leading-10 ring-1 ring-slate-200">
+                  <div className="mt-1 h-10 rounded-2xl bg-white px-3 text-sm font-semibold leading-10 ring-1 text-slate-900">
                     {formatMoney(costPerAppt)}
                   </div>
                 </div>
@@ -350,7 +350,7 @@ useEffect(() => {
                   <button
                     type="button"
                     onClick={() => setProducts((xs) => xs.filter((x) => x.id !== p.id))}
-                    className="text-xs font-semibold text-slate-600 hover:text-slate-900"
+                    className="text-xs font-semibold text-slate-900 hover:text-slate-900"
                   >
                     Remove
                   </button>
@@ -362,7 +362,7 @@ useEffect(() => {
 
         <div className="mt-4 flex items-center justify-between rounded-2xl bg-slate-900 px-4 py-3 text-white">
           <span className="text-sm">Total product cost per appointment</span>
-          <span className="text-lg font-bold">{formatMoney(totalProductCost)}</span>
+          <span className="text-lg font-bold ">{formatMoney(totalProductCost)}</span>
         </div>
       </div>
 
@@ -427,7 +427,7 @@ function Field({
         type="number"
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="h-11 rounded-2xl border border-slate-200 px-4 outline-none focus:border-slate-400"
+        className="h-11 rounded-2xl border border-slate-200 px-4 outline-none  focus:border-slate-400 text-slate-900"
       />
     </label>
   );
@@ -437,7 +437,7 @@ function Stat({ title, value }: { title: string; value: string }) {
   return (
     <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200">
       <div className="text-sm text-slate-600">{title}</div>
-      <div className="mt-1 text-2xl font-bold">{value}</div>
+      <div className="mt-1 text-2xl font-bold text-emerald-100">{value}</div>
     </div>
   );
 }

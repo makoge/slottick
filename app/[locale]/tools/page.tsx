@@ -18,11 +18,11 @@ export default function ToolsPage() {
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
       <header className="max-w-3xl">
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
           Free tools for beauty and service businesses
         </h1>
         <p className="mt-3 text-slate-600">
-          Use these free calculators to price services correctly, understand real profit,
+          Use these free tools to price services correctly, understand real profit,
           and make smarter booking decisions. Built for hairstylists, nail techs,
           barbers, massage therapists, tattoo artists, and more.
         </p>
@@ -45,14 +45,14 @@ export default function ToolsPage() {
       </section>
 
       <section className="mt-12 max-w-3xl">
-        <h2 className="text-xl font-semibold">Why these tools exist</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Why these tools exist</h2>
         <p className="mt-3 text-slate-600">
           Many service businesses underprice without realizing the impact of product costs,
           platform fees, taxes, and fixed expenses. These tools help you see your real numbers
           so you can charge confidently and grow sustainably.
         </p>
 
-        <h2 className="mt-8 text-xl font-semibold">Who these tools are for</h2>
+        <h2 className="mt-8 text-xl font-semibold text-slate-900">Who these tools are for</h2>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-slate-600">
           <li>Hair stylists, braiders, barbers</li>
           <li>Nail techs, lash techs, makeup artists</li>
@@ -62,7 +62,7 @@ export default function ToolsPage() {
       </section>
 
       <section className="mt-12 rounded-3xl bg-slate-50 p-6 ring-1 ring-slate-200">
-        <h2 className="text-xl font-semibold">Want a booking website too?</h2>
+        <h2 className="text-xl font-semibold text-slate-900">Want a booking website too?</h2>
         <p className="mt-2 text-slate-600">
           Slottick turns your availability into a shareable booking page so clients can book your real schedule.
         </p>
@@ -73,12 +73,7 @@ export default function ToolsPage() {
           >
             See Slottick
           </Link>
-          <Link
-            href="./tools/profit-calculator"
-            className="inline-flex h-11 items-center rounded-2xl bg-white px-4 text-sm font-semibold ring-1 ring-slate-200 hover:bg-slate-50"
-          >
-            Use Profit Calculator
-          </Link>
+          
         </div>
       </section>
     </main>
@@ -99,10 +94,10 @@ function ToolCard({
   disabled?: boolean;
 }) {
   const Card = (
-    <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+    <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-200">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold">{title}</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
           <p className="mt-2 text-slate-600">{desc}</p>
         </div>
         {badge ? (

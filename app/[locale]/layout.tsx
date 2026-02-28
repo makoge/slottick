@@ -158,27 +158,43 @@ export default async function LocaleLayout({
 
         {/* HEADER */}
         <header className="sticky top-0 z-50 w-full bg-slate-900">
-          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-            <Link
-              href={`/${locale}`}
-              className="text-lg font-semibold tracking-tight text-white"
-            >
-              {t(messages, "brand.name") === "brand.name" ? SITE_NAME : t(messages, "brand.name")}
-            </Link>
-             
+  <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+    
+    {/* Left side */}
+    <div className="flex items-center gap-8">
+      <Link
+        href={`/${locale}`}
+        className="text-lg font-semibold tracking-tight text-white"
+      >
+        {t(messages, "brand.name") === "brand.name"
+          ? SITE_NAME
+          : t(messages, "brand.name")}
+      </Link>
 
-            <div className="flex items-center gap-3">
-              <InstallPWAButton />
-              <LocaleSwitcher />
-              <Link
-                href={`/${locale}/login`}
-                className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-              >
-                {t(messages, "nav.login") === "nav.login" ? "Login" : t(messages, "nav.login")}
-              </Link>
-            </div>
-          </div>
-        </header>
+      <Link
+        href={`/${locale}/tools`}
+        className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+      >
+        Tools
+      </Link>
+    </div>
+
+    {/* Right side */}
+    <div className="flex items-center gap-3">
+      <InstallPWAButton />
+      <LocaleSwitcher />
+      <Link
+        href={`/${locale}/login`}
+        className="rounded-xl border border-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+      >
+        {t(messages, "nav.login") === "nav.login"
+          ? "Login"
+          : t(messages, "nav.login")}
+      </Link>
+    </div>
+
+  </div>
+</header>
 
         {/* MAIN */}
         <main className="bg-white">
