@@ -1,7 +1,11 @@
 {
   "brand": { "name": "Slottick" },
 
-  "nav": { "login": "Login" },
+  "nav": { 
+    "login": "Login",
+    "tools": "Tools"
+
+},
 
   "footer": {
     "blog": "Blog",
@@ -748,7 +752,120 @@
     "missingId": "Booking created but missing id.",
     "network": "Network error. Try again."
   }
-}
+},
+"tools": {
+    "meta": {
+      "title": "Free Tools for Beauty & Service Businesses | Slottick",
+      "description": "Free calculators and tools for beauty and service businesses. Improve pricing, profit, deposits, and scheduling with simple tools built for hairstylists, nail techs, barbers, massage therapists and more.",
+      "ogTitle": "Free Tools for Beauty & Service Businesses | Slottick",
+      "ogDescription": "Pricing, profit and booking tools made for beauty and service professionals."
+    },
+    "h1": "Free tools for beauty and service businesses",
+    "intro": "Use these free tools to price services correctly, understand real profit, and make smarter booking decisions. Built for hairstylists, nail techs, barbers, massage therapists, tattoo artists, and more.",
+    "badges": {
+      "mostPopular": "Most popular",
+      "comingSoon": "Coming soon"
+    },
+    "cta": {
+      "open": "Open tool →",
+      "unavailable": "Unavailable"
+    },
+    "cards": {
+      "profit": {
+        "title": "Beauty Service Profit Calculator",
+        "desc": "Calculate profit per appointment, hourly earnings, product costs per client, and monthly profit."
+      },
+      "deposit": {
+        "title": "Deposit & No-Show Cost Calculator",
+        "desc": "Estimate how much no-shows cost you monthly and choose a fair deposit that protects your income."
+      }
+    },
+    "why": {
+      "title": "Why these tools exist",
+      "body": "Many service businesses underprice without realizing the impact of product costs, platform fees, taxes, and fixed expenses. These tools help you see your real numbers so you can charge confidently and grow sustainably."
+    },
+    "who": {
+      "title": "Who these tools are for",
+      "items": [
+        "Hair stylists, braiders, barbers",
+        "Nail techs, lash techs, makeup artists",
+        "Massage therapists, tattoo artists, wellness services",
+        "Any appointment-based service business"
+      ]
+    },
+    "bookingCta": {
+      "title": "Want a booking website too?",
+      "body": "Slottick turns your availability into a shareable booking page so clients can book your real schedule.",
+      "button": "See Slottick"
+    }
+  },
+  "profit": {
+    "seo": {
+      "h2": "How to calculate real profit for your beauty business",
+      "p1": "Many service professionals calculate profit incorrectly by only looking at the service price. Real profit is what remains after deducting product costs, platform fees, taxes, and monthly expenses. To calculate profit per appointment, subtract all variable costs (products used, payment processing fees, and taxes) from your service price. Then divide the result by the number of hours spent to understand your true hourly earnings.",
+      "h3a": "Why product cost per client matters",
+      "p2": "Products like hair oil, nail polish, lash glue, wax, or skincare treatments are rarely used entirely on one client. However, they still reduce your real earnings. If a product costs 20 and lasts for 40 clients, that means each appointment carries a hidden cost. Ignoring this can lead to underpricing your services and shrinking your margins over time.",
+      "h3b": "Why hourly rate is more important than service price",
+      "p3": "Charging 100 for a service sounds profitable, but if it takes three hours, your effective hourly rate may be lower than expected. Successful beauty and wellness professionals focus on profit per hour, not just price per service. Monitoring your hourly earnings helps you adjust pricing, reduce unnecessary costs, and build a sustainable business.",
+      "p4": "Use this calculator regularly to test new pricing strategies, understand how deposits and product usage affect margins, and confidently grow your income."
+    },
+    "ui": {
+      "title": "Profit Calculator",
+      "subtitle": "Real profit per appointment, per hour, and monthly.",
+      "currency": "Currency",
+      "loading": "Loading...",
+      "saving": "Saving...",
+      "loadDefaults": "Load defaults",
+      "saveDefaults": "Save defaults",
+      "reset": "Reset",
+      "msg": {
+        "loaded": "Loaded defaults",
+        "none": "No saved defaults yet",
+        "loadFail": "Failed to load defaults",
+        "saved": "Saved defaults",
+        "saveFail": "Failed to save",
+        "reset": "Reset to saved defaults"
+      },
+      "fields": {
+        "servicePrice": "Service price",
+        "duration": "Duration (minutes)",
+        "platformFee": "Platform fee (%)",
+        "tax": "Tax (%)",
+        "fixedMonthly": "Monthly fixed costs (rent, utilities)",
+        "apptsPerMonth": "Appointments (number of clients) / month",
+        "targetHourly": "Target profit / hour"
+      },
+      "products": {
+        "title": "Products used",
+        "subtitle": "Add each product and how many clients it lasts. We’ll calculate cost per appointment.",
+        "add": "+ Add product",
+        "name": "Name",
+        "price": "Price",
+        "lastsFor": "Lasts for how many clients",
+        "portion": "Portion used now",
+        "costPerAppt": "Cost / appt",
+        "remove": "Remove",
+        "total": "Total product cost per appointment"
+      },
+      "status": {
+        "good": "Good hourly rate",
+        "bad": "Underpricing (below target)",
+        "vs": "/ hour vs target"
+      },
+      "stats": {
+        "profitPerAppt": "Profit per appointment",
+        "profitPerHour": "Profit per hour",
+        "monthlyProfit": "Monthly profit (after fixed costs)",
+        "suggestedPrice": "Suggested price for target hourly"
+      },
+      "breakdown": {
+        "fee": "Fee",
+        "tax": "Tax",
+        "variable": "Variable cost",
+        "netRevenue": "Net revenue"
+      }
+    }
+  }
 
 
 }

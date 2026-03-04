@@ -1,7 +1,10 @@
 {
   "brand": { "name": "Slottick" },
 
-  "nav": { "login": "Connexion" },
+  "nav": { 
+    "login": "Connexion",
+    "tools": "Outils"
+   },
 
   "footer": {
     "blog": "Blog",
@@ -721,7 +724,120 @@
     "missingId": "Réservation créée mais identifiant manquant.",
     "network": "Erreur réseau. Réessayez."
   }
-}
+},
+"tools": {
+    "meta": {
+      "title": "Outils gratuits pour la beauté et les services | Slottick",
+      "description": "Calculatrices et outils gratuits pour les entreprises de beauté et de services. Améliorez vos prix, votre profit, vos acomptes et votre organisation grâce à des outils simples pour coiffeurs, prothésistes ongulaires, barbiers, masseurs et plus.",
+      "ogTitle": "Outils gratuits pour la beauté et les services | Slottick",
+      "ogDescription": "Des outils de tarification, de profit et de réservation conçus pour les professionnels."
+    },
+    "h1": "Outils gratuits pour les entreprises de beauté et de services",
+    "intro": "Utilisez ces outils gratuits pour fixer vos prix correctement, comprendre votre profit réel et prendre de meilleures décisions de réservation. Conçu pour les coiffeurs, prothésistes ongulaires, barbiers, masseurs, tatoueurs et plus.",
+    "badges": {
+      "mostPopular": "Le plus utilisé",
+      "comingSoon": "Bientôt"
+    },
+    "cta": {
+      "open": "Ouvrir l’outil →",
+      "unavailable": "Indisponible"
+    },
+    "cards": {
+      "profit": {
+        "title": "Calculateur de profit pour services beauté",
+        "desc": "Calculez le profit par rendez-vous, le gain horaire, le coût des produits par client et le profit mensuel."
+      },
+      "deposit": {
+        "title": "Calculateur d’acompte et de no-show",
+        "desc": "Estimez le coût mensuel des no-shows et choisissez un acompte juste pour protéger vos revenus."
+      }
+    },
+    "why": {
+      "title": "Pourquoi ces outils existent",
+      "body": "Beaucoup d’entreprises de services sous-facturent sans réaliser l’impact des produits, des frais de plateforme, des taxes et des charges fixes. Ces outils vous donnent vos vrais chiffres pour facturer avec confiance et grandir durablement."
+    },
+    "who": {
+      "title": "À qui s’adressent ces outils",
+      "items": [
+        "Coiffeurs, tresseurs, barbiers",
+        "Prothésistes ongulaires, techniciennes cils, maquilleurs",
+        "Masseurs, tatoueurs, services bien-être",
+        "Toute entreprise de services sur rendez-vous"
+      ]
+    },
+    "bookingCta": {
+      "title": "Vous voulez aussi un site de réservation ?",
+      "body": "Slottick transforme vos disponibilités en page de réservation partageable pour que les clients réservent selon votre vrai planning.",
+      "button": "Découvrir Slottick"
+    }
+  },
+  "profit": {
+    "seo": {
+      "h2": "Comment calculer le profit réel pour votre activité beauté",
+      "p1": "Beaucoup de professionnels calculent le profit uniquement à partir du prix du service. Le profit réel est ce qu’il reste après les coûts des produits, les frais de plateforme, les taxes et les dépenses mensuelles. Pour calculer le profit par rendez-vous, soustrayez tous les coûts variables (produits utilisés, frais de paiement et taxes) du prix du service. Puis divisez le résultat par le nombre d’heures travaillées pour comprendre votre gain horaire réel.",
+      "h3a": "Pourquoi le coût des produits par cliente est important",
+      "p2": "Des produits comme l’huile capillaire, le vernis, la colle pour cils, la cire ou les soins sont rarement utilisés entièrement sur une seule cliente. Pourtant, ils réduisent votre gain réel. Si un produit coûte 20 et dure 40 clientes, chaque rendez-vous comporte un coût caché. L’ignorer peut mener à sous-facturer et à réduire vos marges au fil du temps.",
+      "h3b": "Pourquoi le gain horaire est plus important que le prix du service",
+      "p3": "Facturer 100 peut sembler rentable, mais si le service prend trois heures, votre gain horaire réel peut être plus faible que prévu. Les professionnels qui réussissent se concentrent sur le profit par heure, pas seulement sur le prix par service. Suivre votre gain horaire vous aide à ajuster vos tarifs, réduire les coûts inutiles et construire une activité durable.",
+      "p4": "Utilisez ce calculateur régulièrement pour tester vos tarifs, comprendre l’impact des acomptes et de l’utilisation des produits, et augmenter vos revenus avec confiance."
+    },
+    "ui": {
+      "title": "Calculateur de profit",
+      "subtitle": "Profit réel par rendez-vous, par heure et par mois.",
+      "currency": "Devise",
+      "loading": "Chargement...",
+      "saving": "Enregistrement...",
+      "loadDefaults": "Charger les paramètres",
+      "saveDefaults": "Enregistrer les paramètres",
+      "reset": "Réinitialiser",
+      "msg": {
+        "loaded": "Paramètres chargés",
+        "none": "Aucun paramètre enregistré",
+        "loadFail": "Impossible de charger",
+        "saved": "Paramètres enregistrés",
+        "saveFail": "Impossible d’enregistrer",
+        "reset": "Retour aux paramètres enregistrés"
+      },
+      "fields": {
+        "servicePrice": "Prix du service",
+        "duration": "Durée (minutes)",
+        "platformFee": "Frais de plateforme (%)",
+        "tax": "Taxe (%)",
+        "fixedMonthly": "Coûts fixes mensuels (loyer, charges)",
+        "apptsPerMonth": "Rendez-vous (nombre de clients) / mois",
+        "targetHourly": "Profit cible / heure"
+      },
+      "products": {
+        "title": "Produits utilisés",
+        "subtitle": "Ajoutez chaque produit et le nombre de clients qu’il dure. Nous calculons le coût par rendez-vous.",
+        "add": "+ Ajouter un produit",
+        "name": "Nom",
+        "price": "Prix",
+        "lastsFor": "Dure pour combien de clients",
+        "portion": "Portion utilisée maintenant",
+        "costPerAppt": "Coût / rendez-vous",
+        "remove": "Supprimer",
+        "total": "Coût total des produits par rendez-vous"
+      },
+      "status": {
+        "good": "Bon taux horaire",
+        "bad": "Sous-facturation (sous l’objectif)",
+        "vs": "/ heure vs objectif"
+      },
+      "stats": {
+        "profitPerAppt": "Profit par rendez-vous",
+        "profitPerHour": "Profit par heure",
+        "monthlyProfit": "Profit mensuel (après coûts fixes)",
+        "suggestedPrice": "Prix conseillé pour l’objectif horaire"
+      },
+      "breakdown": {
+        "fee": "Frais",
+        "tax": "Taxe",
+        "variable": "Coût variable",
+        "netRevenue": "Revenu net"
+      }
+    }
+  }
 
 
 }

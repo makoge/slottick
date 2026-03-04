@@ -172,11 +172,11 @@ export default async function LocaleLayout({
       </Link>
 
       <Link
-        href={`/${locale}/tools`}
-        className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
-      >
-        Tools
-      </Link>
+  href={`/${locale}/tools`}
+  className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+>
+  {t(messages, "nav.tools")}
+</Link>
     </div>
 
     {/* Right side */}

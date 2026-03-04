@@ -28,6 +28,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const urls: MetadataRoute.Sitemap = [];
 
+  const TOOL_SLUGS = [
+  "profit-calculator",
+      ] as const;
+
   const useLocales = locales.filter((l) =>
     (INDEX_LOCALES as readonly string[]).includes(l)
   );
@@ -73,6 +77,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     }
   }
+
+  // ✅ Tools: /[locale]/tools + individual tool pages
+for (const locale of useLocales) {
+  // tools index page
+  urls.push({
+    url: `${site}/${locale}/tools`,
+    lastModified: now,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  });
+
+  // individual tools
+  for (const slug of TOOL_SLUGS) {
+    urls.push({
+      url: `${site}/${locale}/tools/${slug}`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.75,
+    });
+  }
+}
 
   // ✅ Static pages
   for (const locale of useLocales) {
