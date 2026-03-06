@@ -288,3 +288,37 @@ export async function notifyOwnerContactMessage(args: {
     replyTo: args.email, // IMPORTANT: reply goes to the sender
   });
 }
+
+export async function sendClientFollowUpEmail(args: {
+  to: string;
+  subject: string;
+  html: string;
+  replyTo?: string; // let businesses set their own inbox later
+  footer?: string; // optional override
+}) {
+  // light safety limits (prevents abuse + giant payloads)
+  const to = String(args.to ?? "").trim();
+  const subject = String(args.subject ?? "").trim();
+  const html = String(args.html ?? "");
+
+  if (!to || !subject || !html) return { ok: false, error: "Missing fields" };
+  if (subject.length > 200) return { ok: false, error: "Subject too long" };
+  if (html.length > 80_000) return { ok: false, error: "Body too long" };
+
+  // Optional: wrap in your email layout if caller sends plain body
+  // (If you already pass fully formatted HTML, you can skip wrap.)
+  const wrapped = wrap(
+    subject,
+    html.startsWith("<") ? html : `<p>${escapeHtml(html).replaceAll("\n", "<br/>")}</p>`,
+    args.footer ?? "Powered by Slottick"
+  );
+
+  const res = await safeSend({
+    to,
+    subject,
+    html: wrapped,
+    replyTo: args.replyTo,
+  });
+
+  return { ok: true, res };
+}

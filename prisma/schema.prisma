@@ -216,15 +216,7 @@ model CustomerSession {
   @@index([customerId])
 }
 
-model rag_chunks {
-  id        BigInt                @id @default(autoincrement())
-  url       String
-  title     String?
-  content   String
-  embedding Unsupported("vector")
 
-  @@index([embedding])
-}
 
 enum BookingStatus {
   CONFIRMED
@@ -269,4 +261,43 @@ model ProfitCalculatorPreset {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+model MarketingWorkspace {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // optional later: userId (if auth), or anonymousKey
+  name String?
+
+  messages ScheduledMessage[]
+}
+
+model ScheduledMessage {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspaceId String
+  workspace   MarketingWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  // delivery
+  channel   String   // "email" (later: "whatsapp", "sms")
+  to        String
+  replyTo   String?
+  subject   String
+  html      String
+
+  // schedule
+  sendAt    DateTime
+  status    String   @default("scheduled") // scheduled | sending | sent | failed | cancelled
+  attempts  Int      @default(0)
+  lastError String?
+
+  // idempotency + provider info
+  dedupeKey String?  @unique
+  providerMessageId String?
+
+  @@index([status, sendAt])
+  @@index([workspaceId, createdAt])
 }

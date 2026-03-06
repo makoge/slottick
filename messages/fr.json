@@ -21,6 +21,10 @@
     "explore": {
       "title": "Explorer des services près de chez vous",
       "description": "Explorez et réservez des entreprises fiables près de chez vous. Recherchez un service et filtrez par ville et secteur."
+    },
+    "clientFollowUpAutomation": {
+      "title": "Outil d’automatisation des relances et rappels clients",
+      "description": "Envoyez automatiquement des emails clients pour anniversaires, rappels de rendez-vous, suivis et relances. Planification simple et modèles pour les services."
     }
   },
 
@@ -750,7 +754,11 @@
       "deposit": {
         "title": "Calculateur d’acompte et de no-show",
         "desc": "Estimez le coût mensuel des no-shows et choisissez un acompte juste pour protéger vos revenus."
-      }
+      },
+      "followUp": {
+      "title": "Outil d’automatisation des relances et rappels clients",
+      "desc": "Envoyez automatiquement anniversaires, rappels de rendez-vous, suivis et relances."
+    }
     },
     "why": {
       "title": "Pourquoi ces outils existent",
@@ -837,7 +845,212 @@
         "netRevenue": "Revenu net"
       }
     }
+  },
+  "clientFollowUpAutomation": {
+    "ui": {
+      "badge": "Outil gratuit",
+      "hero": {
+        "h1": "Automatisez les relances clients pour les faire revenir",
+        "lead": "Programmez anniversaires, rappels de rendez-vous et relances—puis laissez tourner.",
+        "ctaPrimary": "Commencer",
+        "ctaSecondary": "Comment ça marche",
+        "trust": "Sans carte, Fonctionne sans Slottick"
+      },
+      "preview": {
+        "title": "Ce que vous pouvez automatiser",
+        "items": [
+          { "t": "Anniversaires & dates importantes", "d": "Un message chaleureux et personnalisé." },
+          { "t": "Rappels de rendez-vous", "d": "Réduisez les absences avec le bon timing." },
+          { "t": "Relance clients inactifs", "d": "Faites revenir les clients automatiquement." }
+        ]
+      },
+      "why": {
+        "title": "Pourquoi ça marche",
+        "lead": "Beaucoup d’entreprises perdent des revenus récurrents faute de relances.",
+        "items": [
+          { "t": "Humain, pas du spam", "d": "Utilise les infos clients pour rester naturel." },
+          { "t": "Le bon moment", "d": "Les déclencheurs envoient le bon message au bon moment." },
+          { "t": "Plus de réservations", "d": "Les relances transforment les clients en réguliers." }
+        ]
+      },
+      "how": {
+        "title": "Comment ça marche",
+        "steps": [
+          "Ajoutez vos clients (nom, email, anniversaire, dernière visite).",
+          "Choisissez un déclencheur (anniversaire, rappel, X jours depuis la visite).",
+          "Personnalisez un modèle et programmez l’heure d’envoi.",
+          "Les automatisations tournent seules. Suivez ce qui a été envoyé."
+        ]
+      },
+      "faq": {
+        "title": "FAQ",
+        "items": [
+          {
+            "q": "Faut-il Slottick pour l’utiliser ?",
+            "a": "Non. Cet outil fonctionne seul. Slottick est optionnel si vous voulez la réservation en ligne."
+          },
+          {
+            "q": "Puis-je envoyer des SMS ?",
+            "a": "D’abord l’email. SMS/WhatsApp peuvent être ajoutés plus tard (souvent payants)."
+          },
+          {
+            "q": "Compatible RGPD ?",
+            "a": "Utilisez le consentement, un opt-out, et stockez le minimum."
+          }
+        ]
+      },
+      "cta": {
+        "title": "Vous voulez aussi un site de réservation ?",
+        "body": "Slottick transforme votre disponibilité en page de réservation partageable pour que les clients réservent selon votre planning réel.",
+        "button": "Voir Slottick"
+      }
+    },
+    "clients": {
+    "title": "Clients",
+    "subtitle": "Ajoutez quelques clients pour prévisualiser le message. Stocké localement pour l’instant.",
+    "add": "Ajouter un client",
+    "importCsv": "Importer CSV",
+    "emptyTitle": "Aucun client",
+    "emptyBody": "Ajoutez 1–3 clients pour voir vos relances avec de vrais noms."
+  },
+  "saved": {
+    "title": "Automatisations enregistrées",
+    "subtitle": "Enregistré dans ce navigateur (local).",
+    "export": "Copier l’export",
+    "empty": "Aucune automatisation. Créez-en une à droite.",
+    "trigger": "Déclencheur",
+    "audience": "Audience",
+    "created": "Créé"
+  },
+  "builder": {
+    "title": "Créateur d’automatisation",
+    "subtitle": "Choisissez un déclencheur, une audience, puis un modèle avec variables.",
+    "reset": "Réinitialiser",
+    "create": "Créer"
+  },
+  "summary": {
+    "trigger": "Déclencheur",
+    "audience": "Audience",
+    "previewClient": "Client aperçu"
+  },
+  "fields": {
+    "name": "Nom de l’automatisation",
+    "namePh": "ex. Anniversaire (VIP)",
+    "previewClient": "Prévisualiser avec",
+    "noClients": "Ajoutez d’abord un client"
+  },
+  "trigger": {
+    "title": "Déclencheur",
+    "subtitle": "Quand envoyer le message ?",
+    "hoursBefore": "Envoyer avant le rendez-vous",
+    "hours": "heures",
+    "daysSince": "Envoyer si dernière visite il y a",
+    "days": "jours",
+    "sendAt": "Date & heure d’envoi",
+    "sendAtHint": "Utilise l’heure de votre appareil.",
+    "birthdayHint": "Envoi le jour de l’anniversaire (si renseigné)."
+  },
+  "triggers": {
+    "birthday": "Anniversaire",
+    "reminder": "Rappel de rendez-vous",
+    "winback": "Relance",
+    "customDate": "Date personnalisée"
+  },
+  "audience": {
+    "title": "Audience",
+    "subtitle": "Qui reçoit le message ?",
+    "all": "Tous les clients",
+    "segment": "Segment",
+    "segmentPick": "Choisir un segment",
+    "segmentHint": "Segments simples pour l’instant.",
+    "allHint": "Envoi à tous les clients de la liste.",
+    "hasBirthday": "Clients avec anniversaire",
+    "inactive30": "Inactifs (30+ jours)",
+    "inactive60": "Inactifs (60+ jours)"
+  },
+  "template": {
+    "title": "Modèle de message",
+    "subtitle": "Utilisez des variables pour personnaliser.",
+    "subject": "Objet",
+    "subjectPh": "ex. Joyeux anniversaire 🎉",
+    "body": "Message",
+    "bodyPh": "Écrivez votre message…",
+    "hint": "Astuce : court, amical, clair."
+  },
+  "preview": {
+    "title": "Aperçu",
+    "subject": "Objet",
+    "body": "Message",
+    "summary": "Résumé",
+    "reminderHint": "Envoi {n} heures avant le rendez-vous.",
+    "winbackHint": "Envoi après {n} jours sans visite.",
+    "customHint": "Envoi le {date}."
+  },
+  "privacy": {
+    "title": "Note confidentialité",
+    "body": "Ajoutez uniquement des clients ayant donné leur accord. Incluez toujours une option de désinscription."
+  },
+  "vars": {
+    "firstName": "Prénom",
+    "name": "Nom complet",
+    "email": "Email"
+  },
+  "clientFields": {
+    "name": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "birthday": "Anniversaire",
+    "lastVisit": "Dernière visite"
+  },
+  "modal": {
+    "addClientTitle": "Ajouter un client",
+    "addClientSubtitle": "Pour l’aperçu + ciblage.",
+    "addClientCta": "Ajouter",
+    "csvTitle": "Importer CSV",
+    "csvSubtitle": "Collez le texte CSV pour ajouter rapidement des clients.",
+    "csvFormatTitle": "Format CSV",
+    "csvFormatBody": "Colonnes : name,email,phone,birthday,lastVisit (dates en YYYY-MM-DD).",
+    "csvPh": "Collez le CSV ici…",
+    "csvCta": "Importer"
+  },
+  "toast": {
+    "clientMissing": "Entrez le nom et l’email.",
+    "clientEmailBad": "Email invalide.",
+    "clientDuplicate": "Cet email est déjà ajouté.",
+    "clientAdded": "Client ajouté ✓",
+    "autoNameMissing": "Ajoutez un nom d’automatisation.",
+    "templateMissing": "Ajoutez un objet et un message.",
+    "autoCreated": "Automatisation créée ✓",
+    "autoDeleted": "Automatisation supprimée ✓",
+    "templateReset": "Modèle réinitialisé ✓",
+    "exportCopied": "Export copié ✓",
+    "exportFailed": "Échec de l’export.",
+    "csvEmpty": "CSV vide.",
+    "csvImported": "{n} clients importés ✓",
+    "csvNone": "Aucune ligne valide."
+  },
+  "templates": {
+    "birthday": {
+      "name": "Message d’anniversaire",
+      "subject": "Joyeux anniversaire, {firstName} ! 🎉",
+      "body": "Salut {firstName},\n\nJoyeux anniversaire ! 🎉\n\nSi vous voulez vous faire plaisir cette semaine : -10%.\n\nÀ bientôt,\n— {name}"
+    },
+    "reminder": {
+      "name": "Rappel",
+      "subject": "Rappel : votre rendez-vous approche",
+      "body": "Salut {firstName},\n\nPetit rappel pour votre rendez-vous.\n\nSi vous devez déplacer, répondez à cet email.\n\nÀ bientôt,\n— {name}"
+    },
+    "winback": {
+      "name": "Relance",
+      "subject": "On ne vous a pas vu depuis un moment",
+      "body": "Salut {firstName},\n\nPetit message — ça fait un moment.\n\nSi vous voulez reprendre rendez-vous, répondez à ce message.\n\n— {name}"
+    },
+    "custom": {
+      "name": "Message personnalisé",
+      "subject": "Petite info",
+      "body": "Salut {firstName},\n\nPetit message pour vous.\n\n— {name}"
+    }
   }
-
+  }
 
 }

@@ -1,13 +1,4 @@
--- CreateTable
-CREATE TABLE "rag_chunks" (
-    "id" BIGSERIAL NOT NULL,
-    "url" TEXT NOT NULL,
-    "title" TEXT,
-    "content" TEXT NOT NULL,
-    "embedding" vector NOT NULL,
 
-    CONSTRAINT "rag_chunks_pkey" PRIMARY KEY ("id")
-);
 
 -- CreateTable
 CREATE TABLE "ProfitCalculatorPreset" (
@@ -27,8 +18,7 @@ CREATE TABLE "ProfitCalculatorPreset" (
     CONSTRAINT "ProfitCalculatorPreset_pkey" PRIMARY KEY ("businessId")
 );
 
--- CreateIndex
-CREATE INDEX "rag_chunks_embedding_idx" ON "rag_chunks"("embedding");
+
 
 -- AddForeignKey
 ALTER TABLE "ProfitCalculatorPreset" ADD CONSTRAINT "ProfitCalculatorPreset_businessId_fkey" FOREIGN KEY ("businessId") REFERENCES "Business"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -205,7 +205,7 @@ export default async function LocaleLayout({
         <footer className="bg-slate-900">
           <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 md:flex-row md:items-center md:justify-between">
             <p className="text-sm text-slate-300">
-              © {new Date().getFullYear()} {SITE_NAME}
+              ©  {SITE_NAME}
             </p>
 
             <nav className="flex gap-4 text-sm">
