@@ -881,11 +881,12 @@
       "badge": "Free tool",
       "hero": {
         "h1": "Automate client follow-ups that bring people back",
-        "lead": "Schedule birthday wishes, appointment reminders, and win-back messages—then let it run.",
+        "lead": "Schedule birthday wishes, appointment reminders, and win-back messages,then let it run.",
         "ctaPrimary": "Start automating",
         "ctaSecondary": "How it works",
         "trust": "No credit card, Works without Slottick"
       },
+      
       "preview": {
         "title": "What you can automate",
         "items": [
@@ -935,13 +936,15 @@
         "button": "See Slottick"
       },
       "clients": {
-    "title": "Clients",
-    "subtitle": "Add a few clients to preview your message. Works locally for now.",
-    "add": "Add client",
-    "importCsv": "Import CSV",
-    "emptyTitle": "No clients yet",
-    "emptyBody": "Add 1–3 clients to preview your follow-ups with real names."
-  },
+         "title": "Clients",
+        "subtitle": "Add a few clients to preview your message. Works         locally       for now.",
+         "add": "Add client",
+        "importCsv": "Import CSV",
+        "emptyTitle": "No clients yet",
+        "emptyBody": "Add 1–3 clients to preview your follow-ups with real names.",
+        "birthday": "Birthday",
+        "lastVisit": "Last visit"
+      },
   "saved": {
     "title": "Saved automations",
     "subtitle": "Your automations are saved in this browser (local).",
@@ -1007,7 +1010,7 @@
     "hint": "Tip: keep it short, friendly, and clear."
   },
   "preview": {
-    "title": "Preview",
+        "title": "Preview",
     "subject": "Subject",
     "body": "Message",
     "summary": "Summary",

@@ -8,8 +8,8 @@ type Client = {
   name: string;
   email: string;
   phone?: string;
-  birthday?: string; // YYYY-MM-DD
-  lastVisit?: string; // YYYY-MM-DD
+  birthday?: string;
+  lastVisit?: string;
 };
 
 type TriggerType = "birthday" | "appointmentReminder" | "winback" | "customDate";
@@ -19,12 +19,9 @@ type Automation = {
   name: string;
   trigger: {
     type: TriggerType;
-    // appointmentReminder
     hoursBefore?: number;
-    // winback
     daysSinceLastVisit?: number;
-    // customDate
-    sendAt?: string; // ISO
+    sendAt?: string;
   };
   template: {
     subject: string;
@@ -55,10 +52,13 @@ function isoNowPlusMinutes(minutes: number) {
 
 function formatDate(isoOrYmd?: string) {
   if (!isoOrYmd) return "—";
-  // supports "YYYY-MM-DD" or ISO
   const d = new Date(isoOrYmd.length === 10 ? `${isoOrYmd}T00:00:00` : isoOrYmd);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "2-digit" });
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
 }
 
 function renderTemplate(body: string, c?: Client) {
@@ -83,12 +83,10 @@ export default function ClientFollowUpAutomation({
   locale: string;
   messages: any;
 }) {
-  // --- Clients
   const [clients, setClients] = useState<Client[]>([]);
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [csvOpen, setCsvOpen] = useState(false);
 
-  // --- Builder state
   const [autoName, setAutoName] = useState<string>("");
   const [triggerType, setTriggerType] = useState<TriggerType>("birthday");
   const [hoursBefore, setHoursBefore] = useState<number>(24);
@@ -103,11 +101,8 @@ export default function ClientFollowUpAutomation({
 
   const [selectedClientId, setSelectedClientId] = useState<string>("");
 
-  // --- Autos
-  const [autos, setAutos] = useState<Automation[]>([]);
-
-  // --- Toast
   const [toast, setToast] = useState<{ kind: "ok" | "bad"; msg: string } | null>(null);
+
   const toastShow = (kind: "ok" | "bad", msg: string) => {
     setToast({ kind, msg });
     window.setTimeout(() => setToast(null), 2800);
@@ -118,10 +113,6 @@ export default function ClientFollowUpAutomation({
       const c = JSON.parse(localStorage.getItem(LS_CLIENTS) ?? "[]");
       if (Array.isArray(c)) setClients(c);
     } catch {}
-    try {
-      const a = JSON.parse(localStorage.getItem(LS_AUTOS) ?? "[]");
-      if (Array.isArray(a)) setAutos(a);
-    } catch {}
   }, []);
 
   useEffect(() => {
@@ -131,14 +122,6 @@ export default function ClientFollowUpAutomation({
   }, [clients]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(LS_AUTOS, JSON.stringify(autos));
-    } catch {}
-  }, [autos]);
-
-  // Defaults for template per trigger (nice UX)
-  useEffect(() => {
-    // Only auto-fill when empty (don’t overwrite user edits)
     if (subject.trim() || body.trim()) return;
 
     if (triggerType === "birthday") {
@@ -166,37 +149,22 @@ export default function ClientFollowUpAutomation({
     [clients, selectedClientId]
   );
 
-  const variableChips = useMemo(
-    () => [
-      { k: "{firstName}", label: t(messages, "clientFollowUpAutomation.ui.vars.firstName") },
-      { k: "{name}", label: t(messages, "clientFollowUpAutomation.ui.vars.name") },
-      { k: "{email}", label: t(messages, "clientFollowUpAutomation.ui.vars.email") },
-    ],
-    [messages]
-  );
-
-  const audienceLabel = useMemo(() => {
-    if (audienceMode === "all") return t(messages, "clientFollowUpAutomation.ui.audience.all");
-    if (segment === "hasBirthday") return t(messages, "clientFollowUpAutomation.ui.audience.hasBirthday");
-    if (segment === "inactive60") return t(messages, "clientFollowUpAutomation.ui.audience.inactive60");
-    return t(messages, "clientFollowUpAutomation.ui.audience.inactive30");
-  }, [audienceMode, segment, messages]);
-
-  const triggerLabel = useMemo(() => {
-    if (triggerType === "birthday") return t(messages, "clientFollowUpAutomation.ui.triggers.birthday");
-    if (triggerType === "appointmentReminder") return t(messages, "clientFollowUpAutomation.ui.triggers.reminder");
-    if (triggerType === "winback") return t(messages, "clientFollowUpAutomation.ui.triggers.winback");
-    return t(messages, "clientFollowUpAutomation.ui.triggers.customDate");
-  }, [triggerType, messages]);
-
   function addClient(c: Omit<Client, "id">) {
     const name = c.name.trim();
     const email = c.email.trim();
-    if (!name || !email) return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.clientMissing"));
-    if (!isEmail(email)) return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.clientEmailBad"));
+
+    if (!name || !email) {
+      return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.clientMissing"));
+    }
+
+    if (!isEmail(email)) {
+      return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.clientEmailBad"));
+    }
+
     if (clients.some((x) => x.email.toLowerCase() === email.toLowerCase())) {
       return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.clientDuplicate"));
     }
+
     const next: Client = { id: uid(), ...c, name, email };
     setClients((p) => [next, ...p]);
     setSelectedClientId(next.id);
@@ -208,16 +176,16 @@ export default function ClientFollowUpAutomation({
     if (selectedClientId === id) setSelectedClientId("");
   }
 
-  function insertVar(v: string) {
-    setBody((p) => (p ? `${p}${p.endsWith(" ") ? "" : " "}${v}` : v));
-  }
-
   function createAutomation() {
     const name = autoName.trim();
-    if (!name) return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.autoNameMissing"));
+    if (!name) {
+      return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.autoNameMissing"));
+    }
     if (!subject.trim() || !body.trim()) {
       return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.templateMissing"));
     }
+
+    const existing = JSON.parse(localStorage.getItem(LS_AUTOS) ?? "[]") as Automation[];
 
     const a: Automation = {
       id: uid(),
@@ -235,13 +203,8 @@ export default function ClientFollowUpAutomation({
       createdAt: new Date().toISOString(),
     };
 
-    setAutos((p) => [a, ...p]);
+    localStorage.setItem(LS_AUTOS, JSON.stringify([a, ...existing]));
     toastShow("ok", t(messages, "clientFollowUpAutomation.ui.toast.autoCreated"));
-  }
-
-  function deleteAutomation(id: string) {
-    setAutos((p) => p.filter((x) => x.id !== id));
-    toastShow("ok", t(messages, "clientFollowUpAutomation.ui.toast.autoDeleted"));
   }
 
   function resetTemplate() {
@@ -251,68 +214,64 @@ export default function ClientFollowUpAutomation({
     toastShow("ok", t(messages, "clientFollowUpAutomation.ui.toast.templateReset"));
   }
 
-  function exportAutos() {
-    try {
-      const payload = JSON.stringify({ clients, automations: autos }, null, 2);
-      navigator.clipboard.writeText(payload);
-      toastShow("ok", t(messages, "clientFollowUpAutomation.ui.toast.exportCopied"));
-    } catch {
-      toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.exportFailed"));
-    }
-  }
-
   function importCsv(text: string) {
-    // CSV columns supported:
-    // name,email,birthday,lastVisit
     const lines = text
       .split(/\r?\n/)
       .map((x) => x.trim())
       .filter(Boolean);
 
-    if (!lines.length) return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.csvEmpty"));
+    if (!lines.length) {
+      return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.csvEmpty"));
+    }
 
     const header = lines[0].toLowerCase();
     const start = header.includes("email") ? 1 : 0;
 
-    let added = 0;
+    const toAdd: Client[] = [];
 
     for (let i = start; i < lines.length; i++) {
       const parts = lines[i].split(",").map((x) => x.trim());
       const [name, email, phone, birthday, lastVisit] = parts;
+
       if (!name || !email || !isEmail(email)) continue;
-
       if (clients.some((x) => x.email.toLowerCase() === email.toLowerCase())) continue;
+      if (toAdd.some((x) => x.email.toLowerCase() === email.toLowerCase())) continue;
 
-      setClients((p) => [
-        { id: uid(), name, email, phone: phone || undefined, birthday: birthday || undefined, lastVisit: lastVisit || undefined },
-        ...p,
-      ]);
-      added++;
+      toAdd.push({
+        id: uid(),
+        name,
+        email,
+        phone: phone || undefined,
+        birthday: birthday || undefined,
+        lastVisit: lastVisit || undefined,
+      });
     }
 
-    if (added) toastShow("ok", t(messages, "clientFollowUpAutomation.ui.toast.csvImported").replace("{n}", String(added)));
-    else toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.csvNone"));
+    if (!toAdd.length) {
+      return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.csvNone"));
+    }
+
+    setClients((p) => [...toAdd, ...p]);
+    setSelectedClientId((prev) => prev || toAdd[0].id);
+    toastShow(
+      "ok",
+      t(messages, "clientFollowUpAutomation.ui.toast.csvImported").replace("{n}", String(toAdd.length))
+    );
   }
 
   const previewSubject = useMemo(() => renderTemplate(subject, selectedClient), [subject, selectedClient]);
   const previewBody = useMemo(() => renderTemplate(body, selectedClient), [body, selectedClient]);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-12">
-      {/* Left: Clients + Saved */}
-      <aside className="lg:col-span-4">
+    <div className="grid min-w-0 gap-6 lg:grid-cols-12">
+      <aside className="min-w-0 lg:col-span-4">
         <div className="rounded-[28px] bg-white p-5 ring-1 ring-slate-100">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-base font-semibold text-slate-900">
-                {t(messages, "clientFollowUpAutomation.ui.clients.title")}
-              </h3>
-              <p className="mt-1 text-sm text-slate-600">
-                {t(messages, "clientFollowUpAutomation.ui.clients.subtitle")}
-              </p>
-            </div>
+            <h3 className="text-base font-semibold text-slate-900">
+              {t(messages, "clientFollowUpAutomation.ui.clients.title")}
+            </h3>
 
-            <div className="flex gap-2">
+            <div className="flex shrink-0 gap-2">
               <button
                 type="button"
                 onClick={() => setCsvOpen(true)}
@@ -330,6 +289,10 @@ export default function ClientFollowUpAutomation({
             </div>
           </div>
 
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+            {t(messages, "clientFollowUpAutomation.ui.clients.subtitle")}
+          </p>
+
           <div className="mt-4">
             {clients.length === 0 ? (
               <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-slate-100">
@@ -339,7 +302,7 @@ export default function ClientFollowUpAutomation({
                 <p className="mt-1">{t(messages, "clientFollowUpAutomation.ui.clients.emptyBody")}</p>
               </div>
             ) : (
-              <div className="max-h-[360px] space-y-2 overflow-auto pr-1">
+              <div className="space-y-3">
                 {clients.map((c) => {
                   const active = (selectedClientId || clients[0]?.id) === c.id;
                   return (
@@ -348,23 +311,39 @@ export default function ClientFollowUpAutomation({
                       type="button"
                       onClick={() => setSelectedClientId(c.id)}
                       className={[
-                        "w-full rounded-2xl p-3 text-left ring-1 transition",
+                        "w-full min-w-0 rounded-2xl p-4 text-left ring-1 transition",
                         active
                           ? "bg-slate-900 text-white ring-slate-900"
                           : "bg-white text-slate-900 ring-slate-100 hover:bg-slate-50",
                       ].join(" ")}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold">{c.name}</p>
-                          <p className={["mt-0.5 text-xs", active ? "text-white/80" : "text-slate-600"].join(" ")}>
+                          <p
+                            className={[
+                              "mt-1 break-all text-xs",
+                              active ? "text-white/80" : "text-slate-600",
+                            ].join(" ")}
+                          >
                             {c.email}
                           </p>
-                          <div className={["mt-2 flex flex-wrap gap-2 text-[11px]", active ? "text-white/80" : "text-slate-600"].join(" ")}>
-                            <span className={["rounded-xl px-2 py-1", active ? "bg-white/10" : "bg-slate-100"].join(" ")}>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <span
+                              className={[
+                                "rounded-xl px-3 py-1 text-xs font-semibold",
+                                active ? "bg-white/10 text-white/85" : "bg-slate-100 text-slate-700",
+                              ].join(" ")}
+                            >
                               {t(messages, "clientFollowUpAutomation.ui.clients.birthday")}: {formatDate(c.birthday)}
                             </span>
-                            <span className={["rounded-xl px-2 py-1", active ? "bg-white/10" : "bg-slate-100"].join(" ")}>
+                            <span
+                              className={[
+                                "rounded-xl px-3 py-1 text-xs font-semibold",
+                                active ? "bg-white/10 text-white/85" : "bg-slate-100 text-slate-700",
+                              ].join(" ")}
+                            >
                               {t(messages, "clientFollowUpAutomation.ui.clients.lastVisit")}: {formatDate(c.lastVisit)}
                             </span>
                           </div>
@@ -375,7 +354,10 @@ export default function ClientFollowUpAutomation({
                             e.stopPropagation();
                             removeClient(c.id);
                           }}
-                          className={["cursor-pointer rounded-xl px-2 py-1 text-xs font-semibold", active ? "bg-white/10" : "bg-slate-100 hover:bg-slate-200"].join(" ")}
+                          className={[
+                            "inline-flex w-fit shrink-0 cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold",
+                            active ? "bg-white/10 text-white" : "bg-slate-100 text-slate-900 hover:bg-slate-200",
+                          ].join(" ")}
                           title={t(messages, "common.remove")}
                           role="button"
                         >
@@ -389,135 +371,19 @@ export default function ClientFollowUpAutomation({
             )}
           </div>
         </div>
-
-        <div className="mt-6 rounded-[28px] bg-white p-5 ring-1 ring-slate-100">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="text-base font-semibold text-slate-900">
-                {t(messages, "clientFollowUpAutomation.ui.saved.title")}
-              </h3>
-              <p className="mt-1 text-sm text-slate-600">
-                {t(messages, "clientFollowUpAutomation.ui.saved.subtitle")}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={exportAutos}
-              className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-            >
-              {t(messages, "clientFollowUpAutomation.ui.saved.export")}
-            </button>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            {autos.length === 0 ? (
-              <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-slate-100">
-                {t(messages, "clientFollowUpAutomation.ui.saved.empty")}
-              </div>
-            ) : (
-              autos.slice(0, 5).map((a) => (
-                <div key={a.id} className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{a.name}</p>
-                      <p className="mt-1 text-xs text-slate-600">
-                        {t(messages, "clientFollowUpAutomation.ui.saved.trigger")}:{" "}
-                        <span className="font-semibold text-slate-900">
-                          {a.trigger.type === "birthday"
-                            ? t(messages, "clientFollowUpAutomation.ui.triggers.birthday")
-                            : a.trigger.type === "appointmentReminder"
-                            ? t(messages, "clientFollowUpAutomation.ui.triggers.reminder")
-                            : a.trigger.type === "winback"
-                            ? t(messages, "clientFollowUpAutomation.ui.triggers.winback")
-                            : t(messages, "clientFollowUpAutomation.ui.triggers.customDate")}
-                        </span>{" "}
-                        • {t(messages, "clientFollowUpAutomation.ui.saved.audience")}:{" "}
-                        <span className="font-semibold text-slate-900">
-                          {a.audience.mode === "all"
-                            ? t(messages, "clientFollowUpAutomation.ui.audience.all")
-                            : a.audience.segment === "inactive60"
-                            ? t(messages, "clientFollowUpAutomation.ui.audience.inactive60")
-                            : a.audience.segment === "inactive30"
-                            ? t(messages, "clientFollowUpAutomation.ui.audience.inactive30")
-                            : t(messages, "clientFollowUpAutomation.ui.audience.hasBirthday")}
-                        </span>
-                      </p>
-                      <p className="mt-2 text-xs text-slate-500">
-                        {t(messages, "clientFollowUpAutomation.ui.saved.created")}: {formatDate(a.createdAt)}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => deleteAutomation(a.id)}
-                      className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-                    >
-                      {t(messages, "common.remove")}
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
       </aside>
 
-      {/* Right: Builder */}
-      <section className="lg:col-span-8">
-        <div className="rounded-[28px] bg-white p-6 ring-1 ring-slate-100">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">
-                {t(messages, "clientFollowUpAutomation.ui.builder.title")}
-              </h3>
-              <p className="mt-1 text-sm text-slate-600">
-                {t(messages, "clientFollowUpAutomation.ui.builder.subtitle")}
-              </p>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={resetTemplate}
-                className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-              >
-                {t(messages, "clientFollowUpAutomation.ui.builder.reset")}
-              </button>
-              <button
-                type="button"
-                onClick={createAutomation}
-                className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
-              >
-                {t(messages, "clientFollowUpAutomation.ui.builder.create")}
-              </button>
-            </div>
+      <section className="min-w-0 lg:col-span-8">
+        <div>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {t(messages, "clientFollowUpAutomation.ui.builder.title")}
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              {t(messages, "clientFollowUpAutomation.ui.builder.subtitle")}
+            </p>
           </div>
 
-          {/* Summary bar */}
-          <div className="mt-5 grid gap-3 rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-100 sm:grid-cols-3">
-            <div>
-              <p className="text-xs font-semibold text-slate-600">
-                {t(messages, "clientFollowUpAutomation.ui.summary.trigger")}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">{triggerLabel}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-600">
-                {t(messages, "clientFollowUpAutomation.ui.summary.audience")}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">{audienceLabel}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-600">
-                {t(messages, "clientFollowUpAutomation.ui.summary.previewClient")}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">
-                {selectedClient ? selectedClient.name : t(messages, "common.unknown")}
-              </p>
-            </div>
-          </div>
-
-          {/* Name */}
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div>
               <label className="text-sm font-semibold text-slate-900">
@@ -527,7 +393,7 @@ export default function ClientFollowUpAutomation({
                 value={autoName}
                 onChange={(e) => setAutoName(e.target.value)}
                 placeholder={t(messages, "clientFollowUpAutomation.ui.fields.namePh")}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-slate-400"
               />
             </div>
 
@@ -538,7 +404,7 @@ export default function ClientFollowUpAutomation({
               <select
                 value={selectedClientId || clients[0]?.id || ""}
                 onChange={(e) => setSelectedClientId(e.target.value)}
-                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-slate-400"
               >
                 {clients.length === 0 ? (
                   <option value="">{t(messages, "clientFollowUpAutomation.ui.fields.noClients")}</option>
@@ -553,7 +419,6 @@ export default function ClientFollowUpAutomation({
             </div>
           </div>
 
-          {/* Trigger + Audience */}
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="rounded-3xl bg-white ring-1 ring-slate-100">
               <div className="border-b border-slate-100 p-4">
@@ -582,10 +447,7 @@ export default function ClientFollowUpAutomation({
                       <button
                         key={k}
                         type="button"
-                        onClick={() => {
-                          setTriggerType(k);
-                          // keep values, just switch type
-                        }}
+                        onClick={() => setTriggerType(k)}
                         className={[
                           "rounded-2xl px-4 py-3 text-left text-sm font-semibold ring-1 transition",
                           active
@@ -612,7 +474,7 @@ export default function ClientFollowUpAutomation({
                           max={168}
                           value={hoursBefore}
                           onChange={(e) => setHoursBefore(clampInt(e.target.value, 1, 168, 24))}
-                          className="w-28 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                          className="w-28 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-slate-400"
                         />
                         <span className="text-sm text-slate-600">
                           {t(messages, "clientFollowUpAutomation.ui.trigger.hours")}
@@ -633,7 +495,7 @@ export default function ClientFollowUpAutomation({
                           max={365}
                           value={daysSinceLast}
                           onChange={(e) => setDaysSinceLast(clampInt(e.target.value, 7, 365, 30))}
-                          className="w-28 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                          className="w-28 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-slate-400"
                         />
                         <span className="text-sm text-slate-600">
                           {t(messages, "clientFollowUpAutomation.ui.trigger.days")}
@@ -651,7 +513,7 @@ export default function ClientFollowUpAutomation({
                         type="datetime-local"
                         value={customSendAt}
                         onChange={(e) => setCustomSendAt(e.target.value)}
-                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                        className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-slate-400"
                       />
                       <p className="mt-2 text-xs text-slate-500">
                         {t(messages, "clientFollowUpAutomation.ui.trigger.sendAtHint")}
@@ -692,6 +554,7 @@ export default function ClientFollowUpAutomation({
                   >
                     {t(messages, "clientFollowUpAutomation.ui.audience.all")}
                   </button>
+
                   <button
                     type="button"
                     onClick={() => setAudienceMode("segment")}
@@ -714,7 +577,7 @@ export default function ClientFollowUpAutomation({
                     <select
                       value={segment}
                       onChange={(e) => setSegment(e.target.value as any)}
-                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-slate-400"
                     >
                       <option value="hasBirthday">
                         {t(messages, "clientFollowUpAutomation.ui.audience.hasBirthday")}
@@ -739,34 +602,17 @@ export default function ClientFollowUpAutomation({
             </div>
           </div>
 
-          {/* Template */}
           <div className="mt-6 rounded-3xl bg-white ring-1 ring-slate-100">
-            <div className="flex flex-col justify-between gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {t(messages, "clientFollowUpAutomation.ui.template.title")}
-                </p>
-                <p className="mt-1 text-sm text-slate-600">
-                  {t(messages, "clientFollowUpAutomation.ui.template.subtitle")}
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {variableChips.map((x) => (
-                  <button
-                    key={x.k}
-                    type="button"
-                    onClick={() => insertVar(x.k)}
-                    className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-200"
-                    title={x.label}
-                  >
-                    {x.k}
-                  </button>
-                ))}
-              </div>
+            <div className="border-b border-slate-100 p-4">
+              <p className="text-sm font-semibold text-slate-900">
+                {t(messages, "clientFollowUpAutomation.ui.template.title")}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                {t(messages, "clientFollowUpAutomation.ui.template.subtitle")}
+              </p>
             </div>
 
-            <div className="grid gap-4 p-4 md:grid-cols-2">
+            <div className="grid gap-6 p-4 lg:grid-cols-2">
               <div>
                 <label className="text-sm font-semibold text-slate-900">
                   {t(messages, "clientFollowUpAutomation.ui.template.subject")}
@@ -775,7 +621,7 @@ export default function ClientFollowUpAutomation({
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder={t(messages, "clientFollowUpAutomation.ui.template.subjectPh")}
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-slate-400"
                 />
 
                 <label className="mt-4 block text-sm font-semibold text-slate-900">
@@ -784,9 +630,9 @@ export default function ClientFollowUpAutomation({
                 <textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  rows={10}
+                  rows={14}
                   placeholder={t(messages, "clientFollowUpAutomation.ui.template.bodyPh")}
-                  className="mt-2 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+                  className="mt-2 min-h-[320px] w-full resize-y rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-slate-400"
                 />
 
                 <p className="mt-2 text-xs text-slate-500">
@@ -794,15 +640,16 @@ export default function ClientFollowUpAutomation({
                 </p>
               </div>
 
-              {/* Preview */}
-              <div className="rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-100">
-                <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-100">
+                <div>
                   <p className="text-sm font-semibold text-slate-900">
                     {t(messages, "clientFollowUpAutomation.ui.preview.title")}
                   </p>
-                  <span className="rounded-2xl bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-                    {selectedClient ? selectedClient.email : t(messages, "common.unknown")}
-                  </span>
+                  <div className="mt-2">
+                    <span className="inline-flex max-w-full break-all rounded-2xl bg-white px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                      {selectedClient ? selectedClient.email : t(messages, "common.unknown")}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="mt-4 rounded-3xl bg-white p-4 ring-1 ring-slate-100">
@@ -816,7 +663,7 @@ export default function ClientFollowUpAutomation({
                   <p className="mt-4 text-xs font-semibold text-slate-600">
                     {t(messages, "clientFollowUpAutomation.ui.preview.body")}
                   </p>
-                  <div className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                  <div className="mt-1 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700">
                     {previewBody || "—"}
                   </div>
                 </div>
@@ -825,23 +672,33 @@ export default function ClientFollowUpAutomation({
                   <p className="text-xs font-semibold text-slate-600">
                     {t(messages, "clientFollowUpAutomation.ui.preview.summary")}
                   </p>
-                  <p className="mt-1 text-sm text-slate-700">
-                    <span className="font-semibold text-slate-900">{triggerLabel}</span>{" "}
-                    • <span className="font-semibold text-slate-900">{audienceLabel}</span>
-                  </p>
+
+                  {triggerType === "birthday" ? (
+                    <p className="mt-1 text-sm text-slate-700">
+                      {t(messages, "clientFollowUpAutomation.ui.triggers.birthday")}
+                    </p>
+                  ) : null}
 
                   {triggerType === "appointmentReminder" ? (
-                    <p className="mt-2 text-xs text-slate-500">
-                      {t(messages, "clientFollowUpAutomation.ui.preview.reminderHint").replace("{n}", String(hoursBefore))}
+                    <p className="mt-1 text-sm text-slate-700">
+                      {t(messages, "clientFollowUpAutomation.ui.preview.reminderHint").replace(
+                        "{n}",
+                        String(hoursBefore)
+                      )}
                     </p>
                   ) : null}
+
                   {triggerType === "winback" ? (
-                    <p className="mt-2 text-xs text-slate-500">
-                      {t(messages, "clientFollowUpAutomation.ui.preview.winbackHint").replace("{n}", String(daysSinceLast))}
+                    <p className="mt-1 text-sm text-slate-700">
+                      {t(messages, "clientFollowUpAutomation.ui.preview.winbackHint").replace(
+                        "{n}",
+                        String(daysSinceLast)
+                      )}
                     </p>
                   ) : null}
+
                   {triggerType === "customDate" ? (
-                    <p className="mt-2 text-xs text-slate-500">
+                    <p className="mt-1 text-sm text-slate-700">
                       {t(messages, "clientFollowUpAutomation.ui.preview.customHint").replace(
                         "{date}",
                         formatDate(new Date(customSendAt).toISOString())
@@ -853,7 +710,24 @@ export default function ClientFollowUpAutomation({
             </div>
           </div>
 
-          {/* Privacy note */}
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={resetTemplate}
+              className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+            >
+              {t(messages, "clientFollowUpAutomation.ui.builder.reset")}
+            </button>
+
+            <button
+              type="button"
+              onClick={createAutomation}
+              className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+            >
+              {t(messages, "clientFollowUpAutomation.ui.builder.create")}
+            </button>
+          </div>
+
           <div className="mt-6 rounded-3xl bg-slate-50 p-4 ring-1 ring-slate-100">
             <p className="text-sm font-semibold text-slate-900">
               {t(messages, "clientFollowUpAutomation.ui.privacy.title")}
@@ -865,7 +739,6 @@ export default function ClientFollowUpAutomation({
         </div>
       </section>
 
-      {/* Toast */}
       {toast ? (
         <div className="fixed bottom-5 left-1/2 z-50 w-[92%] max-w-md -translate-x-1/2">
           <div
@@ -881,12 +754,12 @@ export default function ClientFollowUpAutomation({
         </div>
       ) : null}
 
-      {/* Add client modal */}
       {clientModalOpen ? (
         <Modal
           title={t(messages, "clientFollowUpAutomation.ui.modal.addClientTitle")}
           subtitle={t(messages, "clientFollowUpAutomation.ui.modal.addClientSubtitle")}
           onClose={() => setClientModalOpen(false)}
+          messages={messages}
         >
           <AddClientForm
             messages={messages}
@@ -899,12 +772,12 @@ export default function ClientFollowUpAutomation({
         </Modal>
       ) : null}
 
-      {/* CSV modal */}
       {csvOpen ? (
         <Modal
           title={t(messages, "clientFollowUpAutomation.ui.modal.csvTitle")}
           subtitle={t(messages, "clientFollowUpAutomation.ui.modal.csvSubtitle")}
           onClose={() => setCsvOpen(false)}
+          messages={messages}
         >
           <CsvImportForm
             messages={messages}
@@ -920,37 +793,40 @@ export default function ClientFollowUpAutomation({
   );
 }
 
-/* ---------------- UI helpers ---------------- */
-
 function Modal({
   title,
   subtitle,
   children,
   onClose,
+  messages,
 }: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
   onClose: () => void;
+  messages: any;
 }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-40 p-3 sm:p-4">
       <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl ring-1 ring-slate-200">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-base font-semibold text-slate-900">{title}</p>
-            {subtitle ? <p className="mt-1 text-sm text-slate-600">{subtitle}</p> : null}
+      <div className="relative mx-auto flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl ring-1 ring-slate-200">
+        <div className="border-b border-slate-100 p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-base font-semibold text-slate-900">{title}</p>
+              {subtitle ? <p className="mt-1 text-sm text-slate-600">{subtitle}</p> : null}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-200"
+            >
+              {t(messages, "common.cancel")}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-200"
-          >
-            Close
-          </button>
         </div>
-        <div className="mt-5">{children}</div>
+
+        <div className="overflow-y-auto p-5">{children}</div>
       </div>
     </div>
   );
@@ -1035,7 +911,7 @@ function AddClientForm({
         />
       </div>
 
-      <div className="mt-2 flex gap-2">
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
           onClick={onCancel}
@@ -1080,22 +956,24 @@ function CsvImportForm({
         <p className="font-semibold text-slate-900">
           {t(messages, "clientFollowUpAutomation.ui.modal.csvFormatTitle")}
         </p>
-        <p className="mt-1">{t(messages, "clientFollowUpAutomation.ui.modal.csvFormatBody")}</p>
-        <pre className="mt-3 overflow-auto rounded-2xl bg-white p-3 text-xs text-slate-700 ring-1 ring-slate-100">
-name,email,phone,birthday,lastVisit
-Maria K,maria@email.com,+372...,1994-03-12,2026-02-10
+        <p className="mt-1 break-words">
+          {t(messages, "clientFollowUpAutomation.ui.modal.csvFormatBody")}
+        </p>
+        <pre className="mt-3 overflow-x-auto rounded-2xl bg-white p-3 text-xs text-slate-700 ring-1 ring-slate-100">
+name,email,birthday,lastVisit
+Maria K,maria@email.com,1994-03-12,2026-02-10
         </pre>
       </div>
 
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        rows={8}
+        rows={10}
         placeholder={t(messages, "clientFollowUpAutomation.ui.modal.csvPh")}
-        className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+        className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-slate-400"
       />
 
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
           onClick={onCancel}

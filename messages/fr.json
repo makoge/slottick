@@ -851,7 +851,7 @@
       "badge": "Outil gratuit",
       "hero": {
         "h1": "Automatisez les relances clients pour les faire revenir",
-        "lead": "Programmez anniversaires, rappels de rendez-vous et relances—puis laissez tourner.",
+        "lead": "Programmez anniversaires, rappels de rendez-vous et relances, puis laissez tourner.",
         "ctaPrimary": "Commencer",
         "ctaSecondary": "Comment ça marche",
         "trust": "Sans carte, Fonctionne sans Slottick"
@@ -911,7 +911,9 @@
     "add": "Ajouter un client",
     "importCsv": "Importer CSV",
     "emptyTitle": "Aucun client",
-    "emptyBody": "Ajoutez 1–3 clients pour voir vos relances avec de vrais noms."
+    "emptyBody": "Ajoutez 1–3 clients pour voir vos relances avec de vrais noms.",
+    "birthday": "Anniversaire",
+    "lastVisit": "Dernière visite"
   },
   "saved": {
     "title": "Automatisations enregistrées",

@@ -47,22 +47,14 @@ export default async function ToolsPage({ params }: PageProps) {
           title={t(messages, "tools.cards.followUp.title")}
           desc={t(messages, "tools.cards.followUp.desc")}
           href={`/${locale}/tools/client-follow-up-automation`}
-          badge={t(messages, "tools.badges.comingSoon")} // or tools.badges.mostPopular later
+          badge={t(messages, "tools.badges.mostPopular")} 
           ctaLabel={t(messages, "tools.cta.open")}
           disabledLabel={t(messages, "tools.cta.unavailable")}
              // if your ToolCard supports it:
              // disabled={false}
              // comingSoon={true}
              />
-        <ToolCard
-          title={t(messages, "tools.cards.deposit.title")}
-          desc={t(messages, "tools.cards.deposit.desc")}
-          href={`/${locale}/tools/deposit-optimizer`}
-          badge={t(messages, "tools.badges.comingSoon")}
-          disabled
-          disabledLabel={t(messages, "tools.cta.unavailable")}
-          ctaLabel={t(messages, "tools.cta.open")}
-        />
+        
       </section>
 
       <section className="mt-12 max-w-3xl">
