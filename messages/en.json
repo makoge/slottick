@@ -937,7 +937,7 @@
       },
       "clients": {
          "title": "Clients",
-        "subtitle": "Add a few clients to preview your message. Works         locally       for now.",
+        "subtitle": "Add a few clients to preview your message. Works         locally       for non slottick users.",
          "add": "Add client",
         "importCsv": "Import CSV",
         "emptyTitle": "No clients yet",
@@ -952,7 +952,8 @@
     "empty": "No automations yet. Create one on the right.",
     "trigger": "Trigger",
     "audience": "Audience",
-    "created": "Created"
+    "created": "Created",
+    "saveFail": "Could not save automation"
   },
   "builder": {
     "title": "Automation builder",

@@ -176,36 +176,56 @@ export default function ClientFollowUpAutomation({
     if (selectedClientId === id) setSelectedClientId("");
   }
 
-  function createAutomation() {
-    const name = autoName.trim();
-    if (!name) {
-      return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.autoNameMissing"));
-    }
-    if (!subject.trim() || !body.trim()) {
-      return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.templateMissing"));
-    }
+  async function createAutomation() {
+  const name = autoName.trim();
 
-    const existing = JSON.parse(localStorage.getItem(LS_AUTOS) ?? "[]") as Automation[];
-
-    const a: Automation = {
-      id: uid(),
-      name,
-      trigger:
-        triggerType === "birthday"
-          ? { type: "birthday" }
-          : triggerType === "appointmentReminder"
-          ? { type: "appointmentReminder", hoursBefore: clampInt(hoursBefore, 1, 168, 24) }
-          : triggerType === "winback"
-          ? { type: "winback", daysSinceLastVisit: clampInt(daysSinceLast, 7, 365, 30) }
-          : { type: "customDate", sendAt: new Date(customSendAt).toISOString() },
-      template: { subject: subject.trim(), body: body.trim() },
-      audience: audienceMode === "all" ? { mode: "all" } : { mode: "segment", segment },
-      createdAt: new Date().toISOString(),
-    };
-
-    localStorage.setItem(LS_AUTOS, JSON.stringify([a, ...existing]));
-    toastShow("ok", t(messages, "clientFollowUpAutomation.ui.toast.autoCreated"));
+  if (!name) {
+    return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.autoNameMissing"));
   }
+
+  if (!subject.trim() || !body.trim()) {
+    return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.templateMissing"));
+  }
+
+  const a: Automation = {
+    id: uid(),
+    name,
+    trigger:
+      triggerType === "birthday"
+        ? { type: "birthday" }
+        : triggerType === "appointmentReminder"
+        ? { type: "appointmentReminder", hoursBefore: clampInt(hoursBefore, 1, 168, 24) }
+        : triggerType === "winback"
+        ? { type: "winback", daysSinceLastVisit: clampInt(daysSinceLast, 7, 365, 30) }
+        : { type: "customDate", sendAt: new Date(customSendAt).toISOString() },
+    template: { subject: subject.trim(), body: body.trim() },
+    audience: audienceMode === "all" ? { mode: "all" } : { mode: "segment", segment },
+    createdAt: new Date().toISOString(),
+  };
+
+  try {
+    if (isAuthedBusiness) {
+      const res = await fetch("/api/tools/automations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(a),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to save automation");
+      }
+    } else {
+      const existing = JSON.parse(localStorage.getItem(LS_AUTOS) ?? "[]") as Automation[];
+      localStorage.setItem(LS_AUTOS, JSON.stringify([a, ...existing]));
+    }
+
+    toastShow("ok", t(messages, "clientFollowUpAutomation.ui.toast.autoCreated"));
+  } catch {
+    toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.saveFail"));
+  }
+}
 
   function resetTemplate() {
     setSubject("");
@@ -261,6 +281,18 @@ export default function ClientFollowUpAutomation({
 
   const previewSubject = useMemo(() => renderTemplate(subject, selectedClient), [subject, selectedClient]);
   const previewBody = useMemo(() => renderTemplate(body, selectedClient), [body, selectedClient]);
+
+  const [isAuthedBusiness, setIsAuthedBusiness] = useState(false);
+
+useEffect(() => {
+  fetch("/api/business")
+    .then((r) => r.json())
+    .then((d) => {
+      if (d.business) setIsAuthedBusiness(true);
+      else setIsAuthedBusiness(false);
+    })
+    .catch(() => setIsAuthedBusiness(false));
+}, []);
 
   return (
     <div className="grid min-w-0 gap-6 lg:grid-cols-12">

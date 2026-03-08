@@ -6,7 +6,6 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DATABASE_URL_UNPOOLED")
-   
 }
 
 model Business {
@@ -44,7 +43,10 @@ model Business {
   reviews                 Review[]
   services                Service[]
   sessions                Session[]
-  profitCalculatorPreset ProfitCalculatorPreset?
+  profitCalculatorPreset  ProfitCalculatorPreset?
+  automations             Automation[]
+  scheduledMessages       ScheduledMessage[]
+  marketingWorkspace      MarketingWorkspace?
 
   @@index([industry])
   @@index([city])
@@ -216,8 +218,6 @@ model CustomerSession {
   @@index([customerId])
 }
 
-
-
 enum BookingStatus {
   CONFIRMED
   CANCELLED
@@ -245,23 +245,25 @@ enum ServiceCategory {
   FITNESS
   OTHER
 }
+
 model ProfitCalculatorPreset {
-  businessId    String  @id
-  currency      String  @default("EUR")
-  price         Float   @default(0)
-  minutes       Int     @default(60)
-  feePct        Float   @default(0)
-  taxPct        Float   @default(0)
-  fixedMonthly  Float   @default(0)
-  apptsPerMonth Int     @default(0)
-  targetHourly  Float   @default(0)
-  productsJson  String  @default("[]")
+  businessId    String @id
+  currency      String @default("EUR")
+  price         Float  @default(0)
+  minutes       Int    @default(60)
+  feePct        Float  @default(0)
+  taxPct        Float  @default(0)
+  fixedMonthly  Float  @default(0)
+  apptsPerMonth Int    @default(0)
+  targetHourly  Float  @default(0)
+  productsJson  String @default("[]")
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 model MarketingWorkspace {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -270,34 +272,63 @@ model MarketingWorkspace {
   // optional later: userId (if auth), or anonymousKey
   name String?
 
+  businessId String?   @unique
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   messages ScheduledMessage[]
 }
 
 model ScheduledMessage {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String  @id @default(cuid())
+  businessId   String
+  automationId String?
+  workspaceId  String
 
-  workspaceId String
-  workspace   MarketingWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  channel String // "email" (later: "whatsapp", "sms")
+  to      String
+  replyTo String?
+  subject String
+  html    String
 
-  // delivery
-  channel   String   // "email" (later: "whatsapp", "sms")
-  to        String
-  replyTo   String?
-  subject   String
-  html      String
-
-  // schedule
-  sendAt    DateTime
-  status    String   @default("scheduled") // scheduled | sending | sent | failed | cancelled
-  attempts  Int      @default(0)
-  lastError String?
-
-  // idempotency + provider info
-  dedupeKey String?  @unique
+  sendAt            DateTime
+  status            String   @default("scheduled") // scheduled | sending | sent | failed | cancelled
+  attempts          Int      @default(0)
+  lastError         String?
+  dedupeKey         String?  @unique
   providerMessageId String?
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business   Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  automation Automation?        @relation(fields: [automationId], references: [id], onDelete: SetNull)
+  workspace  MarketingWorkspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
   @@index([status, sendAt])
+  @@index([businessId])
   @@index([workspaceId, createdAt])
+}
+
+model Automation {
+  id         String @id @default(cuid())
+  businessId String
+  name       String
+
+  triggerJson  String
+  templateJson String
+  audienceJson String
+
+  isActive  Boolean   @default(true)
+  lastRunAt DateTime?
+  nextRunAt DateTime?
+
+  messages ScheduledMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([isActive, nextRunAt])
 }

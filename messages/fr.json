@@ -907,7 +907,7 @@
     },
     "clients": {
     "title": "Clients",
-    "subtitle": "Ajoutez quelques clients pour prévisualiser le message. Stocké localement pour l’instant.",
+    "subtitle": "Ajoutez quelques clients pour prévisualiser votre message. Fonctionne localement pour les utilisateurs sans compte Slottick.",
     "add": "Ajouter un client",
     "importCsv": "Importer CSV",
     "emptyTitle": "Aucun client",
@@ -922,7 +922,8 @@
     "empty": "Aucune automatisation. Créez-en une à droite.",
     "trigger": "Déclencheur",
     "audience": "Audience",
-    "created": "Créé"
+    "created": "Créé",
+    "saveFail": "Impossible d’enregistrer l’automatisation"
   },
   "builder": {
     "title": "Créateur d’automatisation",
