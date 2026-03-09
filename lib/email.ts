@@ -20,13 +20,17 @@ type SendArgs = {
   to: string;
   subject: string;
   html: string;
-  replyTo?: string; // per-email override
+  replyTo?: string;
+  scheduledAt?: string; // ISO string or natural language like "in 1 min"
 };
 
-async function safeSend({ to, subject, html, replyTo }: SendArgs) {
-  // Never crash the app/build if key is missing
+async function safeSend({ to, subject, html, replyTo, scheduledAt }: SendArgs) {
   if (!resend) {
-    console.warn("[email] RESEND_API_KEY missing; skipping email:", { to, subject });
+    console.warn("[email] RESEND_API_KEY missing; skipping email:", {
+      to,
+      subject,
+      scheduledAt,
+    });
     return { skipped: true };
   }
 
@@ -37,6 +41,7 @@ async function safeSend({ to, subject, html, replyTo }: SendArgs) {
       subject,
       html,
       replyTo: replyTo ?? REPLY_TO,
+      scheduledAt,
     });
   } catch (err) {
     console.error("[email] send failed:", err);
@@ -293,20 +298,31 @@ export async function sendClientFollowUpEmail(args: {
   to: string;
   subject: string;
   html: string;
-  replyTo?: string; // let businesses set their own inbox later
-  footer?: string; // optional override
+  replyTo?: string;
+  footer?: string;
+  scheduledAt?: string; // ISO string
 }) {
-  // light safety limits (prevents abuse + giant payloads)
   const to = String(args.to ?? "").trim();
   const subject = String(args.subject ?? "").trim();
   const html = String(args.html ?? "");
+  const scheduledAt = args.scheduledAt ? String(args.scheduledAt).trim() : undefined;
 
   if (!to || !subject || !html) return { ok: false, error: "Missing fields" };
   if (subject.length > 200) return { ok: false, error: "Subject too long" };
   if (html.length > 80_000) return { ok: false, error: "Body too long" };
 
-  // Optional: wrap in your email layout if caller sends plain body
-  // (If you already pass fully formatted HTML, you can skip wrap.)
+  if (scheduledAt) {
+    const d = new Date(scheduledAt);
+    if (Number.isNaN(d.getTime())) {
+      return { ok: false, error: "Invalid scheduledAt" };
+    }
+
+    const max = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    if (d.getTime() > max) {
+      return { ok: false, error: "scheduledAt exceeds 30 days" };
+    }
+  }
+
   const wrapped = wrap(
     subject,
     html.startsWith("<") ? html : `<p>${escapeHtml(html).replaceAll("\n", "<br/>")}</p>`,
@@ -318,7 +334,11 @@ export async function sendClientFollowUpEmail(args: {
     subject,
     html: wrapped,
     replyTo: args.replyTo,
+    scheduledAt,
   });
+
+  if ((res as any)?.error) return { ok: false, error: "Send failed" };
+  if ((res as any)?.skipped) return { ok: false, error: "Email provider not configured" };
 
   return { ok: true, res };
 }

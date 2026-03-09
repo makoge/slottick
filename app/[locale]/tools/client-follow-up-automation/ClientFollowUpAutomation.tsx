@@ -102,6 +102,9 @@ export default function ClientFollowUpAutomation({
   const [selectedClientId, setSelectedClientId] = useState<string>("");
 
   const [toast, setToast] = useState<{ kind: "ok" | "bad"; msg: string } | null>(null);
+  const [isAuthedBusiness, setIsAuthedBusiness] = useState(false);
+
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const toastShow = (kind: "ok" | "bad", msg: string) => {
     setToast({ kind, msg });
@@ -150,6 +153,10 @@ export default function ClientFollowUpAutomation({
   );
 
   function addClient(c: Omit<Client, "id">) {
+    if (!isAuthedBusiness && clients.length >= 10) {
+  setUpgradeOpen(true);
+return;
+}
     const name = c.name.trim();
     const email = c.email.trim();
 
@@ -176,6 +183,8 @@ export default function ClientFollowUpAutomation({
     if (selectedClientId === id) setSelectedClientId("");
   }
 
+
+
   async function createAutomation() {
   const name = autoName.trim();
 
@@ -186,6 +195,15 @@ export default function ClientFollowUpAutomation({
   if (!subject.trim() || !body.trim()) {
     return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.templateMissing"));
   }
+
+  if (!selectedClient?.email) {
+    return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.selectClient"));
+  }
+
+ if (!isAuthedBusiness && clients.length > 10) {
+  setUpgradeOpen(true);
+  return;
+}
 
   const a: Automation = {
     id: uid(),
@@ -198,8 +216,14 @@ export default function ClientFollowUpAutomation({
         : triggerType === "winback"
         ? { type: "winback", daysSinceLastVisit: clampInt(daysSinceLast, 7, 365, 30) }
         : { type: "customDate", sendAt: new Date(customSendAt).toISOString() },
-    template: { subject: subject.trim(), body: body.trim() },
-    audience: audienceMode === "all" ? { mode: "all" } : { mode: "segment", segment },
+    template: {
+      subject: subject.trim(),
+      body: body.trim(),
+    },
+    audience:
+      audienceMode === "all"
+        ? { mode: "all" }
+        : { mode: "segment", segment },
     createdAt: new Date().toISOString(),
   };
 
@@ -210,19 +234,57 @@ export default function ClientFollowUpAutomation({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(a),
+        body: JSON.stringify({
+          ...a,
+          client: {
+            id: selectedClient.id,
+            name: selectedClient.name,
+            email: selectedClient.email,
+            phone: selectedClient.phone ?? null,
+            birthday: selectedClient.birthday ?? null,
+            lastVisit: selectedClient.lastVisit ?? null,
+          },
+        }),
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to save automation");
+      const data = await res.json();
+
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Failed to save automation");
       }
     } else {
+      const sendAt =
+        triggerType === "customDate"
+          ? new Date(customSendAt).toISOString()
+          : undefined;
+
+      const res = await fetch("/api/tools/client-follow-up/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: selectedClient.email,
+          subject: renderTemplate(subject.trim(), selectedClient),
+          html: renderTemplate(body.trim(), selectedClient).replace(/\n/g, "<br/>"),
+          sendAt,
+          website: "", // honeypot
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "Failed to send email");
+      }
+
       const existing = JSON.parse(localStorage.getItem(LS_AUTOS) ?? "[]") as Automation[];
       localStorage.setItem(LS_AUTOS, JSON.stringify([a, ...existing]));
     }
 
     toastShow("ok", t(messages, "clientFollowUpAutomation.ui.toast.autoCreated"));
-  } catch {
+  } catch (err) {
+    console.error("[createAutomation] failed:", err);
     toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.saveFail"));
   }
 }
@@ -235,57 +297,68 @@ export default function ClientFollowUpAutomation({
   }
 
   function importCsv(text: string) {
-    const lines = text
-      .split(/\r?\n/)
-      .map((x) => x.trim())
-      .filter(Boolean);
+  const lines = text
+    .split(/\r?\n/)
+    .map((x) => x.trim())
+    .filter(Boolean);
 
-    if (!lines.length) {
-      return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.csvEmpty"));
-    }
-
-    const header = lines[0].toLowerCase();
-    const start = header.includes("email") ? 1 : 0;
-
-    const toAdd: Client[] = [];
-
-    for (let i = start; i < lines.length; i++) {
-      const parts = lines[i].split(",").map((x) => x.trim());
-      const [name, email, phone, birthday, lastVisit] = parts;
-
-      if (!name || !email || !isEmail(email)) continue;
-      if (clients.some((x) => x.email.toLowerCase() === email.toLowerCase())) continue;
-      if (toAdd.some((x) => x.email.toLowerCase() === email.toLowerCase())) continue;
-
-      toAdd.push({
-        id: uid(),
-        name,
-        email,
-        phone: phone || undefined,
-        birthday: birthday || undefined,
-        lastVisit: lastVisit || undefined,
-      });
-    }
-
-    if (!toAdd.length) {
-      return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.csvNone"));
-    }
-
-    setClients((p) => [...toAdd, ...p]);
-    setSelectedClientId((prev) => prev || toAdd[0].id);
-    toastShow(
-      "ok",
-      t(messages, "clientFollowUpAutomation.ui.toast.csvImported").replace("{n}", String(toAdd.length))
-    );
+  if (!lines.length) {
+    return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.csvEmpty"));
   }
+
+  const header = lines[0].toLowerCase();
+  const start = header.includes("email") ? 1 : 0;
+
+  const toAdd: Client[] = [];
+
+  for (let i = start; i < lines.length; i++) {
+    const parts = lines[i].split(",").map((x) => x.trim());
+    const [name, email, phone, birthday, lastVisit] = parts;
+
+    if (!name || !email || !isEmail(email)) continue;
+    if (clients.some((x) => x.email.toLowerCase() === email.toLowerCase())) continue;
+    if (toAdd.some((x) => x.email.toLowerCase() === email.toLowerCase())) continue;
+
+    toAdd.push({
+      id: uid(),
+      name,
+      email,
+      phone: phone || undefined,
+      birthday: birthday || undefined,
+      lastVisit: lastVisit || undefined,
+    });
+  }
+
+  if (!toAdd.length) {
+    return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.csvNone"));
+  }
+
+  const allowedToAdd = !isAuthedBusiness
+    ? Math.max(0, 10 - clients.length)
+    : toAdd.length;
+
+  const finalToAdd = toAdd.slice(0, allowedToAdd);
+
+  if (!finalToAdd.length) {
+    return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.guestLimit"));
+  }
+
+  setClients((p) => [...finalToAdd, ...p]);
+  setSelectedClientId((prev) => prev || finalToAdd[0].id);
+
+  toastShow(
+    "ok",
+    t(messages, "clientFollowUpAutomation.ui.toast.csvImported").replace("{n}", String(finalToAdd.length))
+  );
+}
 
   const previewSubject = useMemo(() => renderTemplate(subject, selectedClient), [subject, selectedClient]);
   const previewBody = useMemo(() => renderTemplate(body, selectedClient), [body, selectedClient]);
 
-  const [isAuthedBusiness, setIsAuthedBusiness] = useState(false);
+  
 
 useEffect(() => {
-  fetch("/api/business")
+  fetch("/api/businesses")
     .then((r) => r.json())
     .then((d) => {
       if (d.business) setIsAuthedBusiness(true);
@@ -293,6 +366,8 @@ useEffect(() => {
     })
     .catch(() => setIsAuthedBusiness(false));
 }, []);
+
+
 
   return (
     <div className="grid min-w-0 gap-6 lg:grid-cols-12">
@@ -821,6 +896,44 @@ useEffect(() => {
           />
         </Modal>
       ) : null}
+
+      {upgradeOpen ? (
+  <div className="fixed inset-0 z-50 p-3 sm:p-4">
+    <div
+      className="absolute inset-0 bg-slate-900/50"
+      onClick={() => setUpgradeOpen(false)}
+    />
+
+    <div className="relative mx-auto flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-[28px] bg-white p-6 shadow-2xl ring-1 ring-slate-200">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-base font-semibold text-slate-900">
+            {t(messages, "clientFollowUpAutomation.ui.upgrade.title")}
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {t(messages, "clientFollowUpAutomation.ui.upgrade.body")}
+          </p>
+        </div>
+
+        <button
+          onClick={() => setUpgradeOpen(false)}
+          className="shrink-0 rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-200"
+        >
+          {t(messages, "common.cancel")}
+        </button>
+      </div>
+
+      <div className="mt-6 flex gap-3">
+        <a
+          href="/register"
+          className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-slate-800"
+        >
+          {t(messages, "clientFollowUpAutomation.ui.upgrade.cta")}
+        </a>
+      </div>
+    </div>
+  </div>
+) : null}
     </div>
   );
 }

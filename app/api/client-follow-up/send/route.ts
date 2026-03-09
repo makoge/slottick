@@ -13,11 +13,6 @@ function getClientIp(req: Request) {
   return xff.split(",")[0]?.trim() || "unknown";
 }
 
-/**
- * Simple in-memory rate limit (per server instance).
- * Good for dev / basic protection.
- * For production, move to Upstash Redis or similar.
- */
 type Bucket = { count: number; resetAt: number };
 const buckets = new Map<string, Bucket>();
 
@@ -43,7 +38,6 @@ export async function POST(req: Request) {
   try {
     const ip = getClientIp(req);
 
-    // 10 requests / 10 minutes per IP
     const rl = rateLimit(`cfu:${ip}`, 10, 10 * 60_000);
     if (!rl.ok) {
       return NextResponse.json(
@@ -64,25 +58,38 @@ export async function POST(req: Request) {
     const html = String(body.html ?? "").trim();
     const replyTo = body.replyTo ? String(body.replyTo).trim() : undefined;
 
-    // honeypot
+    const sendAtRaw = body.sendAt ? String(body.sendAt) : undefined;
+    let scheduledAt: string | undefined;
+
+    if (sendAtRaw) {
+      const d = new Date(sendAtRaw);
+
+      if (Number.isNaN(d.getTime())) {
+        return NextResponse.json({ ok: false, error: "Invalid send date" }, { status: 400 });
+      }
+
+      scheduledAt = d.toISOString();
+    }
+
     const website = String(body.website ?? "").trim();
     if (website) return NextResponse.json({ ok: true });
 
-    // validation
     if (!to || !subject || !html) {
       return NextResponse.json({ ok: false, error: "Missing fields" }, { status: 400 });
     }
+
     if (!isEmail(to)) {
       return NextResponse.json({ ok: false, error: "Invalid recipient email" }, { status: 400 });
     }
+
     if (replyTo && !isEmail(replyTo)) {
       return NextResponse.json({ ok: false, error: "Invalid reply-to email" }, { status: 400 });
     }
 
-    // safety limits
     if (subject.length > 200) {
       return NextResponse.json({ ok: false, error: "Subject too long" }, { status: 400 });
     }
+
     if (html.length > 80_000) {
       return NextResponse.json({ ok: false, error: "Message too long" }, { status: 400 });
     }
@@ -92,6 +99,7 @@ export async function POST(req: Request) {
       subject,
       html,
       replyTo,
+      scheduledAt,
       footer: "Powered by Slottick",
     });
 
@@ -102,7 +110,9 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       remaining: rl.remaining,
+      scheduled: scheduledAt ?? null,
     });
+
   } catch (err) {
     console.error("[client-follow-up/send] route error:", err);
     return NextResponse.json({ ok: false, error: "Server error" }, { status: 500 });

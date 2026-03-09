@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthedBusiness } from "@/lib/auth";
+import { sendClientFollowUpEmail } from "@/lib/email";
 
 function isEmail(v: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
 
-function renderTemplate(body: string, client: {
-  name?: string | null;
-  email?: string | null;
-}) {
+function renderTemplate(
+  body: string,
+  client: { name?: string | null; email?: string | null }
+) {
   const first = client.name?.trim()?.split(/\s+/)?.[0] ?? "";
   const map: Record<string, string> = {
     "{name}": client.name ?? "",
@@ -41,13 +42,20 @@ export async function POST(req: Request) {
     const rawBody = String(template.body ?? "").trim();
 
     if (!name || !subject || !rawBody) {
-      return NextResponse.json({ error: "Missing name, subject, or body" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing name, subject, or body" },
+        { status: 400 }
+      );
     }
 
     if (!client || !client.email || !isEmail(String(client.email))) {
-      return NextResponse.json({ error: "A valid client email is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "A valid client email is required" },
+        { status: 400 }
+      );
     }
 
+    // Save automation (for history / dashboard)
     const automation = await prisma.automation.create({
       data: {
         businessId: business.id,
@@ -58,55 +66,42 @@ export async function POST(req: Request) {
       },
     });
 
-    let sendAt: Date;
+    let scheduledAt: string | undefined;
 
     if (trigger.type === "customDate" && trigger.sendAt) {
-      sendAt = new Date(trigger.sendAt);
-    } else {
-      // fallback for now so you can test it
-      sendAt = new Date(Date.now() + 60 * 1000);
-    }
+      const d = new Date(trigger.sendAt);
+      if (Number.isNaN(d.getTime())) {
+        return NextResponse.json(
+          { error: "Invalid sendAt date" },
+          { status: 400 }
+        );
+      }
 
-    if (Number.isNaN(sendAt.getTime())) {
-      return NextResponse.json({ error: "Invalid sendAt date" }, { status: 400 });
+      scheduledAt = d.toISOString();
     }
 
     const renderedSubject = renderTemplate(subject, client);
     const renderedBody = renderTemplate(rawBody, client).replace(/\n/g, "<br/>");
 
-    const workspace = await prisma.marketingWorkspace.upsert({
-  where: { businessId: business.id },
-  update: {},
-  create: {
-    businessId: business.id,
-    name: business.name,
-  },
-});
+    // Schedule email with Resend
+    const res = await sendClientFollowUpEmail({
+      to: String(client.email).trim(),
+      subject: renderedSubject,
+      html: renderedBody,
+      scheduledAt, // if undefined it sends immediately
+    });
 
-    const scheduledMessage = await prisma.scheduledMessage.create({
-  data: {
-    business: {
-      connect: { id: business.id },
-    },
-    workspace: {
-      connect: { id: workspace.id },
-    },
-    automation: {
-      connect: { id: automation.id },
-    },
+    if (!res?.ok) {
+      return NextResponse.json(
+        { error: "Failed to schedule email" },
+        { status: 500 }
+      );
+    }
 
-    channel: "email",
-    to: String(client.email).trim(),
-    subject: renderedSubject,
-    html: renderedBody,
-    sendAt,
-    status: "scheduled",
-  },
-});
     return NextResponse.json({
       ok: true,
       automation,
-      scheduledMessage,
+      scheduled: scheduledAt ?? "sent immediately",
     });
   } catch (err) {
     console.error("[tools/automations] POST error:", err);
