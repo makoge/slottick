@@ -10,6 +10,8 @@ type Client = {
   phone?: string;
   birthday?: string;
   lastVisit?: string;
+  appointmentDate?: string; // YYYY-MM-DD
+  appointmentTime?: string; // HH:MM
 };
 
 type TriggerType = "birthday" | "appointmentReminder" | "winback" | "customDate";
@@ -186,6 +188,8 @@ return;
 
 
   async function createAutomation() {
+
+    
   const name = autoName.trim();
 
   if (!name) {
@@ -204,18 +208,64 @@ return;
   setUpgradeOpen(true);
   return;
 }
+  
+if (triggerType === "customDate") {
+  const selected = new Date(customSendAt).getTime();
+  const max = Date.now() + 30 * 24 * 60 * 60 * 1000;
+
+  if (Number.isNaN(selected) || selected > max) {
+    return toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.customDateTooFar"));
+  }
+}
+
+let computedSendAt: string | undefined;
+
+if (triggerType === "customDate") {
+  computedSendAt = new Date(customSendAt).toISOString();
+}
+
+  if (triggerType === "appointmentReminder") {
+  if (!selectedClient?.appointmentDate || !selectedClient?.appointmentTime) {
+    return toastShow("bad", "Add appointment date and time for this client first");
+  }
+
+  const appointmentAt = new Date(
+    `${selectedClient.appointmentDate}T${selectedClient.appointmentTime}`
+  );
+
+  if (Number.isNaN(appointmentAt.getTime())) {
+    return toastShow("bad", "Invalid appointment date or time");
+  }
+
+  const sendAt = new Date(
+    appointmentAt.getTime() - clampInt(hoursBefore, 1, 168, 24) * 60 * 60 * 1000
+  );
+
+  if (sendAt.getTime() <= Date.now()) {
+  return toastShow(
+    "bad",
+    "The reminder time is already in the past. Reduce the hours before appointment."
+  );
+}
+
+  computedSendAt = sendAt.toISOString();
+}
 
   const a: Automation = {
     id: uid(),
     name,
     trigger:
-      triggerType === "birthday"
-        ? { type: "birthday" }
-        : triggerType === "appointmentReminder"
-        ? { type: "appointmentReminder", hoursBefore: clampInt(hoursBefore, 1, 168, 24) }
-        : triggerType === "winback"
-        ? { type: "winback", daysSinceLastVisit: clampInt(daysSinceLast, 7, 365, 30) }
-        : { type: "customDate", sendAt: new Date(customSendAt).toISOString() },
+  triggerType === "birthday"
+    ? { type: "birthday" }
+    : triggerType === "appointmentReminder"
+    ? {
+        type: "appointmentReminder",
+        hoursBefore: clampInt(hoursBefore, 1, 168, 24),
+        sendAt: computedSendAt,
+      }
+    : triggerType === "winback"
+    ? { type: "winback", daysSinceLastVisit: clampInt(daysSinceLast, 7, 365, 30) }
+    : { type: "customDate", sendAt: computedSendAt },
     template: {
       subject: subject.trim(),
       body: body.trim(),
@@ -237,28 +287,33 @@ return;
         body: JSON.stringify({
           ...a,
           client: {
-            id: selectedClient.id,
-            name: selectedClient.name,
-            email: selectedClient.email,
-            phone: selectedClient.phone ?? null,
-            birthday: selectedClient.birthday ?? null,
-            lastVisit: selectedClient.lastVisit ?? null,
-          },
+               id: selectedClient.id,
+               name: selectedClient.name,
+               email: selectedClient.email,
+               phone: selectedClient.phone ?? null,
+               birthday: selectedClient.birthday ?? null,
+               lastVisit: selectedClient.lastVisit ?? null,
+               appointmentDate: selectedClient.appointmentDate ?? null,
+               appointmentTime: selectedClient.appointmentTime ?? null,
+                   },
         }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+            try {
+               data = text ? JSON.parse(text) : {};
+            } catch {
+  data = {};
+            }
 
       if (!res.ok || !data?.ok) {
         throw new Error(data?.error || "Failed to save automation");
       }
     } else {
-      const sendAt =
-        triggerType === "customDate"
-          ? new Date(customSendAt).toISOString()
-          : undefined;
+      const sendAt = computedSendAt;
 
-      const res = await fetch("/api/tools/client-follow-up/send", {
+      const res = await fetch("/api/client-follow-up/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -272,7 +327,8 @@ return;
         }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
 
       if (!res.ok || !data?.ok) {
         throw new Error(data?.error || "Failed to send email");
@@ -282,7 +338,7 @@ return;
       localStorage.setItem(LS_AUTOS, JSON.stringify([a, ...existing]));
     }
 
-    toastShow("ok", t(messages, "clientFollowUpAutomation.ui.toast.autoCreated"));
+    toastShow("ok", t(messages, "clientFollowUpAutomation.ui.toast.autoScheduled"));
   } catch (err) {
     console.error("[createAutomation] failed:", err);
     toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.saveFail"));
@@ -313,7 +369,7 @@ return;
 
   for (let i = start; i < lines.length; i++) {
     const parts = lines[i].split(",").map((x) => x.trim());
-    const [name, email, phone, birthday, lastVisit] = parts;
+    const [name, email, phone, birthday, lastVisit, appointmentDate, appointmentTime] = parts;
 
     if (!name || !email || !isEmail(email)) continue;
     if (clients.some((x) => x.email.toLowerCase() === email.toLowerCase())) continue;
@@ -326,6 +382,8 @@ return;
       phone: phone || undefined,
       birthday: birthday || undefined,
       lastVisit: lastVisit || undefined,
+      appointmentDate: appointmentDate || undefined,
+      appointmentTime: appointmentTime || undefined,
     });
   }
 
@@ -436,24 +494,20 @@ useEffect(() => {
                             {c.email}
                           </p>
 
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <span
-                              className={[
-                                "rounded-xl px-3 py-1 text-xs font-semibold",
-                                active ? "bg-white/10 text-white/85" : "bg-slate-100 text-slate-700",
-                              ].join(" ")}
-                            >
-                              {t(messages, "clientFollowUpAutomation.ui.clients.birthday")}: {formatDate(c.birthday)}
-                            </span>
-                            <span
-                              className={[
-                                "rounded-xl px-3 py-1 text-xs font-semibold",
-                                active ? "bg-white/10 text-white/85" : "bg-slate-100 text-slate-700",
-                              ].join(" ")}
-                            >
-                              {t(messages, "clientFollowUpAutomation.ui.clients.lastVisit")}: {formatDate(c.lastVisit)}
-                            </span>
-                          </div>
+                          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                              <span className="rounded-xl bg-white/10 px-2 py-1">
+                                Birthday: {c.birthday ? formatDate(c.birthday) : "—"}
+                              </span>
+
+                              <span className="rounded-xl bg-white/10 px-2 py-1">
+                                Last visit: {c.lastVisit ? formatDate(c.lastVisit) : "—"}
+                              </span>
+
+                              <span className="rounded-xl bg-white/10 px-2 py-1">
+                                 Appointment: {c.appointmentDate ? formatDate(c.appointmentDate) : "—"}{" "}
+                                 {c.appointmentTime ?? ""}
+                              </span>
+                         </div>
                         </div>
 
                         <span
@@ -624,6 +678,9 @@ useEffect(() => {
                       />
                       <p className="mt-2 text-xs text-slate-500">
                         {t(messages, "clientFollowUpAutomation.ui.trigger.sendAtHint")}
+                      </p>
+                      <p className="mt-2 text-xs font-medium text-amber-700">
+                         {t(messages, "clientFollowUpAutomation.ui.trigger.customDateLimit")}
                       </p>
                     </div>
                   ) : null}
@@ -991,6 +1048,8 @@ function AddClientForm({
   const [phone, setPhone] = useState("");
   const [birthday, setBirthday] = useState("");
   const [lastVisit, setLastVisit] = useState("");
+  const [appointmentDate, setAppointmentDate] = useState("");
+  const [appointmentTime, setAppointmentTime] = useState("");
 
   return (
     <div className="grid gap-4">
@@ -1056,6 +1115,34 @@ function AddClientForm({
         />
       </div>
 
+      <div className="grid gap-4 sm:grid-cols-2">
+  <div>
+    <label className="text-sm font-semibold text-slate-900">
+      Appointment date
+      <span className="ml-2 text-xs text-slate-500">{t(messages, "common.optional")}</span>
+    </label>
+    <input
+      type="date"
+      value={appointmentDate}
+      onChange={(e) => setAppointmentDate(e.target.value)}
+      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+    />
+  </div>
+
+  <div>
+    <label className="text-sm font-semibold text-slate-900">
+      Appointment time
+      <span className="ml-2 text-xs text-slate-500">{t(messages, "common.optional")}</span>
+    </label>
+    <input
+      type="time"
+      value={appointmentTime}
+      onChange={(e) => setAppointmentTime(e.target.value)}
+      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+    />
+  </div>
+</div>
+
       <div className="mt-2 flex flex-col gap-2 sm:flex-row">
         <button
           type="button"
@@ -1068,12 +1155,14 @@ function AddClientForm({
           type="button"
           onClick={() =>
             onAdd({
-              name,
-              email,
-              phone: phone || undefined,
-              birthday: birthday || undefined,
-              lastVisit: lastVisit || undefined,
-            })
+                 name,
+                 email,
+                 phone: phone || undefined,
+                 birthday: birthday || undefined,
+                 lastVisit: lastVisit || undefined,
+                appointmentDate: appointmentDate || undefined,
+                appointmentTime: appointmentTime || undefined,
+                  })
           }
           className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800"
         >
@@ -1105,8 +1194,8 @@ function CsvImportForm({
           {t(messages, "clientFollowUpAutomation.ui.modal.csvFormatBody")}
         </p>
         <pre className="mt-3 overflow-x-auto rounded-2xl bg-white p-3 text-xs text-slate-700 ring-1 ring-slate-100">
-name,email,birthday,lastVisit
-Maria K,maria@email.com,1994-03-12,2026-02-10
+name,email,phone,birthday,lastVisit,appointmentDate,appointmentTime
+Maria K,maria@email.com,+372...,1994-03-12,2026-02-10,2026-03-15,14:00
         </pre>
       </div>
 

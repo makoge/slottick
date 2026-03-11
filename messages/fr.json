@@ -959,7 +959,8 @@
     "birthday": "Anniversaire",
     "reminder": "Rappel de rendez-vous",
     "winback": "Relance",
-    "customDate": "Date personnalisée"
+    "customDate": "Date personnalisée",
+    "customDateLimit": "La planification à date personnalisée fonctionne dans une limite d’un mois. Pour des automatisations à plus long terme, passez à une offre supérieure."
   },
   "audience": {
     "title": "Audience",
@@ -1034,7 +1035,11 @@
     "csvImported": "{n} clients importés ✓",
     "csvNone": "Aucune ligne valide.",
     "selectClient": "Sélectionnez d’abord un client",
-    "guestLimit": "Vous avez atteint la limite gratuite de 10 clients. Créez un compte Slottick gratuit pour envoyer des automatisations illimitées et enregistrer vos campagnes."
+    "guestLimit": "Vous avez atteint la limite gratuite de 10 clients. Créez un compte Slottick gratuit pour envoyer des automatisations illimitées et enregistrer vos campagnes.",
+    "autoScheduled": "Automatisation planifiée avec succès",
+    "customDateTooFar": "La date personnalisée doit être dans un délai d’un mois. Passez à une offre supérieure pour des automatisations à plus long terme.",
+    "appointmentMissing": "Ajoutez d’abord une date et une heure de rendez-vous pour ce client",
+"appointmentInvalid": "Date ou heure de rendez-vous invalide"
   },
   "templates": {
     "birthday": {
