@@ -321,7 +321,7 @@ if (triggerType === "customDate") {
         body: JSON.stringify({
           to: selectedClient.email,
           subject: renderTemplate(subject.trim(), selectedClient),
-          html: renderTemplate(body.trim(), selectedClient).replace(/\n/g, "<br/>"),
+          html: renderTemplate(body.trim(), selectedClient),
           sendAt,
           website: "", // honeypot
         }),
@@ -594,32 +594,48 @@ useEffect(() => {
               <div className="p-4">
                 <div className="grid gap-2 sm:grid-cols-2">
                   {(["birthday", "appointmentReminder", "winback", "customDate"] as TriggerType[]).map((k) => {
-                    const active = triggerType === k;
-                    const label =
-                      k === "birthday"
-                        ? t(messages, "clientFollowUpAutomation.ui.triggers.birthday")
-                        : k === "appointmentReminder"
-                        ? t(messages, "clientFollowUpAutomation.ui.triggers.reminder")
-                        : k === "winback"
-                        ? t(messages, "clientFollowUpAutomation.ui.triggers.winback")
-                        : t(messages, "clientFollowUpAutomation.ui.triggers.customDate");
+  const unavailable = k === "birthday" || k === "winback";
+  const active = triggerType === k && !unavailable;
 
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        onClick={() => setTriggerType(k)}
-                        className={[
-                          "rounded-2xl px-4 py-3 text-left text-sm font-semibold ring-1 transition",
-                          active
-                            ? "bg-slate-900 text-white ring-slate-900"
-                            : "bg-white text-slate-900 ring-slate-200 hover:bg-slate-50",
-                        ].join(" ")}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
+  const label =
+    k === "birthday"
+      ? t(messages, "clientFollowUpAutomation.ui.triggers.birthday")
+      : k === "appointmentReminder"
+      ? t(messages, "clientFollowUpAutomation.ui.triggers.reminder")
+      : k === "winback"
+      ? t(messages, "clientFollowUpAutomation.ui.triggers.winback")
+      : t(messages, "clientFollowUpAutomation.ui.triggers.customDate");
+
+  return (
+    <button
+      key={k}
+      type="button"
+      onClick={() => {
+        if (unavailable) {
+          toastShow("bad", t(messages, "clientFollowUpAutomation.ui.toast.triggerUnavailable"));
+          return;
+        }
+        setTriggerType(k);
+      }}
+      className={[
+        "rounded-2xl px-4 py-3 text-left text-sm font-semibold ring-1 transition",
+        unavailable
+          ? "bg-slate-100 text-slate-400 ring-slate-200"
+          : active
+          ? "bg-slate-900 text-white ring-slate-900"
+          : "bg-white text-slate-900 ring-slate-200 hover:bg-slate-50",
+      ].join(" ")}
+    >
+      <span className="block">{label}</span>
+
+      {unavailable ? (
+        <span className="mt-1 block text-[11px] font-medium text-slate-400">
+          {t(messages, "clientFollowUpAutomation.ui.triggers.comingSoon")}
+        </span>
+      ) : null}
+    </button>
+  );
+})}
                 </div>
 
                 <div className="mt-4">
@@ -1061,7 +1077,7 @@ function AddClientForm({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 text-slate-700"
           />
         </div>
         <div>
@@ -1071,7 +1087,7 @@ function AddClientForm({
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 text-slate-700"
           />
         </div>
       </div>
@@ -1085,7 +1101,7 @@ function AddClientForm({
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 text-slate-700"
           />
         </div>
         <div>
@@ -1097,7 +1113,7 @@ function AddClientForm({
             type="date"
             value={birthday}
             onChange={(e) => setBirthday(e.target.value)}
-            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 text-slate-700"
           />
         </div>
       </div>
@@ -1111,7 +1127,7 @@ function AddClientForm({
           type="date"
           value={lastVisit}
           onChange={(e) => setLastVisit(e.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 text-slate-700"
         />
       </div>
 
@@ -1125,7 +1141,7 @@ function AddClientForm({
       type="date"
       value={appointmentDate}
       onChange={(e) => setAppointmentDate(e.target.value)}
-      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 text-slate-700"
     />
   </div>
 
@@ -1138,7 +1154,7 @@ function AddClientForm({
       type="time"
       value={appointmentTime}
       onChange={(e) => setAppointmentTime(e.target.value)}
-      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400"
+      className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400 text-slate-700"
     />
   </div>
 </div>

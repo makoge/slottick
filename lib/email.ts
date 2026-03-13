@@ -36,13 +36,14 @@ async function safeSend({ to, subject, html, replyTo, scheduledAt }: SendArgs) {
 
   try {
     return await resend.emails.send({
-      from: FROM,
-      to,
-      subject,
-      html,
-      replyTo: replyTo ?? REPLY_TO,
-      scheduledAt,
-    });
+  from: FROM,
+  to,
+  subject,
+  html,
+  text: html.replace(/<[^>]+>/g, ""),
+  replyTo: replyTo ?? REPLY_TO,
+  scheduledAt,
+});
   } catch (err) {
     console.error("[email] send failed:", err);
     return { error: true };

@@ -1,154 +1,165 @@
 // lib/seo/near-me-targets.ts
 
 export type SeoIntent = {
-  slug: string;              // "massage-near-me"
-  title: string;             // "Massage near me"
-  categoryParam?: string;    // "Massage" (used for /explore?category=...)
-  synonyms: string[];        // used to vary content
+  slug: string;
+  title: string;
+  categoryParam?: string;
+  synonyms: string[];
   faqs: Array<{ q: string; a: string }>;
 };
 
 export type SeoCity = {
-  slug: string;     // "warsaw"
-  name: string;     // "Warsaw"
-  countryName?: string; // optional for richer text
+  slug: string;
+  name: string;
+  countryName?: string;
 };
 
 export const SEO_CITIES_20: SeoCity[] = [
-  { slug: "warsaw", name: "Warsaw", countryName: "Poland" },
-  { slug: "berlin", name: "Berlin", countryName: "Germany" },
-  { slug: "hamburg", name: "Hamburg", countryName: "Germany" },
-  { slug: "munich", name: "Munich", countryName: "Germany" },
-  { slug: "frankfurt", name: "Frankfurt", countryName: "Germany" },
+  { slug: "warsaw", name: "Varsovie", countryName: "Pologne" },
+  { slug: "berlin", name: "Berlin", countryName: "Allemagne" },
+  { slug: "hamburg", name: "Hambourg", countryName: "Allemagne" },
+  { slug: "munich", name: "Munich", countryName: "Allemagne" },
+  { slug: "frankfurt", name: "Francfort", countryName: "Allemagne" },
 
-  { slug: "london", name: "London", countryName: "United Kingdom" },
-  { slug: "manchester", name: "Manchester", countryName: "United Kingdom" },
-  { slug: "birmingham", name: "Birmingham", countryName: "United Kingdom" },
-  { slug: "bristol", name: "Bristol", countryName: "United Kingdom" },
-  { slug: "leeds", name: "Leeds", countryName: "United Kingdom" },
+  { slug: "london", name: "Londres", countryName: "Royaume-Uni" },
+  { slug: "manchester", name: "Manchester", countryName: "Royaume-Uni" },
+  { slug: "birmingham", name: "Birmingham", countryName: "Royaume-Uni" },
+  { slug: "bristol", name: "Bristol", countryName: "Royaume-Uni" },
+  { slug: "leeds", name: "Leeds", countryName: "Royaume-Uni" },
 
-  { slug: "new-york", name: "New York", countryName: "United States" },
-  { slug: "los-angeles", name: "Los Angeles", countryName: "United States" },
-  { slug: "chicago", name: "Chicago", countryName: "United States" },
-  { slug: "miami", name: "Miami", countryName: "United States" },
-  { slug: "atlanta", name: "Atlanta", countryName: "United States" },
+  { slug: "new-york", name: "New York", countryName: "États-Unis" },
+  { slug: "los-angeles", name: "Los Angeles", countryName: "États-Unis" },
+  { slug: "chicago", name: "Chicago", countryName: "États-Unis" },
+  { slug: "miami", name: "Miami", countryName: "États-Unis" },
+  { slug: "atlanta", name: "Atlanta", countryName: "États-Unis" },
 
-  { slug: "tallinn", name: "Tallinn", countryName: "Estonia" },
-  { slug: "helsinki", name: "Helsinki", countryName: "Finland" },
-  { slug: "tampere", name: "Tampere", countryName: "Finland" },
-  { slug: "riga", name: "Riga", countryName: "Latvia" },
-  { slug: "stockholm", name: "Stockholm", countryName: "Sweden" }
+  { slug: "tallinn", name: "Tallinn", countryName: "Estonie" },
+  { slug: "helsinki", name: "Helsinki", countryName: "Finlande" },
+  { slug: "tampere", name: "Tampere", countryName: "Finlande" },
+  { slug: "riga", name: "Riga", countryName: "Lettonie" },
+  { slug: "stockholm", name: "Stockholm", countryName: "Suède" },
+
+  { slug: "paris", name: "Paris", countryName: "France" },
+{ slug: "lyon", name: "Lyon", countryName: "France" },
+{ slug: "marseille", name: "Marseille", countryName: "France" },
+{ slug: "douala", name: "Douala", countryName: "Cameroun" },
+{ slug: "yaounde", name: "Yaoundé", countryName: "Cameroun" },
+{ slug: "buea", name: "Buea", countryName: "Cameroun" },
+
+{ slug: "toronto", name: "Toronto", countryName: "Canada" },
+{ slug: "montreal", name: "Montréal", countryName: "Canada" },
+{ slug: "vancouver", name: "Vancouver", countryName: "Canada" }
 ];
 
 export const SEO_INTENTS_10: SeoIntent[] = [
   {
     slug: "massage-near-me",
-    title: "Massage near me",
+    title: "Massage près de moi",
     categoryParam: "Massage",
-    synonyms: ["massage therapist", "deep tissue massage", "relaxation massage", "sports massage"],
+    synonyms: ["thérapeute de massage", "massage deep tissue", "massage relaxant", "massage sportif"],
     faqs: [
-      { q: "How do I choose a good massage therapist?", a: "Check reviews, specialties, availability, and whether the service matches your needs (relaxation, sports, deep tissue)." },
-      { q: "How much does a massage usually cost?", a: "Prices vary by city and duration. Compare options and check what’s included before booking." },
-      { q: "Can I book same-day massage appointments?", a: "Yes—availability depends on the provider. Use filters and pick a time slot that fits." }
+      { q: "Comment choisir un bon thérapeute de massage ?", a: "Vérifiez les avis, les spécialités et les disponibilités, et assurez-vous que le service correspond à vos besoins (relaxation, sport, deep tissue)." },
+      { q: "Combien coûte généralement un massage ?", a: "Les prix varient selon la ville et la durée. Comparez les options et regardez ce qui est inclus avant de réserver." },
+      { q: "Puis-je réserver un massage le jour même ?", a: "Oui — cela dépend de la disponibilité du prestataire. Utilisez les filtres et choisissez un créneau adapté." }
     ]
   },
   {
     slug: "beauty-salons-near-me",
-    title: "Beauty salons near me",
+    title: "Salons de beauté près de moi",
     categoryParam: "Other",
-    synonyms: ["beauty salon", "beauty studio", "beauty services", "beauty appointment"],
+    synonyms: ["salon de beauté", "studio de beauté", "services de beauté", "rendez-vous beauté"],
     faqs: [
-      { q: "What services do beauty salons offer?", a: "Common services include facials, brows, lashes, nails, skincare, and makeup—depending on the salon." },
-      { q: "How do I find the best salon near me?", a: "Use reviews, ratings, and service categories. Book businesses with consistent feedback and clear pricing." },
-      { q: "Do I need to call to confirm?", a: "No—online booking shows real availability and confirms the appointment instantly." }
+      { q: "Quels services proposent les salons de beauté ?", a: "Les services courants incluent soins du visage, sourcils, cils, ongles, soins de la peau et maquillage selon le salon." },
+      { q: "Comment trouver le meilleur salon près de moi ?", a: "Utilisez les avis, les notes et les catégories de services. Réservez les établissements avec des retours constants et des prix clairs." },
+      { q: "Dois-je appeler pour confirmer ?", a: "Non — la réservation en ligne montre les disponibilités réelles et confirme instantanément le rendez-vous." }
     ]
   },
   {
     slug: "barber-near-me",
-    title: "Barber near me",
+    title: "Barbier près de moi",
     categoryParam: "Barber",
-    synonyms: ["barbershop", "fade haircut", "beard trim", "line-up"],
+    synonyms: ["barbershop", "coupe dégradée", "taille de barbe", "line-up"],
     faqs: [
-      { q: "What should I ask for at a barber?", a: "Bring a reference photo or describe the style (fade level, length on top, beard shape) to avoid misunderstandings." },
-      { q: "How long does a barber appointment take?", a: "Typically 20–60 minutes depending on haircut and beard services." },
-      { q: "Can I book a barber online?", a: "Yes—book a slot directly based on real availability." }
+      { q: "Que dois-je demander chez un barbier ?", a: "Apportez une photo de référence ou décrivez la coupe (niveau du dégradé, longueur sur le dessus, forme de barbe)." },
+      { q: "Combien de temps dure un rendez-vous chez le barbier ?", a: "En général 20 à 60 minutes selon la coupe et les services de barbe." },
+      { q: "Puis-je réserver un barbier en ligne ?", a: "Oui — choisissez simplement un créneau disponible." }
     ]
   },
   {
     slug: "nail-salon-near-me",
-    title: "Nail salon near me",
+    title: "Salon de manucure près de moi",
     categoryParam: "Nails",
-    synonyms: ["manicure", "pedicure", "gel nails", "acrylic nails"],
+    synonyms: ["manucure", "pédicure", "ongles gel", "ongles acryliques"],
     faqs: [
-      { q: "What’s the difference between gel and acrylic nails?", a: "Gel is often lighter and cured under UV; acrylic is stronger and built with powder + liquid. Choose based on durability and style." },
-      { q: "How often should I get a refill?", a: "Most people do refills every 2–3 weeks depending on growth and wear." },
-      { q: "How do I find a trusted nail salon?", a: "Look for consistent reviews, clean photos, and clear service listings." }
+      { q: "Quelle est la différence entre gel et acrylique ?", a: "Le gel est souvent plus léger et durci sous UV ; l'acrylique est plus solide et construit avec poudre + liquide." },
+      { q: "À quelle fréquence dois-je faire un remplissage ?", a: "La plupart des gens font un remplissage toutes les 2 à 3 semaines selon la repousse." },
+      { q: "Comment trouver un salon d’ongles fiable ?", a: "Regardez les avis, les photos et les services clairement listés." }
     ]
   },
   {
     slug: "lash-tech-near-me",
-    title: "Lash tech near me",
+    title: "Technicienne de cils près de moi",
     categoryParam: "Lash",
-    synonyms: ["lash extensions", "classic lashes", "volume lashes", "lash lift"],
+    synonyms: ["extensions de cils", "cils classiques", "volume russe", "rehaussement de cils"],
     faqs: [
-      { q: "How long do lash extensions last?", a: "Usually 2–4 weeks depending on aftercare and lash cycle." },
-      { q: "What lash style should I choose?", a: "Classic for natural, volume for fullness, hybrid for balance. A good tech will recommend what suits your eye shape." },
-      { q: "Can I book a lash appointment online?", a: "Yes—choose a service and a slot that matches the duration." }
+      { q: "Combien de temps durent les extensions de cils ?", a: "Généralement 2 à 4 semaines selon l’entretien et le cycle naturel des cils." },
+      { q: "Quel style de cils choisir ?", a: "Classique pour un look naturel, volume pour plus de densité, hybride pour un équilibre." },
+      { q: "Puis-je réserver un rendez-vous pour les cils en ligne ?", a: "Oui — choisissez le service et un créneau adapté." }
     ]
   },
   {
     slug: "hair-braiders-near-me",
-    title: "Hair braiders near me",
+    title: "Coiffeuses de tresses près de moi",
     categoryParam: "Hair",
-    synonyms: ["braids", "knotless braids", "box braids", "cornrows"],
+    synonyms: ["tresses", "knotless braids", "box braids", "cornrows"],
     faqs: [
-      { q: "How long do braids take?", a: "It depends on style and length—often 2–6+ hours. Booking platforms help reserve the correct time." },
-      { q: "How long do braids last?", a: "Commonly 3–8 weeks depending on style and maintenance." },
-      { q: "Do braiders require deposits?", a: "Some do. Always check the booking details and policies before confirming." }
+      { q: "Combien de temps prennent les tresses ?", a: "Cela dépend du style et de la longueur — souvent entre 2 et 6 heures ou plus." },
+      { q: "Combien de temps les tresses durent-elles ?", a: "En général entre 3 et 8 semaines selon le style et l’entretien." },
+      { q: "Les coiffeuses demandent-elles un acompte ?", a: "Certaines oui. Vérifiez les politiques avant de confirmer la réservation." }
     ]
   },
   {
     slug: "afro-hair-salon-near-me",
-    title: "Afro hair salon near me",
+    title: "Salon afro près de moi",
     categoryParam: "Hair",
-    synonyms: ["afro hair", "natural hair salon", "textured hair specialist", "curly hair salon"],
+    synonyms: ["cheveux afro", "salon cheveux naturels", "spécialiste cheveux texturés", "salon cheveux bouclés"],
     faqs: [
-      { q: "What services do afro hair salons offer?", a: "Often includes braids, twists, locs, silk press, treatments, and styling for textured hair." },
-      { q: "How do I find a textured hair specialist?", a: "Look for service listings that mention textured/curly hair and check photos + reviews." },
-      { q: "Can I book online?", a: "Yes—book a time slot that matches the service duration." }
+      { q: "Quels services proposent les salons afro ?", a: "Souvent tresses, twists, locks, silk press, soins et coiffures pour cheveux texturés." },
+      { q: "Comment trouver un spécialiste des cheveux texturés ?", a: "Cherchez des services mentionnant cheveux bouclés ou texturés et regardez photos et avis." },
+      { q: "Puis-je réserver en ligne ?", a: "Oui — choisissez un créneau adapté à la durée du service." }
     ]
   },
   {
     slug: "brow-services-near-me",
-    title: "Brow services near me",
+    title: "Services pour sourcils près de moi",
     categoryParam: "Brows",
-    synonyms: ["brow shaping", "brow tint", "lamination", "microblading consult"],
+    synonyms: ["épilation sourcils", "teinture sourcils", "lamination", "consultation microblading"],
     faqs: [
-      { q: "What’s the most popular brow service?", a: "Shaping + tint is common; lamination is popular for a fuller, lifted look." },
-      { q: "How often should I do brows?", a: "Most people do shaping every 2–4 weeks depending on growth." },
-      { q: "Can I book last-minute?", a: "Sometimes—availability depends on the business. Use filters to check." }
+      { q: "Quel est le service de sourcils le plus populaire ?", a: "La mise en forme + teinture est très populaire ; la lamination donne un effet plus fourni." },
+      { q: "À quelle fréquence faire les sourcils ?", a: "La plupart des gens toutes les 2 à 4 semaines." },
+      { q: "Puis-je réserver à la dernière minute ?", a: "Parfois — cela dépend des disponibilités du salon." }
     ]
   },
   {
     slug: "skincare-facial-near-me",
-    title: "Facials and skincare near me",
+    title: "Soins du visage près de moi",
     categoryParam: "Skincare",
-    synonyms: ["facial", "skincare clinic", "acne facial", "glow facial"],
+    synonyms: ["soin du visage", "clinique de soins de peau", "soin anti-acné", "soin éclat"],
     faqs: [
-      { q: "How often should I get a facial?", a: "Many people do facials monthly, but it depends on skin goals and sensitivity." },
-      { q: "Are facials good for acne?", a: "Some treatments can help. Choose providers that clearly list acne-focused services." },
-      { q: "What should I do before a facial?", a: "Avoid harsh exfoliants and mention sensitivities or allergies when booking." }
+      { q: "À quelle fréquence faire un soin du visage ?", a: "Beaucoup de personnes en font un par mois selon leurs objectifs de peau." },
+      { q: "Les soins du visage aident-ils contre l’acné ?", a: "Certains traitements peuvent aider. Choisissez des services spécialisés." },
+      { q: "Que faire avant un soin du visage ?", a: "Évitez les exfoliants agressifs et mentionnez allergies ou sensibilités." }
     ]
   },
   {
     slug: "best-beauty-services-in-city",
-    title: "Best beauty services near me",
+    title: "Meilleurs services de beauté près de moi",
     categoryParam: "Other",
-    synonyms: ["top rated beauty", "best local salons", "trusted beauty services", "beauty appointments"],
+    synonyms: ["beauté la mieux notée", "meilleurs salons locaux", "services beauté fiables", "rendez-vous beauté"],
     faqs: [
-      { q: "How do I find the best beauty services near me?", a: "Compare ratings, categories, and availability. Focus on services that match your needs and budget." },
-      { q: "Is online booking reliable?", a: "Yes—real availability means fewer conflicts and instant confirmation." },
-      { q: "Can I discover new businesses in my city?", a: "That’s the point of a marketplace—browse, compare, then book." }
+      { q: "Comment trouver les meilleurs services de beauté près de moi ?", a: "Comparez les notes, catégories et disponibilités pour choisir ce qui correspond à vos besoins." },
+      { q: "La réservation en ligne est-elle fiable ?", a: "Oui — les disponibilités réelles réduisent les conflits et confirment immédiatement." },
+      { q: "Puis-je découvrir de nouveaux salons dans ma ville ?", a: "Oui — une marketplace permet de parcourir, comparer et réserver facilement." }
     ]
   }
 ];

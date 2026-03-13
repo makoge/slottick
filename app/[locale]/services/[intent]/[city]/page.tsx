@@ -23,7 +23,6 @@ function titleCase(s: string) {
     .join(" ");
 }
 
-// Optional OG locale map (keep only what you actually support)
 function ogLocale(locale: string) {
   const map: Record<string, string> = { en: "en_US", fr: "fr_FR" };
   return map[locale];
@@ -40,8 +39,8 @@ function buildExploreHref(locale: string, intentSlug: string, citySlug: string) 
   return `/${locale}/explore${qs.toString() ? `?${qs.toString()}` : ""}`;
 }
 
-// small variation engine so it doesn’t feel copy/paste
-function generateContentBlocks(intentSlug: string, citySlug: string) {
+// variation engine with locale support
+function generateContentBlocks(intentSlug: string, citySlug: string, locale: string) {
   const intent = SEO_INTENTS_10.find((x) => x.slug === intentSlug);
   const city = SEO_CITIES_20.find((x) => x.slug === citySlug);
 
@@ -55,6 +54,24 @@ function generateContentBlocks(intentSlug: string, citySlug: string) {
   const s3 = synonyms[2] ?? "appointments";
   const s4 = synonyms[3] ?? "nearby businesses";
 
+  if (locale === "fr") {
+    const bullets = [
+      `Filtrez ${intentTitle.toLowerCase()} à ${cityName}${country} par catégorie et disponibilité.`,
+      `Choisissez un créneau qui correspond réellement à l’emploi du temps du prestataire.`,
+      `Comparez les établissements plus rapidement : services, durées et réservation claire.`,
+      `Réservez en quelques minutes puis gérez les modifications facilement.`
+    ];
+
+    const paragraphs = [
+      `Les recherches ${intentTitle.toLowerCase()} signifient souvent une chose : trouver rapidement un service disponible. Slottick vous aide à découvrir ${s1} à ${cityName}${country} et réserver un créneau réel.`,
+      `Au lieu d’appeler plusieurs salons, parcourez les établissements, consultez les services et confirmez instantanément.`,
+      `Si vous cherchez ${s3} à ${cityName}, filtrez par ville et catégorie puis ouvrez une page d’établissement pour voir les horaires.`,
+      `Vous voulez plus de choix ? Utilisez Explore pour découvrir ${s4} et réserver sans échanges interminables.`
+    ];
+
+    return { cityName, country, intentTitle, paragraphs, bullets };
+  }
+
   const bullets = [
     `Filter ${intentTitle.toLowerCase()} in ${cityName}${country} by category and availability.`,
     `Pick a time slot that actually fits the provider’s schedule (no guessing).`,
@@ -64,8 +81,8 @@ function generateContentBlocks(intentSlug: string, citySlug: string) {
 
   const paragraphs = [
     `${intentTitle} searches usually mean one thing: you want something available soon and easy to book. Slottick helps you find ${s1} in ${cityName}${country} and reserve a slot that matches real availability.`,
-    `Instead of calling around, browse businesses, check services and durations, and confirm instantly. This works especially well for ${s2}, where timing matters as much as quality.`,
-    `If you’re looking for ${s3} in ${cityName}, start by filtering by city and category, then open a business page to see live times.`,
+    `Instead of calling around, browse businesses, check services and durations, and confirm instantly.`,
+    `If you’re looking for ${s3} in ${cityName}, start by filtering by city and category.`,
     `Want more choice? Use Explore to browse ${s4}, compare options, and book without the back-and-forth.`
   ];
 
@@ -104,14 +121,20 @@ export async function generateMetadata({
 
   const pageTitle =
     intentObj.slug === "best-beauty-services-in-city"
-      ? `Best beauty services in ${cityName}${country}`
-      : `${intentObj.title ?? titleCase(intent)} in ${cityName}${country}`;
+      ? locale === "fr"
+        ? `Meilleurs services beauté à ${cityName}${country}`
+        : `Best beauty services in ${cityName}${country}`
+      : locale === "fr"
+      ? `${intentObj.title} à ${cityName}${country}`
+      : `${intentObj.title} in ${cityName}${country}`;
 
-  const description = `Find and book ${pageTitle.toLowerCase()}. Compare businesses, check real availability, and book instantly on Slottick.`;
+  const description =
+    locale === "fr"
+      ? `Trouvez et réservez ${pageTitle.toLowerCase()}. Comparez les établissements et réservez instantanément sur Slottick.`
+      : `Find and book ${pageTitle.toLowerCase()}. Compare businesses, check real availability, and book instantly on Slottick.`;
 
   const canonical = `${baseUrl}/${locale}/services/${intent}/${city}`;
 
-  // Keep hreflang only if these pages exist per locale
   const languages = Object.fromEntries(
     locales.map((l) => [l, `${baseUrl}/${l}/services/${intent}/${city}`])
   );
@@ -123,14 +146,7 @@ export async function generateMetadata({
     alternates: { canonical, languages },
     robots: {
       index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        "max-image-preview": "large",
-        "max-snippet": -1,
-        "max-video-preview": -1
-      }
+      follow: true
     },
     openGraph: {
       type: "website",
@@ -162,14 +178,51 @@ export default async function Page({ params }: { params: Promise<Params> }) {
   const canonical = `${baseUrl}/${locale}/services/${intent}/${city}`;
 
   const exploreHref = buildExploreHref(locale, intent, city);
-  const { cityName, country, intentTitle, paragraphs, bullets } = generateContentBlocks(intent, city);
+  const { cityName, country, intentTitle, paragraphs, bullets } = generateContentBlocks(intent, city, locale);
+
+  const t = locale === "fr"
+    ? {
+        intro: "Comparez les établissements, consultez les disponibilités réelles et réservez instantanément.",
+        browse: "Voir les services disponibles à",
+        marketplace: "Ouvrir la marketplace",
+        how: "Comment choisir la bonne option",
+        more: "Plus de services à",
+        otherCities: "dans d’autres villes",
+        faq: "FAQ",
+        ready: "Prêt à réserver ?",
+        readyText: "Allez dans Explore et filtrez par ville et catégorie pour voir les créneaux.",
+        explore: "Explorer",
+        home: "Accueil",
+        exploreNav: "Explorer",
+        list: "Ajouter votre établissement",
+        moreNav: "Plus :"
+      }
+    : {
+        intro: "Compare businesses, check real availability, and book instantly — no back-and-forth.",
+        browse: "Browse available services in",
+        marketplace: "Open full marketplace",
+        how: "How to choose the right option",
+        more: "More services in",
+        otherCities: "in other cities",
+        faq: "FAQ",
+        ready: "Ready to book?",
+        readyText: "Go to Explore and filter by city + category to see real time slots.",
+        explore: "Explore",
+        home: "Home",
+        exploreNav: "Explore",
+        list: "List your business",
+        moreNav: "More:"
+      };
 
   const mainHeading =
     intentObj.slug === "best-beauty-services-in-city"
-      ? `Best beauty services in ${cityName}${country}`
+      ? locale === "fr"
+        ? `Meilleurs services beauté à ${cityName}${country}`
+        : `Best beauty services in ${cityName}${country}`
+      : locale === "fr"
+      ? `${intentTitle} à ${cityName}${country}`
       : `${intentTitle} in ${cityName}${country}`;
 
-  // internal links (strong + safe)
   const siblingIntents = SEO_INTENTS_10.filter((x) => x.slug !== intent).slice(0, 8);
   const siblingCities = SEO_CITIES_20.filter((x) => x.slug !== city).slice(0, 8);
 
@@ -187,8 +240,8 @@ export default async function Page({ params }: { params: Promise<Params> }) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: `${baseUrl}/${locale}` },
-      { "@type": "ListItem", position: 2, name: "Explore", item: `${baseUrl}/${locale}/explore` },
+      { "@type": "ListItem", position: 1, name: t.home, item: `${baseUrl}/${locale}` },
+      { "@type": "ListItem", position: 2, name: t.exploreNav, item: `${baseUrl}/${locale}/explore` },
       { "@type": "ListItem", position: 3, name: mainHeading, item: canonical }
     ]
   };
@@ -201,36 +254,26 @@ export default async function Page({ params }: { params: Promise<Params> }) {
 
           <h1 className="mt-2 text-4xl font-bold tracking-tight">{mainHeading}</h1>
 
-          <p className="mt-4 text-lg text-slate-600">
-            Compare businesses, check real availability, and book instantly — no back-and-forth.
-          </p>
+          <p className="mt-4 text-lg text-slate-600">{t.intro}</p>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              href={exploreHref}
-              className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-            >
-              Browse available services in {cityName}
+            <Link href={exploreHref} className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800">
+              {t.browse} {cityName}
             </Link>
 
-            <Link
-              href={`/${locale}/explore`}
-              className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-50"
-            >
-              Open full marketplace
+            <Link href={`/${locale}/explore`} className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-50">
+              {t.marketplace}
             </Link>
           </div>
 
           <section className="mt-10 space-y-4">
             {paragraphs.map((p, idx) => (
-              <p key={idx} className="leading-relaxed text-slate-700">
-                {p}
-              </p>
+              <p key={idx} className="leading-relaxed text-slate-700">{p}</p>
             ))}
           </section>
 
           <section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-6">
-            <h2 className="text-xl font-semibold">How to choose the right option</h2>
+            <h2 className="text-xl font-semibold">{t.how}</h2>
             <ul className="mt-4 list-disc space-y-2 pl-6 text-slate-700">
               {bullets.map((b, idx) => (
                 <li key={idx}>{b}</li>
@@ -238,41 +281,8 @@ export default async function Page({ params }: { params: Promise<Params> }) {
             </ul>
           </section>
 
-          {/* Strong internal links */}
-          <section className="mt-10 grid gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 p-6">
-              <h2 className="text-lg font-semibold">More services in {cityName}</h2>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {siblingIntents.map((i) => (
-                  <Link
-                    key={i.slug}
-                    href={`/${locale}/services/${i.slug}/${city}`}
-                    className="text-sm underline text-slate-700 hover:text-slate-900"
-                  >
-                    {i.title} in {cityName}
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 p-6">
-              <h2 className="text-lg font-semibold">{intentTitle} in other cities</h2>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {siblingCities.map((c) => (
-                  <Link
-                    key={c.slug}
-                    href={`/${locale}/services/${intent}/${c.slug}`}
-                    className="text-sm underline text-slate-700 hover:text-slate-900"
-                  >
-                    {intentTitle} in {c.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
-
           <section className="mt-12">
-            <h2 className="text-2xl font-semibold">FAQ</h2>
+            <h2 className="text-2xl font-semibold">{t.faq}</h2>
             <div className="mt-4 space-y-5">
               {intentObj.faqs.map((f) => (
                 <div key={f.q} className="rounded-2xl border border-slate-200 p-5">
@@ -284,42 +294,28 @@ export default async function Page({ params }: { params: Promise<Params> }) {
           </section>
 
           <section className="mt-12 rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-xl font-semibold">Ready to book?</h2>
-            <p className="mt-2 text-slate-600">
-              Go to Explore and filter by city + category to see real time slots.
-            </p>
+            <h2 className="text-xl font-semibold">{t.ready}</h2>
+            <p className="mt-2 text-slate-600">{t.readyText}</p>
             <div className="mt-5">
               <Link className="font-semibold underline" href={exploreHref}>
-                Explore {intentTitle.toLowerCase()} in {cityName}
+                {t.explore} {intentTitle.toLowerCase()} {locale === "fr" ? "à" : "in"} {cityName}
               </Link>
             </div>
           </section>
 
           <nav className="mt-10 text-sm text-slate-600">
-            <span className="font-semibold text-slate-900">More:</span>{" "}
-            <Link className="underline" href={`/${locale}`}>
-              Home
-            </Link>{" "}
+            <span className="font-semibold text-slate-900">{t.moreNav}</span>{" "}
+            <Link className="underline" href={`/${locale}`}>{t.home}</Link>{" "}
             •{" "}
-            <Link className="underline" href={`/${locale}/explore`}>
-              Explore
-            </Link>{" "}
+            <Link className="underline" href={`/${locale}/explore`}>{t.exploreNav}</Link>{" "}
             •{" "}
-            <Link className="underline" href={`/${locale}/register`}>
-              List your business
-            </Link>
+            <Link className="underline" href={`/${locale}/register`}>{t.list}</Link>
           </nav>
         </div>
       </main>
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
     </>
   );
 }

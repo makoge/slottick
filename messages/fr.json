@@ -292,13 +292,14 @@
     },
 
     "header": {
-      "badge": "Tableau de bord",
+      "kicker": "Tableau de bord",
       "industryFallback": "Secteur"
     },
 
     "profile": {
       "title": "Profil entreprise",
       "subtitle": "Mettez à jour vos infos publiques. Les changements s’affichent sur votre page de réservation.",
+      "lead": "Mettez à jour les informations et l'image de votre entreprise.",
 
       "fields": {
         "businessName": "Nom de l’entreprise",
@@ -316,6 +317,11 @@
         "uploading": "Téléversement du logo…",
         "saving": "Enregistrement…",
         "saveChanges": "Enregistrer"
+      },
+      "actions": {
+        "removeLogo": "Supprimer le logo",
+        "cancel": "Annuler",
+        "saveChanges": "Enregistrer les modifications"
       }
     },
 
@@ -345,7 +351,8 @@
   "copyLink": "Copier le lien",
   "copied": "Copié ✓",
   "shareHint": "Partagez-le sur Instagram, WhatsApp, votre site web, partout.",
-  "help": "Partagez ce lien pour permettre aux clients de réserver.",
+  "copy": "Copier le site",
+  "help": "Ceci est votre site de réservation. Partagez-le avec vos clients et sur les réseaux sociaux pour permettre une réservation facile.",
   "tip": "Astuce : gardez vos disponibilités à jour, votre page de réservation reflète toujours les changements.",
   "copyFailed": "Échec de la copie — veuillez copier manuellement."
 },
@@ -375,6 +382,9 @@
         "side1": "Image latérale 1",
         "side2": "Image latérale 2",
         "heroAlt": "Aperçu hero",
+        "heroEmpty": "Téléchargez votre photo principale",
+        "side1Empty": "Téléchargez une photo de la galerie",
+        "side2Empty": "Téléchargez une autre photo de la galerie",
         "sideAlt1": "Aperçu latéral 1",
         "sideAlt2": "Aperçu latéral 2"
       },
@@ -953,14 +963,16 @@
     "days": "jours",
     "sendAt": "Date & heure d’envoi",
     "sendAtHint": "Utilise l’heure de votre appareil.",
-    "birthdayHint": "Envoi le jour de l’anniversaire (si renseigné)."
+    "birthdayHint": "Envoi le jour de l’anniversaire (si renseigné).",
+    "customDateLimit": "La planification à date personnalisée fonctionne dans une limite d’un mois. Pour des automatisations à plus long terme, passez à une offre supérieure."
   },
   "triggers": {
     "birthday": "Anniversaire",
     "reminder": "Rappel de rendez-vous",
     "winback": "Relance",
     "customDate": "Date personnalisée",
-    "customDateLimit": "La planification à date personnalisée fonctionne dans une limite d’un mois. Pour des automatisations à plus long terme, passez à une offre supérieure."
+    "comingSoon": "Bientôt disponible"
+    
   },
   "audience": {
     "title": "Audience",
@@ -1039,7 +1051,8 @@
     "autoScheduled": "Automatisation planifiée avec succès",
     "customDateTooFar": "La date personnalisée doit être dans un délai d’un mois. Passez à une offre supérieure pour des automatisations à plus long terme.",
     "appointmentMissing": "Ajoutez d’abord une date et une heure de rendez-vous pour ce client",
-"appointmentInvalid": "Date ou heure de rendez-vous invalide"
+  "appointmentInvalid": "Date ou heure de rendez-vous invalide",
+  "triggerUnavailable": "Cette automatisation n’est pas encore disponible"
   },
   "templates": {
     "birthday": {

@@ -476,56 +476,57 @@ export default function BookingClient({
     <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
       {/* LEFT */}
       <div className="lg:col-span-6">
-  {/* GLASS HEADER CARD (logo + name + pills only) */}
-  <div className="inline-block rounded-[28px] bg-white/10 p-5 ring-1 ring-white/25 backdrop-blur-xl shadow-[0_30px_80px_-60px_rgba(0,0,0,0.9)]">
-    <div className="flex items-start gap-4">
-      {business.logoUrl ? (
-        <div className="rounded-3xl bg-white/70 p-1 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.6)] ring-1 ring-white/60 backdrop-blur">
-          <img
-            src={business.logoUrl}
-            alt={tr("booking.hero.logoAlt", { name: business.name })}
-            className="h-14 w-14 rounded-[22px] object-cover"
-          />
+        {/* GLASS HEADER CARD */}
+        <div className="inline-block rounded-[28px] bg-white/10 p-5 ring-1 ring-white/25 backdrop-blur-xl shadow-[0_30px_80px_-60px_rgba(0,0,0,0.9)]">
+          <div className="flex items-start gap-4">
+            {business.logoUrl ? (
+              <div className="rounded-3xl bg-white/70 p-1 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.6)] ring-1 ring-white/60 backdrop-blur">
+                <img
+                  src={business.logoUrl}
+                  alt={tr("booking.hero.logoAlt", { name: business.name })}
+                  className="h-14 w-14 rounded-[22px] object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/70 text-sm font-semibold text-slate-500 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.6)] ring-1 ring-white/60 backdrop-blur">
+                {business.name?.charAt(0)?.toUpperCase() || "S"}
+              </div>
+            )}
+
+            <div className="min-w-0">
+              <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow sm:text-4xl capitalize">
+                {business.name}
+              </h1>
+
+              <p className="mt-2 text-sm text-white/80 sm:text-base">
+                {business.industry
+                  ? String(business.industry).replace(/_/g, " ")
+                  : tr("booking.hero.industryFallback")}
+                {addr ? ` • ${addr}` : ""}
+              </p>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {!loadingRule ? (
+                  <span className="rounded-full bg-white/75 px-3 py-1 text-sm text-slate-900 shadow-sm ring-1 ring-white/60 backdrop-blur">
+                    {tr("booking.hero.timezoneLabel")}{" "}
+                    <span className="font-semibold">{rule.timezone}</span>
+                  </span>
+                ) : null}
+
+                {website ? (
+                  <a
+                    href={website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-white/75 px-3 py-1 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-white/60 backdrop-blur hover:bg-white"
+                  >
+                    {tr("booking.hero.visitWebsite")}
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/70 text-sm font-semibold text-slate-500 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.6)] ring-1 ring-white/60 backdrop-blur">
-          {business.name?.charAt(0)?.toUpperCase() || "S"}
-        </div>
-      )}
-
-      <div className="min-w-0">
-        <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow sm:text-4xl">
-          {business.name}
-        </h1>
-
-        <p className="mt-2 text-sm text-white/80 sm:text-base">
-          {business.industry ? String(business.industry).replace(/_/g, " ") : tr("booking.hero.industryFallback")}
-          {addr ? ` • ${addr}` : ""}
-        </p>
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          
-
-          {!loadingRule ? (
-            <span className="rounded-full bg-white/75 px-3 py-1 text-sm text-slate-900 shadow-sm ring-1 ring-white/60 backdrop-blur">
-              {tr("booking.hero.timezoneLabel")} <span className="font-semibold">{rule.timezone}</span>
-            </span>
-          ) : null}
-
-          {website ? (
-            <a
-              href={website}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full bg-white/75 px-3 py-1 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-white/60 backdrop-blur hover:bg-white"
-            >
-              {tr("booking.hero.visitWebsite")}
-            </a>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  </div>
 
         <div className="mt-7 space-y-5">
           {description ? (
@@ -533,7 +534,9 @@ export default function BookingClient({
               {description}
             </p>
           ) : (
-            <p className="max-w-2xl text-white/70">{tr("booking.hero.noDescription")}</p>
+            <p className="max-w-2xl text-white/70">
+              {tr("booking.hero.noDescription")}
+            </p>
           )}
         </div>
       </div>
@@ -541,12 +544,19 @@ export default function BookingClient({
       {/* RIGHT */}
       <div className="lg:col-span-6">
         <div className="grid grid-cols-3 gap-4">
-          {/* instead of the big image card, use a glass info card */}
-          <div className="col-span-2 rounded-[28px] bg-white/10 p-6 ring-1 ring-white/25 backdrop-blur-md shadow-[0_30px_80px_-50px_rgba(0,0,0,0.8)]">
-            <div className="text-sm font-semibold text-white/90">Gallery</div>
-            <div className="mt-2 text-sm text-white/70">
-              Tap a photo to preview
-            </div>
+          <div className="col-span-2 overflow-hidden rounded-[28px] bg-white/10 ring-1 ring-white/25 backdrop-blur-md shadow-[0_30px_80px_-50px_rgba(0,0,0,0.8)]">
+            <button
+              type="button"
+              onClick={() => setLightboxUrl(heroImages[0])}
+              className="block h-full w-full"
+            >
+              <img
+                src={heroImages[0]}
+                alt={tr("booking.hero.photoAlt", { name: business.name, n: 1 })}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            </button>
           </div>
 
           <div className="grid gap-4">
@@ -580,8 +590,6 @@ export default function BookingClient({
       </div>
     </div>
   </div>
-
-  
 </section>
 
     {/* BODY */}

@@ -8,6 +8,10 @@ import AvailabilityEditor from "./availability";
 import ServicesEditor from "./services";
 import BookingsPanel from "./bookings";
 import SchedulePanel from "./schedule";
+import DashboardHeader from "./dashboard-header";
+import ShareLinkCard from "./share-link-card";
+import StatsSection from "./stats-section";
+
 
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
@@ -712,68 +716,15 @@ export default function DashboardClient({ locale, business }: Props) {
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900">
       <div className="mx-auto w-full max-w-screen-2xl px-4 py-10 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex items-start gap-4">
-            <div className="h-14 w-14 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-              {biz.logoUrl ? (
-                <img src={biz.logoUrl} alt={t(messages, "dashboard.header.logoAlt")} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-slate-400">
-                  {biz.name?.charAt(0)?.toUpperCase() || "S"}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-slate-600">{t(messages, "dashboard.header.kicker")}</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">{biz.name}</h1>
-              <p className="mt-1 text-sm text-slate-600">
-                <span className="font-semibold text-slate-900">{biz.industry ?? t(messages, "dashboard.header.industryFallback")}</span>
-                {biz.city ? ` • ${biz.city}` : ""}
-                {biz.country ? `, ${biz.country}` : ""}
-                {" • "}
-                <span className="font-semibold text-slate-900">{biz.slug}</span>
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={startEdit}
-              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-            >
-              {t(messages, "dashboard.actions.editProfile")}
-            </button>
-
-            <a
-              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-              href={bookingPath}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {t(messages, "dashboard.actions.openBookingPage")}
-            </a>
-
-            <button
-              type="button"
-              onClick={() => refreshStats()}
-              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-60"
-              disabled={statsLoading}
-            >
-              {statsLoading ? t(messages, "dashboard.actions.refreshing") : t(messages, "dashboard.actions.refreshStats")}
-            </button>
-
-            <button
-              onClick={logout}
-              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-              type="button"
-            >
-              {t(messages, "dashboard.actions.logout")}
-            </button>
-          </div>
-        </div>
+        <DashboardHeader
+  biz={biz}
+  messages={messages}
+  bookingPath={bookingPath}
+  statsLoading={statsLoading}
+  onEdit={startEdit}
+  onRefresh={() => refreshStats()}
+  onLogout={logout}
+/>
 
         {/* Profile editor */}
         {editing && (
@@ -886,79 +837,21 @@ export default function DashboardClient({ locale, business }: Props) {
           </section>
         )}
 
-        {/* Stats row */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard
-            title={t(messages, "dashboard.stats.totalBookings.title")}
-            value={statsLoading ? "—" : String(stats.totalBookings)}
-            sub={statsLoading ? t(messages, "common.loading") : t(messages, "dashboard.stats.totalBookings.sub")}
-            tone="blue"
-          />
+        <StatsSection
+  messages={messages}
+  statsLoading={statsLoading}
+  stats={stats}
+/>
 
-          <StatCard
-            title={t(messages, "dashboard.stats.revenue.title")}
-            sub={statsLoading ? t(messages, "common.loading") : t(messages, "dashboard.stats.revenue.sub")}
-            tone="green"
-          >
-            <div className="grid gap-2 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                  {t(messages, "dashboard.stats.revenue.weekly")}
-                </span>
-                <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.weeklyRevenue}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                  {t(messages, "dashboard.stats.revenue.monthly")}
-                </span>
-                <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.monthlyRevenue}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
-                  {t(messages, "dashboard.stats.revenue.yearly")}
-                </span>
-                <span className="font-semibold text-slate-900">{statsLoading ? "—" : stats.yearlyRevenue}</span>
-              </div>
-            </div>
-          </StatCard>
-
-          <StatCard
-            title={t(messages, "dashboard.stats.customers.title")}
-            value={statsLoading ? "—" : String(stats.uniqueCustomers)}
-            sub={statsLoading ? t(messages, "common.loading") : t(messages, "dashboard.stats.customers.sub")}
-            tone="purple"
-          />
-        </div>
-
-        {/* Share link card */}
-        <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-600">{t(messages, "dashboard.share.title")}</div>
-
-              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="min-w-0 flex-1 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 ring-1 ring-slate-200">
-                  <div className="truncate">{bookingUrl || bookingPath}</div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={copyLink}
-                  className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-                >
-                  {copied ? t(messages, "dashboard.share.copied") : t(messages, "dashboard.share.copy")}
-                </button>
-              </div>
-
-              <div className="mt-2 text-sm text-slate-500">{t(messages, "dashboard.share.help")}</div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-600">
-            {t(messages, "dashboard.share.tip")}
-          </div>
-        </section>
-
+<ShareLinkCard
+  messages={messages}
+  bookingUrl={bookingUrl}
+  bookingPath={bookingPath}
+  copied={copied}
+  onCopy={copyLink}
+/>
+          
+        
         {/* ✅ Booking website content */}
         <BookingGalleryManager locale={locale} />
         <BookingDescriptionEditor
@@ -974,13 +867,13 @@ export default function DashboardClient({ locale, business }: Props) {
         {/* Panels */}
         <div className="mt-8 grid gap-6 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            {/*<div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">
                 <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.schedule.title")}</h2>
                 <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.schedule.lead")}</p>
               </div>
               <SchedulePanel />
-            </div>
+            </div>*/}
 
             <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <div className="mb-4">

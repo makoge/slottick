@@ -30,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const TOOL_SLUGS = [
   "profit-calculator",
+  "client-follow-up-automation",
       ] as const;
 
   const useLocales = locales.filter((l) =>
