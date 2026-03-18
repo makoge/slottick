@@ -42,6 +42,25 @@ type CustomerMe = {
   };
 };
 
+function stars(n: number) {
+  return "★".repeat(Math.max(0, Math.min(5, n))) + "☆".repeat(Math.max(0, 5 - n));
+}
+
+function timeAgo(iso: string) {
+  const ms = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(ms / 60000);
+  const hours = Math.floor(ms / 3600000);
+  const days = Math.floor(ms / 86400000);
+
+  if (mins < 60) return `${Math.max(1, mins)} min ago`;
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  if (days < 7) return `${days} day${days === 1 ? "" : "s"} ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks} week${weeks === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months === 1 ? "" : "s"} ago`;
+}
+
 type BusinessPublic = {
   name: string;
   slug: string;
@@ -58,6 +77,14 @@ type BusinessPublic = {
   logoUrl?: string | null;
 
   galleryImages: string[];
+  reviews: {
+  rating: number;
+  comment: string;
+  createdAt: string;
+  customerName: string;
+}[];
+ratingAvg?: number | null;
+ratingCount?: number | null;
 };
 
 function toCurrency(x: unknown): Currency {
@@ -981,39 +1008,48 @@ export default function BookingClient({
   </div>
 
   {/* REVIEWS */}
-  <div className="rounded-[32px] bg-white/80 p-6 shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-100 backdrop-blur">
-    <div className="flex items-center justify-between">
-      <h2 className="text-lg font-semibold">Customer Reviews</h2>
-      <span className="text-sm text-slate-500">⭐ 4.9 (124)</span>
-    </div>
-
-    <div className="mt-6 space-y-5">
-      {/* SAMPLE REVIEW CARD */}
-      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
-        <div className="flex items-center justify-between">
-          <div className="font-semibold text-sm">Sarah M.</div>
-          <div className="text-xs text-slate-500">2 days ago</div>
-        </div>
-        <div className="mt-2 text-sm text-slate-700">
-          Absolutely amazing service. Super professional and welcoming.
-        </div>
-      </div>
-
-      <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
-        <div className="flex items-center justify-between">
-          <div className="font-semibold text-sm">James K.</div>
-          <div className="text-xs text-slate-500">1 week ago</div>
-        </div>
-        <div className="mt-2 text-sm text-slate-700">
-          Clean environment, great attention to detail. Highly recommend.
-        </div>
-      </div>
-
-      <button className="mt-2 w-full rounded-2xl border border-slate-200 py-2 text-sm font-semibold hover:bg-slate-50">
-        View all reviews
-      </button>
-    </div>
+<div className="rounded-[32px] bg-white/80 p-6 shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-100 backdrop-blur">
+  <div className="flex items-center justify-between">
+    <h2 className="text-lg font-semibold">Customer Reviews</h2>
+    <span className="text-sm text-slate-500">
+      {(business.ratingCount ?? 0) > 0
+        ? `⭐ ${Number(business.ratingAvg ?? 0).toFixed(1)} (${business.ratingCount})`
+        : "No reviews yet"}
+    </span>
   </div>
+
+  <div className="mt-6 space-y-5">
+    {business.reviews?.length ? (
+      <>
+        {business.reviews.map((r, i) => (
+          <div key={`${r.customerName}-${r.createdAt}-${i}`} className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="font-semibold text-sm">{r.customerName}</div>
+                <div className="mt-1 text-sm text-amber-500">{stars(r.rating)}</div>
+              </div>
+              <div className="text-xs text-slate-500">{timeAgo(r.createdAt)}</div>
+            </div>
+
+            <div className="mt-2 text-sm text-slate-700">
+              {r.comment?.trim() || "Great service."}
+            </div>
+          </div>
+        ))}
+
+        {(business.ratingCount ?? 0) > 6 ? (
+          <button className="mt-2 w-full rounded-2xl border border-slate-200 py-2 text-sm font-semibold hover:bg-slate-50">
+            View all reviews
+          </button>
+        ) : null}
+      </>
+    ) : (
+      <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-slate-100">
+        No reviews yet.
+      </div>
+    )}
+  </div>
+</div>
 
 </div>
       </div>

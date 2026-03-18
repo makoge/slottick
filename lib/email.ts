@@ -35,15 +35,24 @@ async function safeSend({ to, subject, html, replyTo, scheduledAt }: SendArgs) {
   }
 
   try {
-    return await resend.emails.send({
-  from: FROM,
-  to,
-  subject,
-  html,
-  text: html.replace(/<[^>]+>/g, ""),
-  replyTo: replyTo ?? REPLY_TO,
-  scheduledAt,
-});
+  const text = html
+  .replace(/<br\s*\/?>/gi, "\n")
+  .replace(/<\/p>/gi, "\n\n")
+  .replace(/<\/div>/gi, "\n")
+  .replace(/<\/li>/gi, "\n")
+  .replace(/<li>/gi, "• ")
+  .replace(/<[^>]+>/g, "")
+  .replace(/\n{3,}/g, "\n\n")
+  .trim();
+  return await resend.emails.send({
+      from: FROM,
+      to,
+      subject,
+      html,
+      text,
+      replyTo: replyTo ?? REPLY_TO,
+      scheduledAt,
+    });
   } catch (err) {
     console.error("[email] send failed:", err);
     return { error: true };

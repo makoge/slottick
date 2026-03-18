@@ -306,11 +306,17 @@ export default function ExploreClient({
 
                     <div className="mt-4 flex items-center justify-between">
                       <div>
-                        <Stars value={Number(b.ratingAvg ?? 0)} />
-                        <div className="mt-1 text-xs text-slate-500">
-                          {t("explore.card.reviews", { n: Number(b.ratingCount ?? 0) })}
-                        </div>
-                      </div>
+  {(b.ratingCount ?? 0) > 0 ? (
+    <>
+      <Stars value={Number(b.ratingAvg ?? 0)} />
+      <div className="mt-1 text-xs text-slate-500">
+        {t("explore.card.reviews", { n: Number(b.ratingCount ?? 0) })}
+      </div>
+    </>
+  ) : (
+    <div className="text-sm font-semibold text-slate-500">No reviews yet</div>
+  )}
+</div>
 
                       <span className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold group-hover:bg-slate-50">
                         {t("explore.card.book")}

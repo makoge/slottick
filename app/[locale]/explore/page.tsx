@@ -176,6 +176,7 @@ export default async function Page({
     take: 500,
     orderBy: { createdAt: "desc" },
     where: {
+      marketplaceEligibleAt: { not: null },
       ...(city ? { city } : {}),
       ...(industryEnum ? { industry: industryEnum } : {}),
       ...(qLower

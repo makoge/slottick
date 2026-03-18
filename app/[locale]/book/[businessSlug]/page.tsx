@@ -109,6 +109,8 @@ export default async function Page({ params }: { params: Promise<Params> }) {
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
 
+   
+
   const business = await prisma.business.findUnique({
     where: { slug: businessSlug },
     select: {
@@ -136,7 +138,23 @@ export default async function Page({ params }: { params: Promise<Params> }) {
       marketplaceEligibleAt: true,
       services: {
         select: { name: true, durationMin: true, price: true, currency: true }
+      },
+      reviews: {
+  take: 6,
+  orderBy: { createdAt: "desc" },
+  select: {
+    rating: true,
+    comment: true,
+    createdAt: true,
+    booking: {
+      select: {
+        customerName: true
       }
+    }
+  }
+},
+ratingAvg: true,
+ratingCount: true,
     }
   });
 
@@ -236,8 +254,16 @@ export default async function Page({ params }: { params: Promise<Params> }) {
 
           website: business.website,
           logoUrl: business.logoUrl,
-          galleryImages
-        }}
+          galleryImages,
+      reviews: (business.reviews ?? []).map((r) => ({
+  rating: r.rating,
+  comment: r.comment ?? "",
+  createdAt: r.createdAt.toISOString(),
+  customerName: r.booking?.customerName ?? "Anonymous"
+})),
+ratingAvg: business.ratingAvg ?? 0,
+ratingCount: business.ratingCount ?? 0,
+}}
       />
 
       {localBusinessJsonLd ? (
