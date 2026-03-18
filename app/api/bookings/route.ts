@@ -2,6 +2,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthedBusiness } from "@/lib/auth";
+import {
+  sendBookingConfirmationEmail,
+  sendClientFollowUpEmail,
+} from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -25,6 +29,38 @@ function asISO(d: unknown) {
   } catch {
     return "";
   }
+}
+
+function formatMoneySimple(amount: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("en", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${amount} ${currency}`;
+  }
+}
+
+function formatBookingDateParts(startsAtIso: string, timeZone: string) {
+  const dt = new Date(startsAtIso);
+
+  const date = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(dt); // YYYY-MM-DD
+
+  const time = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(dt); // HH:MM
+
+  return { date, time };
 }
 
 /**
@@ -56,13 +92,13 @@ export async function GET(req: Request) {
       customerPhone: true,
       customerCountry: true,
       notes: true,
-      status: true
-    }
+      status: true,
+    },
   });
 
   const bookings = rows.map((b) => ({
     ...b,
-    startsAt: asISO(b.startsAt) // ✅ serialize Date -> ISO string for client
+    startsAt: asISO(b.startsAt),
   }));
 
   return json({ bookings });
@@ -76,7 +112,6 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({} as any));
 
-    // Accept multiple possible client keys (robust)
     const businessSlug = asString(body.businessSlug || body.slug).trim();
     const serviceName = asString(body.serviceName || body.service).trim();
 
@@ -92,7 +127,6 @@ export async function POST(req: Request) {
 
     const notes = body.notes == null ? null : asString(body.notes).trim() || null;
 
-    // Validate required fields
     const missing: string[] = [];
     if (!businessSlug) missing.push("businessSlug");
     if (!serviceName) missing.push("serviceName");
@@ -117,12 +151,21 @@ export async function POST(req: Request) {
 
     const business = await prisma.business.findUnique({
       where: { slug: businessSlug },
-      select: { id: true, marketplaceEligibleAt: true }
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        ownerEmail: true,
+        availabilityRule: {
+          select: {
+            timezone: true,
+          },
+        },
+      },
     });
 
     if (!business) return json({ error: "Business not found." }, 404);
 
-    // Resolve service (optional)
     const serviceId = body.serviceId ? asString(body.serviceId).trim() : null;
 
     let resolvedServiceId: string | null = null;
@@ -131,7 +174,7 @@ export async function POST(req: Request) {
     if (serviceId) {
       const s = await prisma.service.findFirst({
         where: { id: serviceId, businessId: business.id },
-        select: { id: true, category: true }
+        select: { id: true, category: true },
       });
       if (s) {
         resolvedServiceId = s.id;
@@ -140,7 +183,7 @@ export async function POST(req: Request) {
     } else {
       const s = await prisma.service.findFirst({
         where: { businessId: business.id, name: serviceName },
-        select: { id: true, category: true }
+        select: { id: true, category: true },
       });
       if (s) {
         resolvedServiceId = s.id;
@@ -164,10 +207,63 @@ export async function POST(req: Request) {
         customerName,
         customerPhone,
         customerEmail,
-        notes
+        notes,
       },
-      select: { id: true }
+      select: { id: true },
     });
+
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+    const locale = asString(body.locale).trim() || "en";
+    const manageLink = `${siteUrl}/${locale}/book/${business.slug}/success?id=${encodeURIComponent(
+      booking.id
+    )}`;
+
+    const businessTz = business.availabilityRule?.timezone || "UTC";
+    const { date, time } = formatBookingDateParts(startsAt, businessTz);
+    const priceText = formatMoneySimple(price, currency);
+
+    try {
+      await sendBookingConfirmationEmail({
+        to: customerEmail,
+        businessName: business.name,
+        serviceName,
+        date,
+        time,
+        durationMin,
+        priceText,
+        manageLink,
+      });
+
+      if (business.ownerEmail) {
+        await sendClientFollowUpEmail({
+          to: business.ownerEmail,
+          subject: `New booking: ${serviceName}`,
+          html: `
+            <p>You have a new booking.</p>
+
+            <p>
+              <strong>Customer:</strong> ${customerName}<br/>
+              <strong>Email:</strong> ${customerEmail}<br/>
+              <strong>Phone:</strong> ${customerPhone}<br/>
+              <strong>Service:</strong> ${serviceName}<br/>
+              <strong>Date:</strong> ${date}<br/>
+              <strong>Time:</strong> ${time}<br/>
+              <strong>Duration:</strong> ${durationMin} min<br/>
+              <strong>Price:</strong> ${priceText}
+              ${notes ? `<br/><strong>Notes:</strong> ${notes}` : ""}
+            </p>
+
+            <p>
+              <a href="${siteUrl}/${locale}/dashboard">Open dashboard</a>
+            </p>
+          `,
+          replyTo: customerEmail,
+        });
+      }
+    } catch (emailErr) {
+      console.error("Booking email send failed:", emailErr);
+    }
 
     return json({ booking }, 200);
   } catch (err: any) {

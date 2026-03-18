@@ -212,22 +212,33 @@ export default function BookingClient({
       setLoadingRule(true);
       try {
         const res = await fetch(
-          `/api/availability?businessSlug=${encodeURIComponent(businessSlug)}`,
-          { cache: "no-store" }
-        );
+             `/api/public/availability?businessSlug=${encodeURIComponent(businessSlug)}`,
+            { cache: "no-store" }
+                );
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
-        setRule(res.ok && data?.rule ? { ...defaultAvailability, ...data.rule } : defaultAvailability);
-      } catch {
+
+        if (!res.ok) {
+           console.error("Availability fetch failed", data);
+           setRule(defaultAvailability);
+           return;
+             }
+
+        if (data?.rule) {
+          setRule({ ...defaultAvailability, ...data.rule });
+            } else {
+             setRule(defaultAvailability);
+               }
+              } catch {
         if (!cancelled) setRule(defaultAvailability);
-      } finally {
+            } finally {
         if (!cancelled) setLoadingRule(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [businessSlug]);
+               }
+             })();
+             return () => {
+              cancelled = true;
+                 };
+          }, [businessSlug]);
 
   // services (includes images)
   useEffect(() => {

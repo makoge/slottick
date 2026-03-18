@@ -5,29 +5,47 @@ import { useState } from "react";
 export default function ReviewClient({
   locale,
   businessSlug,
-  bookingId
+  token,
 }: {
   locale: string;
   businessSlug: string;
-  bookingId: string;
+  token: string;
 }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
-    if (!bookingId) return alert("Missing bookingId");
-    const res = await fetch("/api/reviews", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bookingId, rating, comment })
-    });
-
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      return alert(j.error || "Failed to submit review");
+    if (!token) {
+      setError("Missing review token");
+      return;
     }
-    setDone(true);
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, rating, comment, businessSlug }),
+      });
+
+      const j = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setError(j.error || "Failed to submit review");
+        return;
+      }
+
+      setDone(true);
+    } catch {
+      setError("Failed to submit review");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -45,6 +63,12 @@ export default function ReviewClient({
             </>
           ) : (
             <div className="mt-6 grid gap-4">
+              {error ? (
+                <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+                  {error}
+                </div>
+              ) : null}
+
               <label className="grid gap-1 text-sm">
                 Rating
                 <select
@@ -72,10 +96,11 @@ export default function ReviewClient({
 
               <button
                 type="button"
+                disabled={submitting}
                 onClick={submit}
-                className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+                className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
               >
-                Submit review
+                {submitting ? "Submitting..." : "Submit review"}
               </button>
             </div>
           )}

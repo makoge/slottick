@@ -90,7 +90,9 @@ export default function BookingsPanel() {
   async function cancel(id: string) {
     setBusyId(id);
     try {
-      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/cancel`, { method: "POST" });
+      const res = await fetch(`/api/bookings/${id}/cancel?locale=${locale}`, {
+  method: "POST"
+});
       if (res.status === 401) {
         router.replace(`/${locale}/login`);
         return;
@@ -106,7 +108,9 @@ export default function BookingsPanel() {
   async function done(id: string) {
     setBusyId(id);
     try {
-      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/done`, { method: "POST" });
+      const res = await fetch(`/api/bookings/${encodeURIComponent(id)}/done?locale=${encodeURIComponent(locale)}`, {
+  method: "POST"
+})
       if (res.status === 401) {
         router.replace(`/${locale}/login`);
         return;

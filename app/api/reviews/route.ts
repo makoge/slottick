@@ -1,94 +1,109 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import crypto from "crypto";
 
-function sha256(input: string) {
-  return crypto.createHash("sha256").update(input).digest("hex");
+export const runtime = "nodejs";
+
+function hashToken(token: string) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function asString(v: unknown) {
+  return typeof v === "string" ? v : v == null ? "" : String(v);
 }
 
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
+  try {
+    const body = await req.json().catch(() => ({} as any));
 
-  const bookingId = String(body.bookingId ?? "").trim();
-  const rating = Number(body.rating ?? 0);
-  const comment =
-    body.comment && String(body.comment).trim()
-      ? String(body.comment).trim()
-      : undefined;
+    const token = asString(body.token).trim();
+    const businessSlug = asString(body.businessSlug).trim();
+    const rating = Number(body.rating);
+    const commentRaw = asString(body.comment).trim();
+    const comment = commentRaw || null;
 
-  // Optional: token sent by email (recommended)
-  const reviewToken = body.reviewToken ? String(body.reviewToken).trim() : null;
+    if (!token) {
+      return NextResponse.json({ error: "Missing token" }, { status: 400 });
+    }
 
-  if (!bookingId || !Number.isFinite(rating) || rating < 1 || rating > 5) {
-    return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  }
+    if (!businessSlug) {
+      return NextResponse.json({ error: "Missing businessSlug" }, { status: 400 });
+    }
 
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
-    include: { business: true }
-  });
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return NextResponse.json({ error: "Rating must be between 1 and 5" }, { status: 400 });
+    }
 
-  if (!booking) {
-    return NextResponse.json({ error: "Booking not found" }, { status: 404 });
-  }
+    const reviewTokenHash = hashToken(token);
 
-  if (booking.status === "CANCELLED") {
-    return NextResponse.json({ error: "Booking was cancelled" }, { status: 400 });
-  }
+    const booking = await prisma.booking.findFirst({
+      where: {
+        reviewTokenHash,
+        status: "DONE",
+        business: {
+          slug: businessSlug,
+        },
+      },
+      select: {
+        id: true,
+        businessId: true,
+        startsAt: true,
+        durationMin: true,
+        review: {
+          select: { id: true },
+        },
+      },
+    });
 
-  // Must be completed: now > end time
-  const endsAt = new Date(
-    booking.startsAt.getTime() + booking.durationMin * 60_000
-  );
+ 
+
+    if (!booking) {
+      return NextResponse.json({ error: "Invalid or expired review link" }, { status: 404 });
+    }
+
+      const endsAt = new Date(
+        new Date(booking.startsAt).getTime() + booking.durationMin * 60_000
+        );
 
   if (Date.now() < endsAt.getTime()) {
-    return NextResponse.json(
-      { error: "You can review only after the appointment is completed." },
-      { status: 403 }
-    );
-  }
-
-  // If you're using email review links, enforce token
-  // You need to store reviewTokenHash on Booking (recommended)
-  // booking.reviewTokenHash String?  (add to schema if not there yet)
-  if (booking.reviewTokenHash) {
-    if (!reviewToken) {
-      return NextResponse.json(
-        { error: "Missing review token" },
-        { status: 401 }
-      );
+  return NextResponse.json(
+    { error: "You can review only after the appointment is completed." },
+    { status: 403 }
+  );
     }
-    const hash = sha256(reviewToken);
-    if (hash !== booking.reviewTokenHash) {
-      return NextResponse.json(
-        { error: "Invalid review token" },
-        { status: 401 }
-      );
+
+    if (booking.review) {
+      return NextResponse.json({ error: "Review already submitted" }, { status: 409 });
     }
-  }
+   
 
-  const existing = await prisma.review.findUnique({ where: { bookingId } });
-  if (existing) {
-    return NextResponse.json({ error: "Already reviewed" }, { status: 409 });
-  }
+    await prisma.review.create({
+      data: {
+        bookingId: booking.id,
+        businessId: booking.businessId,
+        rating,
+        comment,
+      },
+    });
 
-  const review = await prisma.review.create({
-    data: {
-      bookingId,
-      businessId: booking.businessId,
-      rating,
-      comment
-    }
-  });
+    const agg = await prisma.review.aggregate({
+      where: { businessId: booking.businessId },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
 
-  // Optional: unlock marketplace listing after first real review
-  if (!booking.business.marketplaceEligibleAt) {
     await prisma.business.update({
       where: { id: booking.businessId },
-      data: { marketplaceEligibleAt: new Date() }
+      data: {
+        ratingAvg: agg._avg.rating ?? 0,
+        ratingCount: agg._count.rating ?? 0,
+      },
     });
-  }
 
-  return NextResponse.json({ review });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error("POST /api/reviews failed:", err);
+    return NextResponse.json({ error: "Failed to submit review" }, { status: 500 });
+  }
 }
 
