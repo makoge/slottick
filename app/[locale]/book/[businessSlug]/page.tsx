@@ -1,4 +1,4 @@
-// app/[locale]/book/[businessSlug]/page.tsx
+
 import type { Metadata } from "next";
 import BookingClient from "./booking-client";
 import { locales } from "@/lib/i18n";

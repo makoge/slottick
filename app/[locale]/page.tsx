@@ -1,4 +1,4 @@
-// app/[locale]/page.tsx
+
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { locales, t } from "@/lib/i18n";
@@ -216,8 +216,8 @@ export default async function Home({ params }: { params: Promise<Params> }) {
         {/* HERO */}
         <section className="grid gap-10 md:grid-cols-2 md:items-center">
           <div className="flex flex-col gap-6">
-            <span className="inline-flex w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium">
-              {tr(dict, "home.hero.badge", "Booking management for service businesses")}
+            <span className="inline-flex w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium ring-emerald-200">
+              {tr(dict, "home.hero.badge", "Booking system for service businesses")}
             </span>
 
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
@@ -254,7 +254,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
           </div>
 
           {/* VISUAL */}
-          <div className="rounded-3xl border border-slate-200 bg-[#7bc043a5] p-8 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-[#7bc043a5] p-8 shadow-sm ring-emerald-200">
             <div className="space-y-4 text-sm text-slate-600">
               {heroChecks.map((x, i) => (
                 <p key={`${i}-${x}`}>✔ {x}</p>
@@ -262,12 +262,142 @@ export default async function Home({ params }: { params: Promise<Params> }) {
             </div>
           </div>
         </section>
+       {/* FEATURES BENTO GRID */}
+<section className="mt-6 md:mt-24 lg:mt-32 py-16 sm:py-20 lg:py-24">
+  <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
+    <div className="mb-10 rounded-[2rem] bg-slate-50 px-4 py-6 text-center sm:mb-12 sm:px-6 sm:py-8 lg:mb-16">
+      <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
+        {tr(dict, "home.features.title", "Master your calendar")}
+      </h2>
+      <p className="mx-auto max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+        {tr(
+          dict,
+          "home.features.subtitle",
+          "Elite tools designed to give you back your hours and provide a seamless booking journey for your clients."
+        )}
+      </p>
+    </div>
 
+    <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:gap-8 md:grid-cols-3">
+      {/* Card 1 */}
+      <div className="editorial-shadow group flex flex-col justify-between rounded-2xl bg-white p-6 transition-all hover:bg-slate-100 sm:p-8 lg:p-10 md:col-span-2">
+        <div>
+          <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 transition-transform group-hover:scale-110 sm:h-12 sm:w-12">
+            <span className="material-symbols-outlined text-slate-900">rule</span>
+          </div>
+
+          <h3 className="mb-3 text-xl font-bold text-slate-900 sm:mb-4 sm:text-2xl">
+            {tr(
+              dict,
+              "home.features.card1.title",
+              "Intelligent Availability Rules"
+            )}
+          </h3>
+
+          <p className="max-w-md text-sm leading-7 text-slate-600 sm:text-base">
+            {tr(
+              dict,
+              "home.features.card1.desc",
+              "Set complex recurring schedules, holiday overrides, and specific window blocks. Your calendar works on your terms, always."
+            )}
+          </p>
+        </div>
+
+        <div className="mt-8 flex items-center gap-3 overflow-hidden sm:mt-10 sm:gap-4 lg:mt-12">
+          <div className="h-10 w-20 flex-shrink-0 rounded-lg bg-slate-100 sm:h-12 sm:w-24" />
+          <div className="h-10 w-24 flex-shrink-0 rounded-lg bg-slate-900 sm:h-12 sm:w-32" />
+          <div className="h-10 w-20 flex-shrink-0 rounded-lg bg-slate-100 sm:h-12 sm:w-24" />
+          <div className="h-10 w-28 flex-shrink-0 rounded-lg bg-slate-100 sm:h-12 sm:w-40" />
+        </div>
+      </div>
+
+      {/* Card 2 */}
+      <div className="relative overflow-hidden rounded-2xl bg-slate-900 p-6 text-white sm:p-8 lg:p-10">
+        <div className="relative z-10">
+          <div className="mb-5 flex h-11 w-11 items-center justify-center  sm:h-12 sm:w-12 px-9">
+            <span className="material-symbols-outlined text-white ">
+              hourglass_empty
+            </span>
+          </div>
+
+          <h3 className="mb-3 text-xl font-bold sm:mb-4 sm:text-2xl">
+            {tr(dict, "home.features.card2.title", "Smart Buffer Times")}
+          </h3>
+
+          <p className="text-sm leading-7 text-slate-300 sm:text-base">
+            {tr(
+              dict,
+              "home.features.card2.desc",
+              "Automatically add travel or prep time between appointments to prevent burnout."
+            )}
+          </p>
+        </div>
+
+        <div className="absolute bottom-0 right-0 h-24 w-24 rounded-full bg-white/10 blur-3xl sm:h-32 sm:w-32" />
+      </div>
+
+      {/* Card 3 */}
+      <div className="editorial-shadow group rounded-2xl bg-white p-6 transition-all hover:bg-slate-100 sm:p-8 lg:p-10">
+        <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 transition-transform group-hover:scale-110 sm:h-12 sm:w-12">
+          <span className="material-symbols-outlined text-slate-900">sync</span>
+        </div>
+
+        <h3 className="mb-3 text-xl font-bold text-slate-900 sm:mb-4 sm:text-2xl">
+          {tr(dict, "home.features.card3.title", "Real-time Scheduling")}
+        </h3>
+
+        <p className="text-sm leading-7 text-slate-600 sm:text-base">
+          {tr(
+            dict,
+            "home.features.card3.desc",
+            "Instant synchronization across all your personal and professional calendars to eliminate double bookings."
+          )}
+        </p>
+      </div>
+
+      {/* Card 4 */}
+      <div className="group relative overflow-hidden rounded-2xl bg-slate-200 p-6 sm:p-8 lg:p-10 md:col-span-2">
+        <div className="flex flex-col gap-8 md:flex-row md:items-center md:gap-10 lg:gap-12">
+          <div className="flex-1">
+            <h3 className="mb-3 text-xl font-bold text-slate-900 sm:mb-4 sm:text-2xl">
+              {tr(
+                dict,
+                "home.features.card4.title",
+                "Digital Concierge Experience"
+              )}
+            </h3>
+
+            <p className="text-sm leading-7 text-slate-600 sm:text-base">
+              {tr(
+                dict,
+                "home.features.card4.desc",
+                "A beautifully branded booking page that acts as an extension of your business identity, not just another form."
+              )}
+            </p>
+<Link
+  href={`/${locale}/register`}
+  className="mt-6 flex items-center gap-2 text-sm font-bold text-slate-900 transition-all group-hover:gap-4 sm:mt-8 sm:text-base"
+>
+  {tr(dict, "home.features.cta", "Explore all features")}
+  <span className="material-symbols-outlined">east</span>
+</Link>
+          </div>
+
+          <div className="flex aspect-square w-full max-w-[220px] items-center justify-center self-center rounded-2xl border border-slate-100 bg-white shadow-lg md:w-1/3 md:max-w-none">
+            <span className="material-symbols-outlined text-5xl text-slate-300 sm:text-6xl">
+              dashboard_customize
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
         {/* DASHBOARD PREVIEW */}
         <section className="mt-20 grid gap-8 lg:grid-cols-12 lg:items-start">
           {/* Left FAQ */}
           <div className="lg:col-span-5 min-w-0">
-            <span className="inline-flex w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium">
+            <span className="inline-flex w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium ring-emerald-200">
               {tr(dict, "home.faq.badge", "FAQ")}
             </span>
 
@@ -410,12 +540,12 @@ export default async function Home({ params }: { params: Promise<Params> }) {
             </div>
           </div>
         </section>
-
+        
         {/* WHY SLOTTICK (2nd question section — kept) */}
 <section className="mt-32">
   <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
     <div className="max-w-xl">
-      <span className="inline-flex w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium">
+      <span className="inline-flex w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium ring-emerald-200">
         {t(dict, "home.why.badge")}
       </span>
 
@@ -605,33 +735,44 @@ export default async function Home({ params }: { params: Promise<Params> }) {
           </p>
         </section>
 
-        {/* CTA */}
-        <section className="mt-24 rounded-3xl bg-slate-900 px-8 py-14 text-white">
-          <h2 className="text-3xl font-bold tracking-tight">
-            {tr(dict, "home.cta.title", "Your availability is your business.")}
-          </h2>
-          <p className="mt-4 max-w-xl text-slate-300">
-            {tr(dict, "home.cta.desc", "Set your schedule once. Share one link. Get booked without chaos.")}
-          </p>
+        {/* CTA SECTION */}
+<section className="px-4 py-16 text-center sm:px-6 sm:py-20 lg:py-24">
+  <div className="mx-auto max-w-4xl">
+    <h2 className="mb-6 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl lg:text-6xl">
+      {tr(
+        dict,
+        "home.finalCta.title",
+        "Ready to elevate your schedule?"
+      )}
+    </h2>
 
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href={`/${locale}/register`}
-              prefetch
-              className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-            >
-              {tr(dict, "home.cta.primary", "Create your booking page")}
-            </Link>
+    <p className="mx-auto mb-10 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+      {tr(
+        dict,
+        "home.finalCta.desc",
+        "Join thousands of service professionals who have reclaimed their time with Slottick."
+      )}
+    </p>
 
-            <Link
-              href={`/${locale}/explore`}
-              prefetch
-              className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-900"
-            >
-              {tr(dict, "home.cta.secondary", "Explore Services")}
-            </Link>
-          </div>
-        </section>
+    <div className="inline-flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
+      <Link
+        href={`/${locale}/register`}
+        prefetch
+        className="rounded-xl bg-slate-900 px-8 py-4 text-base font-bold text-white transition-transform hover:scale-105 hover:bg-slate-800 sm:px-10 sm:py-5 sm:text-lg"
+      >
+        {tr(dict, "home.finalCta.button", "Get Started Free")}
+      </Link>
+
+      <p className="text-sm font-medium text-slate-400">
+        {tr(
+          dict,
+          "home.finalCta.note",
+          "No credit card required • 14-day trial"
+        )}
+      </p>
+    </div>
+  </div>
+</section>
       </div>
 
       {/* Structured data */}

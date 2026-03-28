@@ -124,8 +124,28 @@
       ],
       "note": "Les clients ne voient que les vrais créneaux disponibles — pas de double réservation."
     },
-    
-    "why": {
+   "features": {
+  "title": "Maîtrisez votre agenda",
+  "subtitle": "Des outils puissants conçus pour vous faire gagner du temps et offrir une expérience de réservation fluide à vos clients.",
+  "card1": {
+    "title": "Règles de disponibilité intelligentes",
+    "desc": "Définissez des horaires récurrents complexes, des exceptions pour les jours fériés et des plages spécifiques. Votre agenda fonctionne selon vos règles."
+  },
+  "card2": {
+    "title": "Temps tampon intelligents",
+    "desc": "Ajoutez automatiquement du temps de préparation ou de déplacement entre les rendez-vous pour éviter la surcharge."
+  },
+  "card3": {
+    "title": "Planification en temps réel",
+    "desc": "Synchronisation instantanée avec tous vos calendriers personnels et professionnels pour éviter les doubles réservations."
+  },
+  "card4": {
+    "title": "Expérience de conciergerie digitale",
+    "desc": "Une page de réservation élégante et personnalisée qui reflète votre marque, pas juste un simple formulaire."
+  },
+  "cta": "Découvrir toutes les fonctionnalités"
+}, 
+"why": {
   "badge": "Pourquoi Slottick",
   "title": "Pourquoi choisir Slottick comme système de réservation ?",
   "lead": "Moins de temps en messages, moins d’erreurs, et une façon plus propre pour vos clients de réserver.",
@@ -202,7 +222,13 @@
       "desc": "Définissez votre planning une fois. Partagez un lien. Recevez des réservations sans chaos.",
       "primary": "Créer votre page de réservation",
       "secondary": "Explorer les services"
-    }
+    },
+    "finalCta": {
+  "title": "Prêt à améliorer votre agenda ?",
+  "desc": "Rejoignez des milliers de professionnels du service qui ont repris le contrôle de leur temps avec Slottick.",
+  "button": "Commencer gratuitement",
+  "note": "Aucune carte bancaire requise • Essai de 14 jours"
+}
   },
 
   "register": {

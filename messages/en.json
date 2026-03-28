@@ -64,8 +64,8 @@
         "Services, durations & pricing",
         "Availability rules & breaks",
         "Buffer time between clients",
-        "One booking link for your bio",
-        "Real-time schedule (no double booking)"
+        "One booking link as your website",
+        "Track revenue, bookings, and client growth"
       ]
     },
 
@@ -122,8 +122,28 @@
       ],
       "note": "Clients only see real available slots — no double booking."
     },
-
-    "why": {
+   "features": {
+  "title": "Master your calendar",
+  "subtitle": "Elite tools designed to give you back your hours and provide a seamless booking journey for your clients.",
+  "card1": {
+    "title": "Intelligent Availability Rules",
+    "desc": "Set complex recurring schedules, holiday overrides, and specific window blocks. Your calendar works on your terms, always."
+  },
+  "card2": {
+    "title": "Smart Buffer Times",
+    "desc": "Automatically add travel or prep time between appointments to prevent burnout."
+  },
+  "card3": {
+    "title": "Real-time Scheduling",
+    "desc": "Instant synchronization across all your personal and professional calendars to eliminate double bookings."
+  },
+  "card4": {
+    "title": "Digital Concierge Experience",
+    "desc": "A beautifully branded booking page that acts as an extension of your business identity, not just another form."
+  },
+  "cta": "Explore all features"
+},
+  "why": {
   "badge": "Why Slottick",
   "title": "Why choose Slottick as your booking system?",
   "lead": "Less time in DMs, fewer mistakes, and a cleaner way for clients to book you.",
@@ -173,8 +193,7 @@
   }
 },
 
-
-    "how": {
+"how": {
       "items": [
         {
           "title": "Set services and rules",
@@ -201,7 +220,13 @@
       "desc": "Set your schedule once. Share one link. Get booked without chaos.",
       "primary": "Create your booking page",
       "secondary": "Explore Services"
-    }
+    },
+    "finalCta": {
+  "title": "Ready to elevate your schedule?",
+  "desc": "Join thousands of service professionals who have reclaimed their time with Slottick.",
+  "button": "Get Started Free",
+  "note": "No credit card required • 14-day trial"
+}
   },
 
   "register": {
