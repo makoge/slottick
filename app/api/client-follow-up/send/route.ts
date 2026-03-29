@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendClientFollowUpEmail } from "@/lib/email";
+import { hasValidOrigin } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
@@ -35,6 +36,9 @@ function rateLimit(key: string, limit: number, windowMs: number) {
 }
 
 export async function POST(req: Request) {
+  if (!hasValidOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   try {
     const ip = getClientIp(req);
 

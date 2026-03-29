@@ -7,6 +7,7 @@ import {
   notifyOwnerNewSignup,
   sendVerifyEmail
 } from "@/lib/email";
+import { hasValidOrigin } from "@/lib/request-security";
 
 // ✅ match your Prisma enum values (schema.prisma)
 const INDUSTRY_VALUES = new Set([
@@ -81,6 +82,9 @@ function toIndustryEnum(input: unknown): IndustryEnum {
 }
 
 export async function POST(req: Request) {
+  if (!hasValidOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const body = await req.json().catch(() => ({}));
 
   // logoUrl safety
@@ -113,10 +117,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid email" }, { status: 400 });
   }
 
-  // keep your rule (6)
-  if (ownerPassword.length < 6) {
+  // keep your rule (8)
+  if (ownerPassword.length < 8) {
     return NextResponse.json(
-      { error: "Password must be at least 6 characters" },
+      { error: "Password must be at least 8 characters" },
       { status: 400 }
     );
   }
@@ -159,6 +163,10 @@ export async function POST(req: Request) {
 
   const passwordHash = await bcrypt.hash(ownerPassword, 10);
 
+  const now = new Date();
+const trialEndsAt = new Date(now);
+trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
   const business = await prisma.business.create({
     data: {
       name,
@@ -171,7 +179,9 @@ export async function POST(req: Request) {
       website: website || undefined,
       ownerEmail,
       passwordHash,
-      logoUrl: safeLogoUrl
+      logoUrl: safeLogoUrl,
+      subscriptionStatus: "trialing",
+      trialEndsAt
     },
     select: {
       id: true,
@@ -185,7 +195,9 @@ export async function POST(req: Request) {
       website: true,
       ownerEmail: true,
       createdAt: true,
-      logoUrl: true
+      logoUrl: true,
+      subscriptionStatus: true,
+      trialEndsAt: true
     }
   });
 
@@ -244,7 +256,9 @@ export async function POST(req: Request) {
       website: business.website,
       ownerEmail: business.ownerEmail,
       createdAt: business.createdAt,
-      logoUrl: business.logoUrl
+      logoUrl: business.logoUrl,
+      subscriptionStatus: business.subscriptionStatus,
+      trialEndsAt: business.trialEndsAt
     }
   });
 }

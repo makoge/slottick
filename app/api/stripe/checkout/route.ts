@@ -1,7 +1,11 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
+import { hasValidOrigin } from "@/lib/request-security";
 
 export async function POST(req: Request) {
+  if (!hasValidOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   try {
     const secretKey = process.env.STRIPE_SECRET_KEY;
     const priceId = process.env.STRIPE_PRICE_ID;

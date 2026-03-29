@@ -8,17 +8,18 @@ import { t } from "@/lib/i18n";
 
 type IndustryKey =
   | "BEAUTY_AND_CARE"
-  | "WELLNESS_AND_LIFESTYLE"
-  | "CREATIVE_SERVICES"
-  | "HOME_AND_LOCAL"
-  | "EDUCATION_AND_PROFESSIONALS";
+  | "WELLNESS_AND_LIFESTYLE(Comming Soon)"
+  | "CREATIVE_SERVICES(Comming Soon)"
+  | "HOME_AND_LOCAL(Comming Soon)"
+  | "EDUCATION_AND_PROFESSIONALS(Comming Soon)";
 
 const INDUSTRY_OPTIONS: { key: IndustryKey; labelKey: string }[] = [
   { key: "BEAUTY_AND_CARE", labelKey: "register.industry.beauty" },
-  { key: "WELLNESS_AND_LIFESTYLE", labelKey: "register.industry.wellness" },
-  { key: "CREATIVE_SERVICES", labelKey: "register.industry.creative" },
-  { key: "HOME_AND_LOCAL", labelKey: "register.industry.home" },
-  { key: "EDUCATION_AND_PROFESSIONALS", labelKey: "register.industry.education" }
+  { key: "WELLNESS_AND_LIFESTYLE(Comming Soon)", labelKey: "register.industry.wellness" },
+  { key: "CREATIVE_SERVICES(Comming Soon)", labelKey: "register.industry.creative" },
+  { key: "HOME_AND_LOCAL(Comming Soon)", labelKey: "register.industry.home" },
+  { key: "EDUCATION_AND_PROFESSIONALS(Comming Soon)", labelKey: "register.industry.education" }
+  
 ];
 
 function slugify(input: string) {
@@ -155,7 +156,7 @@ export default function RegisterClient() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
+    <main className="min-h-screen bg-white/10 text-slate-900">
       <div className="mx-auto max-w-2xl px-6 py-14">
         <section className="rounded-3xl border border-slate-200 p-8 shadow-sm">
           <div className="flex items-start justify-between gap-4">

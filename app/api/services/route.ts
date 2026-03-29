@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthedBusiness } from "@/lib/auth";
 import { ServiceCategory } from "@prisma/client";
+import { hasValidOrigin } from "@/lib/request-security";
+import { businessHasAccess } from "@/lib/subscription";
 
 type DepositType = "PERCENT" | "AMOUNT";
 
@@ -232,8 +234,25 @@ export async function GET(req: Request) {
 
 // PUT: owner-only, replaces all services + images
 export async function PUT(req: Request) {
+
+  if (!hasValidOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const business = await getAuthedBusiness();
   if (!business) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+
+  if (!businessHasAccess(business)) {
+    return NextResponse.json(
+      {
+        error: "Your free trial has ended. Please subscribe to continue.",
+        code: "TRIAL_EXPIRED"
+      },
+      { status: 402 }
+    );
+  }
+  
 
   const body = await req.json().catch(() => ({}));
   const next = normalizeServices(body.services);

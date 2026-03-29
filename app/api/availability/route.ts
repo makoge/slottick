@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthedBusiness } from "@/lib/auth";
+import { hasValidOrigin } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!hasValidOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const business = await getAuthedBusiness();
   if (!business) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

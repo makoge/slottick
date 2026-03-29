@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import crypto from "crypto";
 import { sendVerifyEmail } from "@/lib/email";
+import { hasValidOrigin } from "@/lib/request-security";
 
 function sha256(x: string) {
   return crypto.createHash("sha256").update(x).digest("hex");
@@ -20,6 +21,9 @@ function getLocaleFromReferer(req: Request) {
 }
 
 export async function POST(req: Request) {
+  if (!hasValidOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const body = await req.json().catch(() => ({}));
   const email = String(body.email ?? "").trim().toLowerCase();
 

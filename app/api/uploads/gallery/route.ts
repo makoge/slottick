@@ -3,6 +3,7 @@ import { getAuthedBusiness } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { put } from "@vercel/blob";
 import crypto from "crypto";
+import { hasValidOrigin } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
@@ -88,6 +89,9 @@ export async function POST(req: Request) {
 
 // Reorder: body { order: string[] }
 export async function PATCH(req: Request) {
+  if (!hasValidOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const authed = await getAuthedBusiness();
   if (!authed) return json({ error: "Unauthorized" }, 401);
 

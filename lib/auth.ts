@@ -35,7 +35,10 @@ export async function getAuthedBusiness() {
           ownerEmail: true,
           emailVerifiedAt: true,
           logoUrl: true,
-          description: true 
+          description: true,
+          subscriptionStatus: true,
+          trialEndsAt: true,
+          currentPeriodEnd: true
         }
       }
     }

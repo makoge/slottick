@@ -36,6 +36,10 @@ type Props = {
 
     // ✅ new field (stored on Business)
     description?: string | null;
+
+    subscriptionStatus?: string | null;
+    trialEndsAt?: string | null;
+    currentPeriodEnd?: string | null;
   };
 };
 
@@ -378,6 +382,7 @@ function BookingDescriptionEditor({
   initial: string;
   onSaved: (next: string) => void;
 }) {
+  const router = useRouter();
   const messages = useMessages(locale);
 
   const [value, setValue] = useState(initial);
@@ -405,6 +410,13 @@ function BookingDescriptionEditor({
       });
 
       const data = await res.json().catch(() => ({}));
+
+   if (res.status === 402 || data?.code === "TRIAL_EXPIRED") {
+        router.push(`/${locale}/subscribe`);
+       return;
+     }
+
+      
       if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.description.errors.saveFailed"));
 
       const next = String(data?.business?.description ?? trimmed ?? "");
@@ -503,6 +515,13 @@ export default function DashboardClient({ locale, business }: Props) {
     return `${window.location.origin}${bookingPath}`;
   }, [bookingPath]);
 
+  const trialDaysLeft = useMemo(() => {
+  if (biz.subscriptionStatus !== "trialing" || !biz.trialEndsAt) return null;
+
+  const msLeft = new Date(biz.trialEndsAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)));
+}, [biz.subscriptionStatus, biz.trialEndsAt]);
+
   async function copyLink() {
     if (!bookingUrl) return;
     try {
@@ -524,6 +543,11 @@ export default function DashboardClient({ locale, business }: Props) {
     try {
       const res = await fetch("/api/bookings?scope=owner", { cache: "no-store", signal });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 402 || data?.code === "TRIAL_EXPIRED") {
+      router.push(`/${locale}/subscribe`);
+      return;
+    }
+
       setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
     } finally {
       setStatsLoading(false);
@@ -682,6 +706,13 @@ export default function DashboardClient({ locale, business }: Props) {
       });
 
       const data = await res.json().catch(() => ({}));
+
+     if (res.status === 402 || data?.code === "TRIAL_EXPIRED") {
+     router.push(`/${locale}/subscribe`);
+     return;
+      }
+
+      
       if (!res.ok) {
         setProfileError(data?.error || t(messages, "dashboard.profile.errors.updateFailed"));
         return;
@@ -725,7 +756,16 @@ export default function DashboardClient({ locale, business }: Props) {
   onRefresh={() => refreshStats()}
   onLogout={logout}
 />
-
+{biz.subscriptionStatus === "trialing" && trialDaysLeft !== null && (
+  <section className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+    <h2 className="text-sm font-semibold text-amber-900">
+      Free trial
+    </h2>
+    <p className="mt-1 text-sm text-amber-800">
+      You have {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} left in your free trial.
+    </p>
+  </section>
+)}
         {/* Profile editor */}
         {editing && (
           <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

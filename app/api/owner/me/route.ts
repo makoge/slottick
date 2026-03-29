@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthedBusiness } from "@/lib/auth";
+import { businessHasAccess } from "@/lib/subscription";
+import { hasValidOrigin } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
@@ -25,7 +27,6 @@ function isValidHttpUrlOrNull(v: unknown) {
 }
 
 function isValidLogoUrlOrNull(v: unknown) {
-  // same as http(s) check, kept separate in case you expand later
   return isValidHttpUrlOrNull(v);
 }
 
@@ -39,9 +40,23 @@ function json(data: any, status = 200) {
   return NextResponse.json(data, { status });
 }
 
+function trialExpiredResponse() {
+  return json(
+    {
+      error: "Your free trial has ended. Please subscribe to continue.",
+      code: "TRIAL_EXPIRED"
+    },
+    402
+  );
+}
+
 export async function GET() {
   const business = await getAuthedBusiness();
   if (!business) return json({ error: "Unauthorized" }, 401);
+
+  if (!businessHasAccess(business)) {
+    return trialExpiredResponse();
+  }
 
   return json({
     business: {
@@ -62,29 +77,32 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
+  if (!hasValidOrigin(req)) {
+  return json({ error: "Forbidden" }, 403);
+}
   const authed = await getAuthedBusiness();
   if (!authed) return json({ error: "Unauthorized" }, 401);
 
+  if (!businessHasAccess(authed)) {
+    return trialExpiredResponse();
+  }
+
   const body = await req.json().catch(() => ({}));
 
-  // Build update data ONLY from fields that are provided
   const data: Record<string, any> = {};
 
-  // name
   if (body.name !== undefined) {
     const name = String(body.name ?? "").trim();
     if (!name) return json({ error: "Business name is required." }, 400);
     data.name = name;
   }
 
-  // city
   if (body.city !== undefined) {
     const city = String(body.city ?? "").trim();
     if (!city) return json({ error: "City is required." }, 400);
     data.city = city;
   }
 
-  // country
   if (body.country !== undefined) {
     const country = String(body.country ?? "").trim().toUpperCase();
     if (!country || country.length < 2) {
@@ -93,7 +111,6 @@ export async function PATCH(req: Request) {
     data.country = country;
   }
 
-  // street / postal
   if (body.street !== undefined) {
     const streetRaw = body.street == null ? null : String(body.street).trim();
     data.street = streetRaw ? streetRaw : null;
@@ -104,14 +121,12 @@ export async function PATCH(req: Request) {
     data.postalCode = postalRaw ? postalRaw : null;
   }
 
-  // website
   if (body.website !== undefined) {
     const website = normalizeWebsite(body.website == null ? null : String(body.website));
     if (!isValidHttpUrlOrNull(website)) return json({ error: "Website URL is invalid." }, 400);
     data.website = website;
   }
 
-  // logoUrl (undefined=keep, null=remove, string=set)
   if (body.logoUrl !== undefined) {
     const logoUrl =
       body.logoUrl == null ? null : String(body.logoUrl).trim() || null;
@@ -120,7 +135,6 @@ export async function PATCH(req: Request) {
     data.logoUrl = logoUrl;
   }
 
-  // ✅ description (max 600 words)
   if (body.description !== undefined) {
     const desc = body.description == null ? null : String(body.description);
     const trimmed = desc == null ? null : desc.trim();

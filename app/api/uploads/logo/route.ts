@@ -2,10 +2,14 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import crypto from "crypto";
+import { hasValidOrigin } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  if (!hasValidOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   try {
     const form = await req.formData();
     const file = form.get("file");

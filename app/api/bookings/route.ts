@@ -2,10 +2,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getAuthedBusiness } from "@/lib/auth";
+import { businessHasAccess } from "@/lib/subscription";
 import {
   sendBookingConfirmationEmail,
   sendClientFollowUpEmail,
 } from "@/lib/email";
+import { hasValidOrigin } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 
@@ -51,20 +53,20 @@ function formatBookingDateParts(startsAtIso: string, timeZone: string) {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(dt); // YYYY-MM-DD
+  }).format(dt);
 
   const time = new Intl.DateTimeFormat("en-GB", {
     timeZone,
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).format(dt); // HH:MM
+  }).format(dt);
 
   return { date, time };
 }
 
 /**
- * ✅ GET /api/bookings?scope=owner
+ * GET /api/bookings?scope=owner
  * Used by dashboard BookingsPanel + stats
  */
 export async function GET(req: Request) {
@@ -77,6 +79,16 @@ export async function GET(req: Request) {
 
   const authed = await getAuthedBusiness();
   if (!authed) return json({ error: "Unauthorized" }, 401);
+
+  if (!businessHasAccess(authed)) {
+    return json(
+      {
+        error: "Your free trial has ended. Please subscribe to continue.",
+        code: "TRIAL_EXPIRED",
+      },
+      402
+    );
+  }
 
   const rows = await prisma.booking.findMany({
     where: { businessId: authed.id },
@@ -105,10 +117,13 @@ export async function GET(req: Request) {
 }
 
 /**
- * ✅ POST /api/bookings
+ * POST /api/bookings
  * Used by BookingClient
  */
 export async function POST(req: Request) {
+  if (!hasValidOrigin(req)) {
+  return json({ error: "Forbidden" }, 403);
+}
   try {
     const body = await req.json().catch(() => ({} as any));
 
@@ -156,6 +171,9 @@ export async function POST(req: Request) {
         name: true,
         slug: true,
         ownerEmail: true,
+        subscriptionStatus: true,
+        trialEndsAt: true,
+        currentPeriodEnd: true,
         availabilityRule: {
           select: {
             timezone: true,
@@ -164,7 +182,19 @@ export async function POST(req: Request) {
       },
     });
 
-    if (!business) return json({ error: "Business not found." }, 404);
+    if (!business) {
+      return json({ error: "Business not found." }, 404);
+    }
+
+    if (!businessHasAccess(business)) {
+      return json(
+        {
+          error: "This business is not accepting bookings right now.",
+          code: "SUBSCRIPTION_INACTIVE",
+        },
+        402
+      );
+    }
 
     const serviceId = body.serviceId ? asString(body.serviceId).trim() : null;
 
@@ -196,14 +226,11 @@ export async function POST(req: Request) {
         businessId: business.id,
         serviceId: resolvedServiceId,
         serviceCategory: resolvedCategory,
-
         serviceName,
         durationMin,
         price,
         currency,
-
         startsAt: new Date(startsAt),
-
         customerName,
         customerPhone,
         customerEmail,
@@ -215,6 +242,7 @@ export async function POST(req: Request) {
     const siteUrl =
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
     const locale = asString(body.locale).trim() || "en";
+
     const manageLink = `${siteUrl}/${locale}/book/${business.slug}/success?id=${encodeURIComponent(
       booking.id
     )}`;
@@ -270,6 +298,7 @@ export async function POST(req: Request) {
     if (err?.code === "P2002") {
       return json({ error: "That slot is already booked." }, 409);
     }
+
     console.error("POST /api/bookings failed:", err);
     return json({ error: "Booking failed." }, 500);
   }

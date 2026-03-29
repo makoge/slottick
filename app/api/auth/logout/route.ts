@@ -3,8 +3,14 @@ import { prisma } from "@/lib/db";
 import { hashToken } from "@/lib/auth";
 import { COOKIE_NAME } from "@/lib/auth-constants";
 import { cookies } from "next/headers";
+import { hasValidOrigin } from "@/lib/request-security";
 
-export async function POST() {
+
+export async function POST(req: Request) {
+   if (!hasValidOrigin(req)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+ 
   const token = (await cookies()).get(COOKIE_NAME)?.value;
 
   if (token) {

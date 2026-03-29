@@ -23,10 +23,14 @@ model Business {
   failedLoginCount        Int                      @default(0)
   lockUntil               DateTime?
   marketplaceEligibleAt   DateTime?
+
+  trialEndsAt             DateTime?
   currentPeriodEnd        DateTime?
+
   stripeCustomerId        String?                  @unique
   stripeSubscriptionId    String?                  @unique
-  subscriptionStatus      String                   @default("inactive")
+  subscriptionStatus      String                   @default("trialing")
+
   logoUrl                 String?
   heroTag                 String?
   ratingAvg               Float?                   @default(0)

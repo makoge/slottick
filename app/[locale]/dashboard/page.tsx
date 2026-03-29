@@ -62,7 +62,10 @@ export default async function DashboardPage({
         postalCode: business.postalCode ?? undefined,
         logoUrl: business.logoUrl,
         description: business.description ?? undefined,
-        createdAt: business.createdAt.toISOString()
+        createdAt: business.createdAt.toISOString(),
+        subscriptionStatus: business.subscriptionStatus ?? undefined,
+        trialEndsAt: business.trialEndsAt?.toISOString(),
+        currentPeriodEnd: business.currentPeriodEnd?.toISOString()
       }}
     />
   );
