@@ -647,7 +647,17 @@
     "industry": "Secteur",
     "all": "Tous"
   },
-
+  "quickFilters": {
+  "label": "Filtres rapides :",
+  "items": {
+    "all": "Tous les Secteur",
+    "beauty": "Beauté & soins",
+    "wellness": "Bien-être & lifestyle",
+    "creative": "Services créatifs",
+    "home": "Maison & local",
+    "education": "Éducation & professionnels"
+  }
+},
   "results": {
     "showing": "{n} entreprises affichées",
     "empty": "Aucune entreprise trouvée. Essayez une autre ville, secteur ou mot-clé."
@@ -658,7 +668,29 @@
     "cityFallback": "—",
     "reviews": "{n} avis",
     "book": "Réserver",
-    "logoAlt": "Logo de {name}"
+    "logoAlt": "Logo de {name}",
+    "noReviews": "Pas encore d’avis",
+    "nextSlot": "Prochain créneau :",
+    "noReviewsShort": "Nouveau",
+  "startingAt": "À partir de",
+  "viewStudio": "Voir le studio",
+  "heroAlt": "Image de couverture de {name}",
+"nextSlotValues": {
+  "today": "Aujourd’hui",
+  "tomorrow": "Demain",
+  "in2days": "Dans 2 jours",
+  "later": "Bientôt",
+  "noReviewsShort": "Nouveau",
+  "startingAt": "À partir de",
+  "viewStudio": "Voir le studio"
+}
+  },
+  "hero": {
+    "titleStart": "Découvrez votre prochain",
+    "titleAccent": "partenaire stratégique",
+    "description":
+      "Entrez en contact avec des stylistes haut de gamme, des praticiens du bien-être et des propriétaires de studios premium. Améliorez l’expérience client grâce à la réservation collaborative.",
+    "searchButton": "Rechercher"
   },
 
   "industries": {
@@ -667,6 +699,36 @@
     "CREATIVE_SERVICES": "Services créatifs",
     "HOME_AND_LOCAL": "Maison & local",
     "EDUCATION_AND_PROFESSIONALS": "Éducation & professionnels"
+  },
+  "partnership": {
+    "badge": "Ouvert aux partenariats",
+    "title": "Élargissez votre offre avec des espaces partagés",
+    "description":
+      "Rejoignez des entreprises locales qui réservent des salles spécialisées entre elles. Réduisez vos coûts et attirez plus vite de nouveaux clients.",
+    "primaryCta": "Trouver un lieu",
+    "secondaryCta": "En savoir plus",
+    "imageAlt":
+      "Deux propriétaires discutant d’une collaboration dans un hall premium minimaliste"
+  },
+  "insights": {
+    "eyebrow": "Tendances du marché",
+    "title": "Tendance dans votre marché : les réservations bien-être premium",
+    "metric1Label": "Croissance de la demande",
+    "metric1Value": "+24%",
+    "metric2Label": "Valeur moyenne de réservation",
+    "metric2Value": "120 €",
+    "cta": "Voir le rapport complet",
+    "trendingEyebrow": "Réservations tendance",
+  "trendingTitle": "Le plus réservé à {city}",
+  "priceEyebrow": "Meilleur prix",
+  "priceTitle": "Prix de départ le plus bas à {city}",
+  "bookings": "Réservations (30 jours)",
+  "business": "Entreprise",
+  "startingAt": "À partir de",
+  "service": "Service",
+  "viewBusiness": "Voir l’entreprise",
+  "bookNow": "Réserver",
+  "yourArea": "votre zone"
   }
 },
 "booking": {

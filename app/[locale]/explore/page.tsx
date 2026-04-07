@@ -1,10 +1,9 @@
-// app/[locale]/explore/page.tsx
 import type { Metadata } from "next";
 import ExploreClient from "./explore-client";
 import { locales } from "@/lib/i18n";
 import { prisma } from "@/lib/db";
-import { Industry, ServiceCategory } from "@prisma/client";
-import { getDictionary } from "@/lib/dictionaries"; // ✅ adjust path if yours differs
+import { Industry, ServiceCategory, BookingStatus } from "@prisma/client";
+import { getDictionary } from "@/lib/dictionaries";
 
 export const revalidate = 3600;
 
@@ -86,6 +85,7 @@ function toServiceCategoryFromQuery(q: string): ServiceCategory | undefined {
     makeup: ServiceCategory.MAKEUP,
     skincare: ServiceCategory.SKINCARE,
     tattoo: ServiceCategory.TATTOO,
+    fitness: ServiceCategory.FITNESS,
 
     other: ServiceCategory.OTHER
   };
@@ -153,7 +153,7 @@ export default async function Page({
   const { locale } = await params;
   const sp = await searchParams;
 
-  const dict = await getDictionary(locale); // ✅
+  const dict = await getDictionary(locale);
 
   const qRaw = normalize(sp.q);
   const qLower = qRaw.toLowerCase();
@@ -163,6 +163,9 @@ export default async function Page({
   const serviceCategoryFromQ = toServiceCategoryFromQuery(qLower);
 
   const industriesRaw = await prisma.business.findMany({
+    where: {
+      services: { some: {} }
+    },
     select: { industry: true },
     distinct: ["industry"]
   });
@@ -172,11 +175,22 @@ export default async function Page({
     .filter((x): x is Industry => Boolean(x))
     .sort((a, b) => String(a).localeCompare(String(b)));
 
+  const baseUrl = envBaseUrl();
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const now = new Date();
+  const next14Days = new Date();
+  next14Days.setDate(next14Days.getDate() + 14);
+
   const businesses = await prisma.business.findMany({
     take: 500,
     orderBy: { createdAt: "desc" },
     where: {
-      marketplaceEligibleAt: { not: null },
+      services: {
+        some: {}
+      },
       ...(city ? { city } : {}),
       ...(industryEnum ? { industry: industryEnum } : {}),
       ...(qLower
@@ -208,11 +222,61 @@ export default async function Page({
       logoUrl: true,
       heroTag: true,
       ratingAvg: true,
-      ratingCount: true
+      ratingCount: true,
+
+      galleryImages: {
+    orderBy: { sort: "asc" },
+    take: 1,
+    select: {
+      url: true
+    }
+  },
+
+      services: {
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          currency: true,
+          category: true,
+          durationMin: true
+        }
+      },
+
+      // For trending / market insight card
+      bookings: {
+        where: {
+          createdAt: { gte: thirtyDaysAgo },
+          status: { in: [BookingStatus.CONFIRMED, BookingStatus.DONE] }
+        },
+        select: {
+          id: true,
+          startsAt: true,
+          durationMin: true
+        }
+      },
+
+      // For future next-slot logic
+      availabilityRule: {
+        select: {
+          timezone: true,
+          daysJson: true,
+          start: true,
+          end: true,
+          breakStart: true,
+          breakEnd: true,
+          bufferMin: true,
+          slotStepMin: true
+        }
+      },
+
+      // Upcoming occupied times
+      // named differently to avoid collision would require client change,
+      // so we keep one bookings field for now and client can still use it
+      // for trending count. If you later want exact next-slot + trending separately,
+      // split them into separate server-side computed values.
     }
   });
-
-  const baseUrl = envBaseUrl();
 
   const itemListJsonLd = {
     "@context": "https://schema.org",
@@ -234,6 +298,7 @@ export default async function Page({
       { "@type": "ListItem", position: 2, name: "Explore", item: `${baseUrl}/${locale}/explore` }
     ]
   };
+  
 
   return (
     <>

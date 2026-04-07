@@ -677,6 +677,17 @@
     "industry": "Industry",
     "all": "All"
   },
+  "quickFilters": {
+  "label": "Quick Filters:",
+  "items": {
+    "all": "All Industry",
+    "beauty": "Beauty & Care",
+    "wellness": "Wellness & Lifestyle",
+    "creative": "Creative Services",
+    "home": "Home & Local",
+    "education": "Education & Professionals"
+  }
+},
 
   "results": {
     "showing": "Showing {n} businesses",
@@ -688,7 +699,30 @@
     "cityFallback": "—",
     "reviews": "{n} reviews",
     "book": "Book",
-    "logoAlt": "{name} logo"
+    "logoAlt": "{name} logo",
+    "noReviews": "No reviews yet",
+    "nextSlot": "Next slot:",
+    "noReviewsShort": "New",
+  "startingAt": "Starting at",
+  "viewStudio": "View Studio",
+  "heroAlt": "{name} cover image",
+"nextSlotValues": {
+  "today": "Today",
+  "tomorrow": "Tomorrow",
+  "in2days": "In 2 days",
+  "later": "Soon",
+  "noReviewsShort": "New",
+  "startingAt": "Starting at",
+  "viewStudio": "View Studio"
+}
+
+  },
+   "hero": {
+    "titleStart": "Discover your next",
+    "titleAccent": "strategic partner",
+    "description":
+      "Connect with editorial-grade stylists, wellness practitioners, and luxury studio owners. Elevate your client experience through collaborative booking.",
+    "searchButton": "Search Directory"
   },
 
   "industries": {
@@ -697,8 +731,39 @@
     "CREATIVE_SERVICES": "Creative services",
     "HOME_AND_LOCAL": "Home & local",
     "EDUCATION_AND_PROFESSIONALS": "Education & professionals"
+  },
+  "partnership": {
+    "badge": "Open for Partnerships",
+    "title": "Expand your service menu with shared spaces",
+    "description":
+      "Join local businesses cross-booking specialized treatment rooms. Lower overhead and reach new clients faster.",
+    "primaryCta": "Find a Venue",
+    "secondaryCta": "Learn more",
+    "imageAlt":
+      "Two business owners discussing a collaboration in a premium minimalist lobby"
+  },
+  "insights": {
+    "eyebrow": "Market Insights",
+    "title": "Trending in your market: premium wellness bookings",
+    "metric1Label": "Demand Growth",
+    "metric1Value": "+24%",
+    "metric2Label": "Average Booking Value",
+    "metric2Value": "€120",
+    "cta": "View Full Report",
+    "trendingEyebrow": "Trending Bookings",
+  "trendingTitle": "Most booked in {city}",
+  "priceEyebrow": "Best Price",
+  "priceTitle": "Lowest starting price in {city}",
+  "bookings": "Bookings (30 days)",
+  "business": "Business",
+  "startingAt": "Starting at",
+  "service": "Service",
+  "viewBusiness": "View Business",
+  "bookNow": "Book Now",
+  "yourArea": "your area"
   }
   },
+  
   "booking": {
   "lightbox": {
     "close": "Close",

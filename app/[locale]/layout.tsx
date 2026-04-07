@@ -1,6 +1,6 @@
 // app/[locale]/layout.tsx
 import type { ReactNode } from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
 import { notFound } from "next/navigation";
@@ -12,6 +12,10 @@ import LocaleSwitcher from "@/app/components/LocaleSwitcher";
 
 const SITE_NAME = "Slottick";
 const SITE_URL = "https://slottick.com"; // non-www, https
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a"
+};
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -58,7 +62,7 @@ export async function generateMetadata({
 
     // PWA
     manifest: "/manifest.webmanifest",
-    themeColor: "#0f172a",
+    
 
     title: {
       default: titleDefault,

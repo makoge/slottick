@@ -26,5 +26,12 @@ export function SubscribeButton({
     window.location.href = data.url;
   };
 
-  return <button onClick={onClick}>Subscribe</button>;
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-4 text-base font-semibold text-slate-900 shadow-lg transition hover:scale-[1.01] hover:bg-slate-100"
+    >
+      Upgrade now
+    </button>
+  );
 }
