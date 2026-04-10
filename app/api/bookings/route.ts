@@ -8,6 +8,8 @@ import {
   sendClientFollowUpEmail,
 } from "@/lib/email";
 import { hasValidOrigin } from "@/lib/request-security";
+import crypto from "crypto";
+import { sendPushToBusiness } from "@/lib/push";
 
 export const runtime = "nodejs";
 
@@ -64,6 +66,12 @@ function formatBookingDateParts(startsAtIso: string, timeZone: string) {
 
   return { date, time };
 }
+
+function hashToken(token: string) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+
 
 /**
  * GET /api/bookings?scope=owner
@@ -163,7 +171,7 @@ export async function POST(req: Request) {
     if (!isIsoDate(startsAt)) {
       return json({ error: "startsAt must be an ISO datetime string." }, 400);
     }
-
+    
     const business = await prisma.business.findUnique({
       where: { slug: businessSlug },
       select: {
@@ -174,6 +182,7 @@ export async function POST(req: Request) {
         subscriptionStatus: true,
         trialEndsAt: true,
         currentPeriodEnd: true,
+        bookingApprovalRequired: true,
         availabilityRule: {
           select: {
             timezone: true,
@@ -195,7 +204,7 @@ export async function POST(req: Request) {
         402
       );
     }
-
+    const bookingStatus = business.bookingApprovalRequired ? "PENDING" : "CONFIRMED";
     const serviceId = body.serviceId ? asString(body.serviceId).trim() : null;
 
     let resolvedServiceId: string | null = null;
@@ -235,13 +244,58 @@ export async function POST(req: Request) {
         customerPhone,
         customerEmail,
         notes,
-      },
-      select: { id: true },
-    });
+        status: bookingStatus,
+        statusUpdatedAt: new Date(),
+        respondedAt: bookingStatus === "CONFIRMED" ? new Date() : null,
+       },
+       select: { id: true, status: true },
+     });
 
-    const siteUrl =
+     const siteUrl =
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
     const locale = asString(body.locale).trim() || "en";
+
+     let clientChatLink: string | null = null;
+
+if (business.bookingApprovalRequired) {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const clientTokenHash = hashToken(rawToken);
+
+  await prisma.bookingConversation.create({
+    data: {
+      bookingId: booking.id,
+      businessId: business.id,
+      clientTokenHash,
+      lastMessageAt: new Date(),
+      messages: {
+        create: {
+          senderType: "SYSTEM",
+          body: "Booking request created."
+        }
+      }
+    }
+  });
+
+  await prisma.notification.create({
+    data: {
+      businessId: business.id,
+      bookingId: booking.id,
+      type: "BOOKING_REQUEST",
+      title: "New booking request",
+      body: `${customerName} requested ${serviceName}`
+    }
+  });
+
+  await sendPushToBusiness(business.id, {
+  title: "New booking request",
+  body: `${customerName} requested ${serviceName}`,
+  url: `/${locale}/dashboard`
+});
+
+  clientChatLink = `${siteUrl}/${locale}/booking-chat/${rawToken}`;
+}
+
+    
 
     const manageLink = `${siteUrl}/${locale}/book/${business.slug}/success?id=${encodeURIComponent(
       booking.id
@@ -252,46 +306,67 @@ export async function POST(req: Request) {
     const priceText = formatMoneySimple(price, currency);
 
     try {
-      await sendBookingConfirmationEmail({
-        to: customerEmail,
-        businessName: business.name,
-        serviceName,
-        date,
-        time,
-        durationMin,
-        priceText,
-        manageLink,
-      });
+  if (booking.status === "CONFIRMED") {
+    await sendBookingConfirmationEmail({
+      to: customerEmail,
+      businessName: business.name,
+      serviceName,
+      date,
+      time,
+      durationMin,
+      priceText,
+      manageLink,
+    });
+  } else {
+    await sendClientFollowUpEmail({
+      to: customerEmail,
+      subject: `Booking request received: ${serviceName}`,
+      html: `
+        <p>Your booking request has been received.</p>
+        <p>
+          <strong>Business:</strong> ${business.name}<br/>
+          <strong>Service:</strong> ${serviceName}<br/>
+          <strong>Date:</strong> ${date}<br/>
+          <strong>Time:</strong> ${time}
+        </p>
+        <p>The business will review your request and respond soon.</p>
+        ${
+          clientChatLink
+            ? `<p><a href="${clientChatLink}">Open booking chat</a></p>`
+            : ""
+        }
+      `,
+    });
+  }
 
-      if (business.ownerEmail) {
-        await sendClientFollowUpEmail({
-          to: business.ownerEmail,
-          subject: `New booking: ${serviceName}`,
-          html: `
-            <p>You have a new booking.</p>
-
-            <p>
-              <strong>Customer:</strong> ${customerName}<br/>
-              <strong>Email:</strong> ${customerEmail}<br/>
-              <strong>Phone:</strong> ${customerPhone}<br/>
-              <strong>Service:</strong> ${serviceName}<br/>
-              <strong>Date:</strong> ${date}<br/>
-              <strong>Time:</strong> ${time}<br/>
-              <strong>Duration:</strong> ${durationMin} min<br/>
-              <strong>Price:</strong> ${priceText}
-              ${notes ? `<br/><strong>Notes:</strong> ${notes}` : ""}
-            </p>
-
-            <p>
-              <a href="${siteUrl}/${locale}/dashboard">Open dashboard</a>
-            </p>
-          `,
-          replyTo: customerEmail,
-        });
-      }
-    } catch (emailErr) {
-      console.error("Booking email send failed:", emailErr);
-    }
+  if (business.ownerEmail) {
+    await sendClientFollowUpEmail({
+      to: business.ownerEmail,
+      subject:
+        booking.status === "PENDING"
+          ? `New booking request: ${serviceName}`
+          : `New booking: ${serviceName}`,
+      html: `
+        <p>You have a new ${booking.status === "PENDING" ? "booking request" : "booking"}.</p>
+        <p>
+          <strong>Customer:</strong> ${customerName}<br/>
+          <strong>Email:</strong> ${customerEmail}<br/>
+          <strong>Phone:</strong> ${customerPhone}<br/>
+          <strong>Service:</strong> ${serviceName}<br/>
+          <strong>Date:</strong> ${date}<br/>
+          <strong>Time:</strong> ${time}<br/>
+          <strong>Duration:</strong> ${durationMin} min<br/>
+          <strong>Price:</strong> ${priceText}
+          ${notes ? `<br/><strong>Notes:</strong> ${notes}` : ""}
+        </p>
+        <p><a href="${siteUrl}/${locale}/dashboard">Open dashboard</a></p>
+      `,
+      replyTo: customerEmail,
+    });
+  }
+} catch (emailErr) {
+  console.error("Booking email send failed:", emailErr);
+}
 
     return json({ booking }, 200);
   } catch (err: any) {

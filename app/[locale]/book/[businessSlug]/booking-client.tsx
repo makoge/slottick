@@ -429,7 +429,9 @@ export default function BookingClient({
       const id: string | undefined = data.booking?.id;
       if (!id) return setError(tr("booking.errors.missingId"));
 
-      router.push(`/${locale}/book/${businessSlug}/success?id=${encodeURIComponent(id)}`);
+      router.push(
+  `/${locale}/book/${businessSlug}/success?id=${encodeURIComponent(id)}&status=${encodeURIComponent(data.booking.status)}`
+);
     } catch {
       setError(tr("booking.errors.network"));
     } finally {

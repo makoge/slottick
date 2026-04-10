@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatMoney, type Currency } from "@/lib/services";
 import { useLocale } from "@/lib/use-locale";
+import { useMessages } from "@/lib/use-messages";
+import { t } from "@/lib/i18n";
 
 type BookingDTO = {
   id: string;
-  startsAt: string; // ISO (stored in UTC is fine)
+  startsAt: string;
   durationMin: number;
   serviceName: string;
   price: number;
@@ -33,7 +35,7 @@ type BusinessCard = {
 };
 
 function formatLocalDateTime(iso: string, locale: string) {
-  const dt = new Date(iso); // Date will render in user's local timezone by default
+  const dt = new Date(iso);
 
   const date = new Intl.DateTimeFormat(locale, {
     year: "numeric",
@@ -47,7 +49,6 @@ function formatLocalDateTime(iso: string, locale: string) {
     hour12: false
   }).format(dt);
 
-  // Optional: show user's timezone abbreviation (EET/EEST etc.)
   const tz = Intl.DateTimeFormat(locale, { timeZoneName: "short" })
     .formatToParts(dt)
     .find((p) => p.type === "timeZoneName")?.value;
@@ -56,10 +57,25 @@ function formatLocalDateTime(iso: string, locale: string) {
 }
 
 export default function SuccessClient({ businessSlug }: { businessSlug: string }) {
-  const locale = useLocale("en"); // ✅ always defined
+  const locale = useLocale("en");
+  const messages = useMessages(locale);
+
+  const tr = (key: string, vars?: Record<string, string | number>) => {
+    let s = t(messages, key);
+    if (vars) {
+      for (const [k, v] of Object.entries(vars)) {
+        s = s.replaceAll(`{${k}}`, String(v));
+      }
+    }
+    return s;
+  };
 
   const sp = useSearchParams();
   const id = sp.get("id") ?? "";
+
+  const status = (sp.get("status") ?? "").toUpperCase();
+  const isPending = status === "PENDING";
+  const isConfirmed = status === "CONFIRMED";
 
   const [booking, setBooking] = useState<BookingDTO | null>(null);
   const [explore, setExplore] = useState<BusinessCard[]>([]);
@@ -97,10 +113,9 @@ export default function SuccessClient({ businessSlug }: { businessSlug: string }
 
       const city = b.business?.city?.trim();
       if (city) {
-        const r2 = await fetch(
-          `/api/businesses?city=${encodeURIComponent(city)}`,
-          { cache: "no-store" }
-        );
+        const r2 = await fetch(`/api/businesses?city=${encodeURIComponent(city)}`, {
+          cache: "no-store"
+        });
         const d2 = await r2.json().catch(() => ({}));
 
         if (!cancelled && r2.ok && Array.isArray(d2.businesses)) {
@@ -141,47 +156,82 @@ export default function SuccessClient({ businessSlug }: { businessSlug: string }
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-slate-600">Slottick</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">
-                Booked <span aria-hidden>✅</span>
-              </h1>
-              <p className="mt-2 text-slate-600">Your appointment is confirmed.</p>
 
-              {!loading && booking && (
+              <h1 className="mt-2 text-3xl font-bold tracking-tight">
+                {isPending ? (
+                  <>
+                    {tr("bookingSuccess.pending.title")} <span aria-hidden>⏳</span>
+                  </>
+                ) : (
+                  <>
+                    {tr("bookingSuccess.confirmed.title")} <span aria-hidden>✅</span>
+                  </>
+                )}
+              </h1>
+
+              <p className="mt-2 text-slate-600">
+                {isPending
+                  ? tr("bookingSuccess.pending.description")
+                  : tr("bookingSuccess.confirmed.description")}
+              </p>
+
+              {!loading && booking && isConfirmed && (
                 <a
                   href={`/api/bookings/${booking.id}/calendar`}
                   className="mt-4 inline-flex items-center rounded-xl px-4 py-2 shadow"
                 >
-                  Add to calendar
+                  {tr("bookingSuccess.actions.addToCalendar")}
                 </a>
               )}
             </div>
 
             <a className="text-sm underline text-slate-600" href={backHref}>
-              Back to booking
+              {tr("bookingSuccess.actions.backToBooking")}
             </a>
           </div>
 
           {loading ? (
             <div className="mt-6 rounded-2xl border border-slate-200 p-4 text-sm text-slate-600">
-              Loading booking details…
+              {tr("bookingSuccess.states.loading")}
             </div>
           ) : !booking || !details ? (
             <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
-              We couldn’t load the booking details (missing or invalid id).
+              {tr("bookingSuccess.states.loadError")}
               <div className="mt-2">
                 <a className="font-semibold underline" href={backHref}>
-                  Go back to booking
+                  {tr("bookingSuccess.actions.goBack")}
                 </a>
               </div>
             </div>
           ) : (
             <>
               <div className="mt-6 rounded-2xl bg-slate-50 p-5">
-                <div className="text-sm font-medium text-slate-600">Booking details</div>
+                <div className="text-sm font-medium text-slate-600">
+                  {isPending
+                    ? tr("bookingSuccess.sections.requestDetails")
+                    : tr("bookingSuccess.sections.bookingDetails")}
+                </div>
 
                 <div className="mt-3 grid gap-2 text-sm">
                   <div>
-                    <span className="text-slate-600">Business:</span>{" "}
+                    <span className="text-slate-600">
+                      {tr("bookingSuccess.labels.status")}:
+                    </span>{" "}
+                    <span
+                      className={`font-semibold ${
+                        isPending ? "text-amber-700" : "text-emerald-700"
+                      }`}
+                    >
+                      {isPending
+                        ? tr("bookingSuccess.status.pendingApproval")
+                        : tr("bookingSuccess.status.confirmed")}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-600">
+                      {tr("bookingSuccess.labels.business")}:
+                    </span>{" "}
                     <span className="font-semibold">{booking.business.name}</span>
                     {booking.business.city ? (
                       <span className="text-slate-600"> • {booking.business.city}</span>
@@ -189,24 +239,30 @@ export default function SuccessClient({ businessSlug }: { businessSlug: string }
                   </div>
 
                   <div>
-                    <span className="text-slate-600">Service:</span>{" "}
+                    <span className="text-slate-600">
+                      {tr("bookingSuccess.labels.service")}:
+                    </span>{" "}
                     <span className="font-semibold">{booking.serviceName}</span>
                     <span className="text-slate-600">
                       {" "}
-                      • {booking.durationMin} min •{" "}
+                      • {tr("booking.common.minutes", { n: booking.durationMin })} •{" "}
                       {formatMoney(booking.price, booking.currency as any)}
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-slate-600">When (your time):</span>{" "}
+                    <span className="text-slate-600">
+                      {tr("bookingSuccess.labels.whenYourTime")}:
+                    </span>{" "}
                     <span className="font-semibold">
                       {details.date} • {details.time} {details.tz ? `(${details.tz})` : ""}
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-slate-600">Name:</span>{" "}
+                    <span className="text-slate-600">
+                      {tr("bookingSuccess.labels.name")}:
+                    </span>{" "}
                     <span className="font-semibold">{booking.customerName}</span>
                   </div>
 
@@ -215,7 +271,9 @@ export default function SuccessClient({ businessSlug }: { businessSlug: string }
                       className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
                       href={backHref}
                     >
-                      Book another time
+                      {isPending
+                        ? tr("bookingSuccess.actions.sendAnotherRequest")
+                        : tr("bookingSuccess.actions.bookAnotherTime")}
                     </a>
                   </div>
                 </div>
@@ -224,20 +282,22 @@ export default function SuccessClient({ businessSlug }: { businessSlug: string }
               <div className="mt-8">
                 <div className="flex items-end justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-semibold">Explore more services</h2>
+                    <h2 className="text-lg font-semibold">
+                      {tr("bookingSuccess.explore.title")}
+                    </h2>
                     <p className="mt-1 text-sm text-slate-600">
-                      Discover other businesses near you (simple MVP list by city).
+                      {tr("bookingSuccess.explore.description")}
                     </p>
                   </div>
 
                   <a className="text-sm font-semibold underline" href={`/${locale}/explore`}>
-                    Open marketplace
+                    {tr("bookingSuccess.actions.openMarketplace")}
                   </a>
                 </div>
 
                 {explore.length === 0 ? (
                   <div className="mt-4 rounded-2xl border border-slate-200 p-4 text-sm text-slate-600">
-                    No nearby businesses found yet.
+                    {tr("bookingSuccess.explore.empty")}
                   </div>
                 ) : (
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -249,8 +309,9 @@ export default function SuccessClient({ businessSlug }: { businessSlug: string }
                       >
                         <div className="font-semibold">{b.name}</div>
                         <div className="mt-1 text-sm text-slate-600">
-                          {b.category ?? "Service"} {b.city ? `• ${b.city}` : ""}{" "}
-                          {b.country ? `• ${b.country}` : ""}
+                          {b.category ?? tr("bookingSuccess.explore.fallbackCategory")}
+                          {b.city ? ` • ${b.city}` : ""}
+                          {b.country ? ` • ${b.country}` : ""}
                         </div>
                       </a>
                     ))}

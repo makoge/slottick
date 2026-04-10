@@ -9,27 +9,27 @@ datasource db {
 }
 
 model Business {
-  id                      String                   @id @default(cuid())
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  name                    String
-  slug                    String                   @unique
-  city                    String
-  country                 String
-  website                 String?
-  ownerEmail              String                   @unique
-  passwordHash            String
-  emailVerifiedAt         DateTime?
-  failedLoginCount        Int                      @default(0)
-  lockUntil               DateTime?
-  marketplaceEligibleAt   DateTime?
+  id                    String    @id @default(cuid())
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  name                  String
+  slug                  String    @unique
+  city                  String
+  country               String
+  website               String?
+  ownerEmail            String    @unique
+  passwordHash          String
+  emailVerifiedAt       DateTime?
+  failedLoginCount      Int       @default(0)
+  lockUntil             DateTime?
+  marketplaceEligibleAt DateTime?
 
-  trialEndsAt             DateTime?
-  currentPeriodEnd        DateTime?
+  trialEndsAt      DateTime?
+  currentPeriodEnd DateTime?
 
-  stripeCustomerId        String?                  @unique
-  stripeSubscriptionId    String?                  @unique
-  subscriptionStatus      String                   @default("trialing")
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
+  subscriptionStatus   String  @default("trialing")
 
   logoUrl                 String?
   heroTag                 String?
@@ -51,6 +51,12 @@ model Business {
   automations             Automation[]
   scheduledMessages       ScheduledMessage[]
   marketingWorkspace      MarketingWorkspace?
+
+  bookingApprovalRequired Boolean               @default(false)
+  bookingConversations    BookingConversation[]
+  bookingMessages         BookingMessage[]
+  notifications           Notification[]
+  pushSubscriptions       PushSubscription[]
 
   @@index([industry])
   @@index([city])
@@ -145,6 +151,11 @@ model Booking {
   service           Service?         @relation(fields: [serviceId], references: [id])
   review            Review?
 
+  statusUpdatedAt DateTime?
+  respondedAt     DateTime?
+  conversation    BookingConversation?
+  notifications   Notification[]
+
   @@unique([businessId, startsAt])
   @@index([businessId, startsAt])
   @@index([businessId, serviceId])
@@ -203,13 +214,15 @@ model EmailVerificationToken {
 }
 
 model Customer {
-  id           String            @id @default(cuid())
-  createdAt    DateTime          @default(now())
-  email        String            @unique
-  passwordHash String
-  name         String?
-  phone        String?
-  sessions     CustomerSession[]
+  id                   String                @id @default(cuid())
+  createdAt            DateTime              @default(now())
+  email                String                @unique
+  passwordHash         String
+  name                 String?
+  phone                String?
+  sessions             CustomerSession[]
+  bookingConversations BookingConversation[]
+  bookingMessages      BookingMessage[]
 }
 
 model CustomerSession {
@@ -223,7 +236,10 @@ model CustomerSession {
 }
 
 enum BookingStatus {
+  PENDING
+  NEEDS_INFO
   CONFIRMED
+  DECLINED
   CANCELLED
   DONE
 }
@@ -335,4 +351,82 @@ model Automation {
 
   @@index([businessId])
   @@index([isActive, nextRunAt])
+}
+
+model BookingConversation {
+  id              String    @id @default(cuid())
+  bookingId       String    @unique
+  businessId      String
+  customerId      String?
+  clientTokenHash String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastMessageAt   DateTime?
+  closedAt        DateTime?
+
+  booking  Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  business Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  messages BookingMessage[]
+
+  @@index([businessId, updatedAt])
+  @@index([customerId])
+}
+
+model BookingMessage {
+  id             String            @id @default(cuid())
+  conversationId String
+  senderType     MessageSenderType
+  businessId     String?
+  customerId     String?
+  body           String
+  isRead         Boolean           @default(false)
+  createdAt      DateTime          @default(now())
+
+  conversation BookingConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  business     Business?           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customer     Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, createdAt])
+  @@index([isRead])
+  @@index([businessId])
+  @@index([customerId])
+}
+
+enum MessageSenderType {
+  BUSINESS
+  CUSTOMER
+  SYSTEM
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  businessId String
+  bookingId  String?
+  type       String
+  title      String
+  body       String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, isRead, createdAt])
+  @@index([bookingId])
+}
+
+model PushSubscription {
+  id         String   @id @default(cuid())
+  businessId String
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
 }

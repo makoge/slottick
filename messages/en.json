@@ -479,7 +479,11 @@
   "schedule": {
     "title": "Schedule overview",
     "subtitle": "See your timeline and upcoming slots.",
-    "lead": "See your timeline and upcoming slots."
+    "lead": "See your timeline and upcoming slots.",
+    "inbox": {
+        "title": "Inbox",
+        "lead": "Review booking requests, chat with clients, and accept or decline bookings."
+      }
   },
   "bookings": {
     "title": "Bookings",
@@ -860,6 +864,111 @@
     "network": "Network error. Try again."
   }
 },
+"bookingSuccess": {
+    "pending": {
+      "title": "Request sent",
+      "description": "Your booking request has been sent to the business. They will review it and respond soon."
+    },
+    "confirmed": {
+      "title": "Booked",
+      "description": "Your appointment is confirmed."
+    },
+    "actions": {
+      "addToCalendar": "Add to calendar",
+      "backToBooking": "Back to booking",
+      "goBack": "Go back to booking",
+      "sendAnotherRequest": "Send another request",
+      "bookAnotherTime": "Book another time",
+      "openMarketplace": "Open marketplace"
+    },
+    "states": {
+      "loading": "Loading booking details…",
+      "loadError": "We couldn’t load the booking details (missing or invalid id)."
+    },
+    "sections": {
+      "requestDetails": "Request details",
+      "bookingDetails": "Booking details"
+    },
+    "labels": {
+      "status": "Status",
+      "business": "Business",
+      "service": "Service",
+      "whenYourTime": "When (your time)",
+      "name": "Name"
+    },
+    "status": {
+      "pendingApproval": "Pending approval",
+      "confirmed": "Confirmed"
+    },
+    "explore": {
+      "title": "Explore more services",
+      "description": "Discover other businesses near you.",
+      "empty": "No nearby businesses found yet.",
+      "fallbackCategory": "Service"
+    }
+  },
+  "bookingChat": {
+    "title": "Booking chat",
+    "loading": "Loading conversation…",
+    "labels": {
+      "business": "Business",
+      "service": "Service",
+      "status": "Status"
+    },
+    "placeholders": {
+      "message": "Write your message…"
+    },
+    "actions": {
+      "send": "Send message",
+      "sending": "Sending..."
+    },
+    "errors": {
+      "loadFailed": "Failed to load conversation.",
+      "sendFailed": "Failed to send message.",
+      "notFound": "Conversation not found."
+    }
+  },
+  "inbox": {
+    "title": "Inbox",
+    "subtitle": "Booking requests and client conversations",
+    "loading": "Loading inbox...",
+    "loadingConversation": "Loading conversation...",
+    "empty": "No conversations yet.",
+    "noMessages": "No messages yet.",
+    "selectConversation": "Select a conversation to view messages.",
+    "conversationNotFound": "Conversation not found.",
+    "placeholder": "Ask a question or update the client...",
+    "send": "Send message",
+    "sending": "Sending...",
+    "accept": "Accept",
+    "accepting": "Accepting...",
+    "decline": "Decline",
+    "declining": "Declining...",
+    "replyingTo": "Replying to {customer} about {service}",
+    "labels": {
+      "service": "Service",
+      "time": "Time",
+      "price": "Price",
+      "email": "Email",
+      "phone": "Phone",
+      "notes": "Notes"
+    },
+    "status": {
+      "pending": "Pending",
+      "needs_info": "Needs info",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "cancelled": "Cancelled",
+      "done": "Done"
+    },
+    "errors": {
+      "loadInbox": "Failed to load inbox.",
+      "loadConversation": "Failed to load conversation.",
+      "sendMessage": "Failed to send message.",
+      "acceptBooking": "Failed to accept booking.",
+      "declineBooking": "Failed to decline booking."
+    }
+  },
 "tools": {
     "meta": {
       "title": "Free Tools for Beauty & Service Businesses | Slottick",

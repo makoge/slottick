@@ -452,7 +452,11 @@
   "schedule": {
     "title": "Aperçu du planning",
     "subtitle": "Consultez votre planning et les créneaux à venir.",
-    "lead": "Consultez votre planning et les créneaux à venir."
+    "lead": "Consultez votre planning et les créneaux à venir.",
+    "inbox": {
+        "title": "Boîte de réception",
+        "lead": "Consultez les demandes de réservation, discutez avec les clients et acceptez ou refusez les réservations."
+      }
   },
   "bookings": {
     "title": "Réservations",
@@ -827,6 +831,112 @@
     "network": "Erreur réseau. Réessayez."
   }
 },
+
+  "bookingSuccess": {
+    "pending": {
+      "title": "Demande envoyée",
+      "description": "Votre demande de réservation a été envoyée à l’établissement. Il l’examinera et vous répondra bientôt."
+    },
+    "confirmed": {
+      "title": "Réservé",
+      "description": "Votre rendez-vous est confirmé."
+    },
+    "actions": {
+      "addToCalendar": "Ajouter au calendrier",
+      "backToBooking": "Retour à la réservation",
+      "goBack": "Revenir à la réservation",
+      "sendAnotherRequest": "Envoyer une autre demande",
+      "bookAnotherTime": "Réserver un autre créneau",
+      "openMarketplace": "Ouvrir la marketplace"
+    },
+    "states": {
+      "loading": "Chargement des détails de la réservation…",
+      "loadError": "Impossible de charger les détails de la réservation (identifiant manquant ou invalide)."
+    },
+    "sections": {
+      "requestDetails": "Détails de la demande",
+      "bookingDetails": "Détails de la réservation"
+    },
+    "labels": {
+      "status": "Statut",
+      "business": "Établissement",
+      "service": "Service",
+      "whenYourTime": "Quand (votre heure)",
+      "name": "Nom"
+    },
+    "status": {
+      "pendingApproval": "En attente d’approbation",
+      "confirmed": "Confirmé"
+    },
+    "explore": {
+      "title": "Découvrez plus de services",
+      "description": "Découvrez d’autres établissements près de chez vous.",
+      "empty": "Aucun établissement à proximité pour le moment.",
+      "fallbackCategory": "Service"
+    }
+  },
+  "bookingChat": {
+    "title": "Discussion de réservation",
+    "loading": "Chargement de la conversation…",
+    "labels": {
+      "business": "Établissement",
+      "service": "Service",
+      "status": "Statut"
+    },
+    "placeholders": {
+      "message": "Écrivez votre message…"
+    },
+    "actions": {
+      "send": "Envoyer le message",
+      "sending": "Envoi..."
+    },
+    "errors": {
+      "loadFailed": "Impossible de charger la conversation.",
+      "sendFailed": "Impossible d’envoyer le message.",
+      "notFound": "Conversation introuvable."
+    }
+  },
+  "inbox": {
+    "title": "Boîte de réception",
+    "subtitle": "Demandes de réservation et conversations clients",
+    "loading": "Chargement de la boîte de réception...",
+    "loadingConversation": "Chargement de la conversation...",
+    "empty": "Aucune conversation pour le moment.",
+    "noMessages": "Aucun message pour le moment.",
+    "selectConversation": "Sélectionnez une conversation pour voir les messages.",
+    "conversationNotFound": "Conversation introuvable.",
+    "placeholder": "Posez une question ou informez le client...",
+    "send": "Envoyer le message",
+    "sending": "Envoi...",
+    "accept": "Accepter",
+    "accepting": "Acceptation...",
+    "decline": "Refuser",
+    "declining": "Refus...",
+    "replyingTo": "Réponse à {customer} au sujet de {service}",
+    "labels": {
+      "service": "Service",
+      "time": "Heure",
+      "price": "Prix",
+      "email": "Email",
+      "phone": "Téléphone",
+      "notes": "Notes"
+    },
+    "status": {
+      "pending": "En attente",
+      "needs_info": "Infos requises",
+      "confirmed": "Confirmé",
+      "declined": "Refusé",
+      "cancelled": "Annulé",
+      "done": "Terminé"
+    },
+    "errors": {
+      "loadInbox": "Impossible de charger la boîte de réception.",
+      "loadConversation": "Impossible de charger la conversation.",
+      "sendMessage": "Impossible d’envoyer le message.",
+      "acceptBooking": "Impossible d’accepter la réservation.",
+      "declineBooking": "Impossible de refuser la réservation."
+    }
+  },
 "tools": {
     "meta": {
       "title": "Outils gratuits pour la beauté et les services | Slottick",

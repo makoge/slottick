@@ -9,6 +9,8 @@ import ServicesEditor from "./services";
 import BookingsPanel from "./bookings";
 import SchedulePanel from "./schedule";
 import DashboardHeader from "./dashboard-header";
+import Inbox from "./inbox";
+import PushToggle from "./push-toggle";
 import ShareLinkCard from "./share-link-card";
 import StatsSection from "./stats-section";
 
@@ -890,7 +892,15 @@ export default function DashboardClient({ locale, business }: Props) {
   copied={copied}
   onCopy={copyLink}
 />
-          
+  <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+  <div className="mb-4">
+    <h2 className="text-base font-semibold">Notifications</h2>
+    <p className="mt-1 text-sm text-slate-500">
+      Get desktop alerts for new bookings and client messages.
+    </p>
+  </div>
+  <PushToggle />
+</div>        
         
         {/* ✅ Booking website content */}
         <BookingGalleryManager locale={locale} />
@@ -906,23 +916,23 @@ export default function DashboardClient({ locale, business }: Props) {
 
         {/* Panels */}
         <div className="mt-8 grid gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-7">
-            {/*<div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-4">
-                <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.schedule.title")}</h2>
-                <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.schedule.lead")}</p>
-              </div>
-              <SchedulePanel />
-            </div>*/}
+          <div className="lg:col-span-7 space-y-6">
+  <div>
+    <div className="mb-4">
+      <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.inbox.title")}</h2>
+      <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.inbox.lead")}</p>
+    </div>
+    <Inbox />
+  </div>
 
-            <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-4">
-                <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.bookings.title")}</h2>
-                <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.bookings.lead")}</p>
-              </div>
-              <BookingsPanel />
-            </div>
-          </div>
+  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <div className="mb-4">
+      <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.bookings.title")}</h2>
+      <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.bookings.lead")}</p>
+    </div>
+    <BookingsPanel />
+  </div>
+</div>
 
           <div className="space-y-6 lg:col-span-5">
             <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
