@@ -18,6 +18,7 @@ import StatsSection from "./stats-section";
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
 
+
 type Props = {
   locale: string;
   business: {

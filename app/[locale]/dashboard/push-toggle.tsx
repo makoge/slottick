@@ -38,53 +38,57 @@ export default function PushToggle() {
     });
   }, []);
 
-  async function enablePush() {
-    try {
-      setBusy(true);
-      setError("");
+async function enablePush() {
+  try {
+    setBusy(true);
+    setError("");
 
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setError("Notifications were not allowed.");
-        return;
-      }
-
-      const reg = await navigator.serviceWorker.register("/sw.js");
-      const existing = await reg.pushManager.getSubscription();
-
-      let sub = existing;
-      if (!sub) {
-        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-        if (!vapidKey) throw new Error("Missing VAPID public key.");
-
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey)
-        });
-      }
-
-      const json = sub.toJSON();
-
-      const res = await fetch("/api/push/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          endpoint: json.endpoint,
-          keys: json.keys,
-          userAgent: navigator.userAgent
-        })
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Failed to save subscription.");
-
-      setEnabled(true);
-    } catch (err: any) {
-      setError(err?.message || "Failed to enable notifications.");
-    } finally {
-      setBusy(false);
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+      setError("Notifications were not allowed.");
+      return;
     }
+
+    const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim();
+    if (!vapidKey) {
+      throw new Error("Missing VAPID public key.");
+    }
+
+    await navigator.serviceWorker.register("/sw.js");
+
+    const reg = await navigator.serviceWorker.ready;
+
+    let sub = await reg.pushManager.getSubscription();
+
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey)
+      });
+    }
+
+    const json = sub.toJSON();
+
+    const res = await fetch("/api/push/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        endpoint: json.endpoint,
+        keys: json.keys,
+        userAgent: navigator.userAgent
+      })
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || "Failed to save subscription.");
+
+    setEnabled(true);
+  } catch (err: any) {
+    setError(err?.message || "Failed to enable notifications.");
+  } finally {
+    setBusy(false);
   }
+}
 
   async function disablePush() {
     try {

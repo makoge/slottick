@@ -479,12 +479,12 @@
   "schedule": {
     "title": "Schedule overview",
     "subtitle": "See your timeline and upcoming slots.",
-    "lead": "See your timeline and upcoming slots.",
-    "inbox": {
+    "lead": "See your timeline and upcoming slots."  
+  },
+  "inbox": {
         "title": "Inbox",
         "lead": "Review booking requests, chat with clients, and accept or decline bookings."
-      }
-  },
+      },
   "bookings": {
     "title": "Bookings",
     "subtitle": "Track requests, confirmations, and status.",

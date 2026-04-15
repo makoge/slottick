@@ -229,7 +229,8 @@ export async function POST(req: Request) {
         resolvedCategory = s.category;
       }
     }
-
+     
+    
     const booking = await prisma.booking.create({
       data: {
         businessId: business.id,
@@ -250,31 +251,39 @@ export async function POST(req: Request) {
        },
        select: { id: true, status: true },
      });
+     
+     console.log("🔥 BOOKING CREATED:", booking.id, booking.status);
 
      const siteUrl =
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
     const locale = asString(body.locale).trim() || "en";
 
      let clientChatLink: string | null = null;
+     let conversationId: string | null = null;
 
 if (business.bookingApprovalRequired) {
   const rawToken = crypto.randomBytes(32).toString("hex");
   const clientTokenHash = hashToken(rawToken);
 
-  await prisma.bookingConversation.create({
-    data: {
-      bookingId: booking.id,
-      businessId: business.id,
-      clientTokenHash,
-      lastMessageAt: new Date(),
-      messages: {
-        create: {
-          senderType: "SYSTEM",
-          body: "Booking request created."
-        }
+ const conversation = await prisma.bookingConversation.create({
+  data: {
+    bookingId: booking.id,
+    businessId: business.id,
+    clientTokenHash,
+    lastMessageAt: new Date(),
+    messages: {
+      create: {
+        senderType: "SYSTEM",
+        body: "Booking request created."
       }
     }
-  });
+  },
+  select: {
+    id: true
+  }
+});
+
+conversationId = conversation.id;
 
   await prisma.notification.create({
     data: {
@@ -285,11 +294,13 @@ if (business.bookingApprovalRequired) {
       body: `${customerName} requested ${serviceName}`
     }
   });
-
-  await sendPushToBusiness(business.id, {
+  
+  console.log("🔥 TRIGGERING PUSH NOW");
+ await sendPushToBusiness(business.id, {
+  
   title: "New booking request",
   body: `${customerName} requested ${serviceName}`,
-  url: `/${locale}/dashboard`
+  url: `/${locale}/dashboard?tab=inbox&conversation=${conversation.id}`
 });
 
   clientChatLink = `${siteUrl}/${locale}/booking-chat/${rawToken}`;
@@ -338,9 +349,11 @@ if (business.bookingApprovalRequired) {
       `,
     });
   }
-
+   
+   
   if (business.ownerEmail) {
     await sendClientFollowUpEmail({
+      
       to: business.ownerEmail,
       subject:
         booking.status === "PENDING"
@@ -359,7 +372,15 @@ if (business.bookingApprovalRequired) {
           <strong>Price:</strong> ${priceText}
           ${notes ? `<br/><strong>Notes:</strong> ${notes}` : ""}
         </p>
-        <p><a href="${siteUrl}/${locale}/dashboard">Open dashboard</a></p>
+        <p>
+  <a href="${
+    conversationId
+      ? `${siteUrl}/${locale}/dashboard?tab=inbox&conversation=${conversationId}`
+      : `${siteUrl}/${locale}/dashboard`
+  }">
+    Open request
+  </a>
+</p>
       `,
       replyTo: customerEmail,
     });

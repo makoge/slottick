@@ -82,11 +82,38 @@ function btn(href: string, text: string) {
 
 function wrap(title: string, bodyHtml: string, footer = "Powered by Slottick") {
   return `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <h2 style="margin:0 0 12px 0">${escapeHtml(title)}</h2>
-      ${bodyHtml}
-      <p style="color:#64748b;font-size:13px;margin-top:22px">${escapeHtml(footer)}</p>
-    </div>
+  <div style="margin:0;padding:0;background:#f5f7fb;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
+    <table width="100%" cellspacing="0" cellpadding="0" style="padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table width="100%" style="max-width:600px;background:#ffffff;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;">
+            
+            <tr>
+              <td style="padding:20px 24px;background:#0f172a;color:#fff;">
+                <div style="font-size:13px;opacity:0.8;">Slottick</div>
+                <div style="font-size:24px;font-weight:700;margin-top:6px;">
+                  ${escapeHtml(title)}
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:24px;">
+                ${bodyHtml}
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:16px 24px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:13px;color:#64748b;">
+                ${escapeHtml(footer)}
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
   `;
 }
 

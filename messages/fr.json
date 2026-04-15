@@ -452,12 +452,12 @@
   "schedule": {
     "title": "Aperçu du planning",
     "subtitle": "Consultez votre planning et les créneaux à venir.",
-    "lead": "Consultez votre planning et les créneaux à venir.",
-    "inbox": {
+    "lead": "Consultez votre planning et les créneaux à venir." 
+  },
+  "inbox": {
         "title": "Boîte de réception",
         "lead": "Consultez les demandes de réservation, discutez avec les clients et acceptez ou refusez les réservations."
-      }
-  },
+      },
   "bookings": {
     "title": "Réservations",
     "subtitle": "Suivez les demandes, confirmations et statuts.",

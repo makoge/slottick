@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
 import { notFound } from "next/navigation";
 
-import InstallPWAButton from "@/app/components/InstallPWAButton";
+
 import { getMessages, locales, defaultLocale, t, type Locale } from "@/lib/i18n";
 import LocaleSwitcher from "@/app/components/LocaleSwitcher";
 
@@ -185,7 +185,7 @@ export default async function LocaleLayout({
 
     {/* Right side */}
     <div className="flex items-center gap-3">
-      <InstallPWAButton />
+      
       <LocaleSwitcher />
       <Link
         href={`/${locale}/login`}

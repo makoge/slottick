@@ -1,21 +1,36 @@
 self.addEventListener("push", (event) => {
   if (!event.data) return;
 
+  const raw = event.data.text();
+
   let data = {};
   try {
-    data = event.data.json();
+    data = JSON.parse(raw);
   } catch {
-    data = { title: "Notification", body: event.data.text() };
+    data = {
+      title: "Slottick",
+      body: raw || "New notification"
+    };
   }
 
   const title = data.title || "Slottick";
   const options = {
     body: data.body || "",
     icon: "/icon-192.png",
-    badge: "/badge-72.png",
+    badge: "/icon-192.png",
+    vibrate: [200, 100, 200],
+    requireInteraction: true,
+    renotify: true,
+    tag: data.tag || "slottick-booking",
     data: {
       url: data.url || "/"
-    }
+    },
+    actions: [
+      {
+        action: "open",
+        title: "Open"
+      }
+    ]
   };
 
   event.waitUntil(self.registration.showNotification(title, options));

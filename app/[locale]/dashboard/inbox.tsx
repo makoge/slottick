@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/lib/use-locale";
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
+import { useSearchParams } from "next/navigation";
 
 type ConversationListItem = {
   id: string;
@@ -114,9 +115,19 @@ export default function Inbox() {
     return tr(`inbox.status.${key}`);
   }
 
+  const searchParams = useSearchParams();
+  const initialConversationId = searchParams.get("conversation") ?? "";
+  
+
   const [items, setItems] = useState<ConversationListItem[]>([]);
-  const [activeId, setActiveId] = useState<string>("");
+  const [activeId, setActiveId] = useState<string>(initialConversationId);
   const [active, setActive] = useState<ActiveConversation | null>(null);
+  useEffect(() => {
+  if (initialConversationId) {
+    setActiveId(initialConversationId);
+    setError(null);
+  }
+}, [initialConversationId]);
   const [loadingList, setLoadingList] = useState(true);
   const [loadingThread, setLoadingThread] = useState(false);
   const [sending, setSending] = useState(false);
