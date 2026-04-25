@@ -6,7 +6,7 @@ export function businessHasAccess(business: {
   const now = new Date();
 
   const hasTrialAccess =
-    business.subscriptionStatus === "trialing" &&
+    business.subscriptionStatus === "TRIALING" &&
     !!business.trialEndsAt &&
     business.trialEndsAt > now;
 

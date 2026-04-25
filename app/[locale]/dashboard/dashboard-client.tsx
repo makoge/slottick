@@ -519,7 +519,7 @@ export default function DashboardClient({ locale, business }: Props) {
   }, [bookingPath]);
 
   const trialDaysLeft = useMemo(() => {
-  if (biz.subscriptionStatus !== "trialing" || !biz.trialEndsAt) return null;
+  if (biz.subscriptionStatus !== "TRIALING" || !biz.trialEndsAt) return null;
 
   const msLeft = new Date(biz.trialEndsAt).getTime() - Date.now();
   return Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)));
@@ -759,7 +759,7 @@ export default function DashboardClient({ locale, business }: Props) {
   onRefresh={() => refreshStats()}
   onLogout={logout}
 />
-{biz.subscriptionStatus === "trialing" && trialDaysLeft !== null && (
+{biz.subscriptionStatus === "TRIALING" && trialDaysLeft !== null && (
   <section className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
     <h2 className="text-sm font-semibold text-amber-900">
       Free trial

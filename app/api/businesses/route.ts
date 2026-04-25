@@ -180,7 +180,7 @@ trialEndsAt.setDate(trialEndsAt.getDate() + 14);
       ownerEmail,
       passwordHash,
       logoUrl: safeLogoUrl,
-      subscriptionStatus: "trialing",
+      subscriptionStatus: "TRIALING",
       trialEndsAt
     },
     select: {
