@@ -211,8 +211,8 @@ export default async function Home({ params }: { params: Promise<Params> }) {
       : null;
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <div className="mx-auto max-w-6xl px-6 pb-20 pt-0">
+    <main className="mx-auto w-full max-w-[1500px] px-3 sm:px-6 lg:px-8  bg-white text-slate-900">
+      <div className=" w-full ">
         {/* HERO */}
         <section className=" mt-8 grid gap-8  rounded-4xl  px-5 py-8   md:grid-cols-2 md:items-center ">
 
@@ -272,7 +272,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
           </div>
         </section>
        {/* FEATURES BENTO GRID */}
-<section className=" md:mt-20 lg:mt-28 py-16 sm:py-20 lg:py-24">
+<section className=" md:mt-20 lg:mt-20 py-16 sm:py-20 lg:py-24">
   <div className="mx-auto  px-4 sm:px-6 lg:px-10">
     <div className="mb-10 rounded-[2rem] bg-slate-300 px-4 py-6 text-center sm:mb-12 sm:px-6 sm:py-8 lg:mb-16">
       <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
@@ -417,7 +417,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
 </Link>
           </div>
 
-          <div className="flex aspect-square w-full max-w-[220px] items-center justify-center self-center rounded-2xl border border-slate-100 bg-white shadow-lg md:w-1/3 md:max-w-none">
+          <div className="flex aspect-square w-full max-w-[220px] items-center justify-center self-center rounded-2xl border border-slate-100 shadow-lg md:w-1/3 md:max-w-none bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]">
             <span className="material-symbols-outlined text-5xl text-slate-300 sm:text-6xl">
               dashboard_customize
             </span>
@@ -430,7 +430,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
         {/* DASHBOARD PREVIEW */}
         <section className="mt-20 grid gap-8 lg:grid-cols-12 lg:items-start">
           {/* Left FAQ */}
-          <div className="lg:col-span-5 min-w-0">
+          <div className="lg:col-span-5 min-w-0 shadow-sm bg-slate-400 rounded-4xl px-5 py-8">
             <span className="inline-flex w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium ring-emerald-200">
               {tr(dict, "home.faq.badge", "FAQ")}
             </span>
@@ -770,9 +770,9 @@ export default async function Home({ params }: { params: Promise<Params> }) {
         </section>
 
         {/* CTA SECTION */}
-<section className="rounded-4xl relative  px-4 py-16 text-center sm:px-6 sm:py-20 lg:py-24  lg:mt-10 ">
+<section className="relative rounded-4xl overflow-hidden px-4 py-16 text-center sm:px-6 sm:py-20 lg:py-24 md:mt-20 lg:mt-20 bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]">
    <div className="pointer-events-none absolute inset-0 ">       
-    <div className="absolute inset-y-0 right-0 w-full bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]" />
+    
     </div>
   <div className="rounded-4xl mx-auto max-w-4xl relative">
     <h2 className="mb-6 text-3xl font-extrabold tracking-tight text-slate-200 sm:text-4xl md:text-5xl lg:text-6xl">

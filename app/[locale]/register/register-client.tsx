@@ -158,21 +158,21 @@ export default function RegisterClient() {
   return (
     <main className="min-h-screen bg-white/10 text-slate-900">
       <div className="mx-auto max-w-2xl px-6 py-14">
-        <section className="rounded-3xl border border-slate-200 p-8 shadow-sm bg-lime-100">
+        <section className="rounded-3xl border border-slate-200 p-8 shadow-sm bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-slate-600">{t(messages, "brand.name")}</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">{t(messages, "register.title")}</h1>
-              <p className="mt-2 text-slate-600">{t(messages, "register.subtitle")}</p>
+              <p className="text-sm font-medium text-slate-300">{t(messages, "brand.name")}</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">{t(messages, "register.title")}</h1>
+              <p className="mt-2 text-slate-200">{t(messages, "register.subtitle")}</p>
             </div>
 
             <div className="text-right">
-              <a className="text-sm underline text-slate-600" href={`/${locale}`}>
+              <a className="text-sm underline text-slate-200" href={`/${locale}`}>
                 {t(messages, "register.back")}
               </a>
               <div className="mt-2 text-sm text-slate-600">
                 {t(messages, "register.haveAccount")}{" "}
-                <a className="font-semibold underline" href={`/${locale}/login`}>
+                <a className="font-semibold underline text-slate-200" href={`/${locale}/login`}>
                   {t(messages, "register.login")}
                 </a>
               </div>
@@ -181,7 +181,7 @@ export default function RegisterClient() {
 
           <form onSubmit={submit} className="mt-8 grid gap-5">
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.businessName")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
@@ -192,7 +192,7 @@ export default function RegisterClient() {
                 />
               </label>
 
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.category")}
                 <select
                   className="rounded-xl border border-slate-200 px-3 py-2"
@@ -209,7 +209,7 @@ export default function RegisterClient() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.city")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
@@ -220,7 +220,7 @@ export default function RegisterClient() {
                 />
               </label>
 
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.country")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
@@ -233,7 +233,7 @@ export default function RegisterClient() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.street")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
@@ -243,7 +243,7 @@ export default function RegisterClient() {
                 />
               </label>
 
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.postalCode")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
@@ -255,7 +255,7 @@ export default function RegisterClient() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.website")}
                 <input
                   className="rounded-xl border border-slate-200 px-3 py-2"
@@ -265,11 +265,11 @@ export default function RegisterClient() {
                 />
               </label>
 
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.email")}
                 <input
                   type="email"
-                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  className="rounded-xl text-slate-200 border border-slate-200 px-3 py-2"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t(messages, "register.placeholders.email")}
@@ -279,7 +279,7 @@ export default function RegisterClient() {
             </div>
 
             <div className="grid gap-2">
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.logo")}
                 <input
                   type="file"
@@ -308,7 +308,7 @@ export default function RegisterClient() {
                   />
                   <button
                     type="button"
-                    className="text-sm underline text-slate-600"
+                    className="text-sm underline text-slate-100"
                     onClick={() => {
                       setLogoFile(null);
                       setLogoPreview("");
@@ -318,28 +318,28 @@ export default function RegisterClient() {
                   </button>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">{t(messages, "register.logoHint")}</p>
+                <p className="text-xs text-slate-200">{t(messages, "register.logoHint")}</p>
               )}
             </div>
 
             <div className="grid gap-1 text-sm">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between text-slate-100">
                 <label>{t(messages, "register.fields.slug")}</label>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-slate-200">
                   {t(messages, "register.yourLink")} /{locale}/book/{finalSlug || "your-slug"}
                 </span>
               </div>
               <input
-                className="rounded-xl border border-slate-200 px-3 py-2"
+                className="rounded-xl text-slate-200 border border-slate-200 px-3 py-2"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder={suggestedSlug || "damino-studio"}
               />
-              <p className="text-xs text-slate-500">{t(messages, "register.slugHint")}</p>
+              <p className="text-xs text-slate-200">{t(messages, "register.slugHint")}</p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.password")}
                 <input
                   type="password"
@@ -351,7 +351,7 @@ export default function RegisterClient() {
                 />
               </label>
 
-              <label className="grid gap-1 text-sm">
+              <label className="grid gap-1 text-sm text-slate-100">
                 {t(messages, "register.fields.confirmPassword")}
                 <input
                   type="password"
@@ -367,7 +367,7 @@ export default function RegisterClient() {
             <button
               type="submit"
               disabled={loading || logoUploading}
-              className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+             className="rounded-xl px-8 py-4 text-base font-bold text-white transition-transform bg-linear-to-r from-lime-400 to-green-500 hover:scale-105 hover:bg-slate-800 sm:px-10 sm:py-5 sm:text-lg"
             >
               {logoUploading
                 ? t(messages, "register.states.uploadingLogo")
@@ -376,7 +376,7 @@ export default function RegisterClient() {
                   : t(messages, "register.states.createAccount")}
             </button>
 
-            <p className="text-xs text-slate-500">{t(messages, "register.nextHint")}</p>
+            <p className="text-xs text-slate-200">{t(messages, "register.nextHint")}</p>
           </form>
         </section>
       </div>
