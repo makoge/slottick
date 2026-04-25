@@ -18,7 +18,7 @@ export default function ShareLinkCard({
   onCopy
 }: Props) {
   return (
-    <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-lime-100 shadow-sm">
       <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <div className="text-sm font-medium text-slate-600">
@@ -47,7 +47,7 @@ export default function ShareLinkCard({
         </div>
       </div>
 
-      <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-sm text-slate-600">
+      <div className="border-t border-slate-200 bg-slate-600 px-6 py-4 text-sm text-slate-50">
         {t(messages, "dashboard.share.tip")}
       </div>
     </section>

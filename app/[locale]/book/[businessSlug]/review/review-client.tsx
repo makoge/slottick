@@ -51,7 +51,7 @@ export default function ReviewClient({
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-xl px-6 py-14">
-        <section className="rounded-3xl border border-slate-200 p-8 shadow-sm">
+        <section className="rounded-3xl border border-slate-200 p-8 shadow-sm bg-lime-100">
           <h1 className="text-2xl font-bold tracking-tight">Leave a review</h1>
 
           {done ? (

@@ -27,9 +27,10 @@ model Business {
   trialEndsAt      DateTime?
   currentPeriodEnd DateTime?
 
-  stripeCustomerId     String? @unique
-  stripeSubscriptionId String? @unique
-  subscriptionStatus   String  @default("trialing")
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  subscriptionStatus   SubscriptionStatus @default(TRIALING)
+  billingProvider      BillingProvider?
 
   logoUrl                 String?
   heroTag                 String?
@@ -57,6 +58,15 @@ model Business {
   bookingMessages         BookingMessage[]
   notifications           Notification[]
   pushSubscriptions       PushSubscription[]
+
+  momoPhone              String?
+  momoNetwork            MobileNetwork?
+  momoSubscriptionStatus MomoSubscriptionStatus?
+  momoNextBillingDate    DateTime?
+  momoLastPaidAt         DateTime?
+  momoProviderRef        String?
+  momoPlanCode           String?
+  momoPaymentAttempts    MomoPaymentAttempt[]
 
   @@index([industry])
   @@index([city])
@@ -429,4 +439,94 @@ model PushSubscription {
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
+}
+
+model MomoPaymentAttempt {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  businessId  String
+  provider    MobileMoneyProvider
+  phoneNumber String
+  network     MobileNetwork
+  amount      Int
+  currency    String              @default("XAF")
+
+  billingForMonth   String?
+  externalReference String            @unique
+  providerTxnId     String?
+  status            MomoPaymentStatus @default(PENDING)
+
+  initiatedAt DateTime?
+  completedAt DateTime?
+  expiresAt   DateTime?
+
+  failureCode     String?
+  failureReason   String?
+  rawResponseJson String?
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@index([status, createdAt])
+  @@index([provider, externalReference])
+}
+
+model MomoWebhookEvent {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  provider     MobileMoneyProvider
+  eventType    String?
+  eventId      String?
+  reference    String?
+  payloadJson  String
+  processedAt  DateTime?
+  status       String              @default("received")
+  errorMessage String?
+
+  @@index([provider, createdAt])
+  @@index([eventId])
+  @@index([reference])
+}
+
+enum MobileNetwork {
+  MTN
+  ORANGE
+}
+
+enum MobileMoneyProvider {
+  MTN_MOMO
+  ORANGE_MONEY
+}
+
+enum MomoSubscriptionStatus {
+  ACTIVE
+  PENDING_PAYMENT
+  PAST_DUE
+  CANCELED
+}
+
+enum MomoPaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+  CANCELED
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  FAILED
+  CANCELED
+  INACTIVE
+}
+
+enum BillingProvider {
+  STRIPE
+  MTN_MOMO
+  ORANGE_MONEY
 }

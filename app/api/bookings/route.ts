@@ -258,32 +258,34 @@ export async function POST(req: Request) {
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
     const locale = asString(body.locale).trim() || "en";
 
-     let clientChatLink: string | null = null;
-     let conversationId: string | null = null;
+let conversationId: string | null = null;
+let clientChatLink: string | null = null;
+let ownerRequestLink: string | null = null;
 
 if (business.bookingApprovalRequired) {
   const rawToken = crypto.randomBytes(32).toString("hex");
   const clientTokenHash = hashToken(rawToken);
 
- const conversation = await prisma.bookingConversation.create({
-  data: {
-    bookingId: booking.id,
-    businessId: business.id,
-    clientTokenHash,
-    lastMessageAt: new Date(),
-    messages: {
-      create: {
-        senderType: "SYSTEM",
-        body: "Booking request created."
+  const conversation = await prisma.bookingConversation.create({
+    data: {
+      bookingId: booking.id,
+      businessId: business.id,
+      clientTokenHash,
+      lastMessageAt: new Date(),
+      messages: {
+        create: {
+          senderType: "SYSTEM",
+          body: "Booking request created."
+        }
       }
-    }
-  },
-  select: {
-    id: true
-  }
-});
+    },
+    select: { id: true }
+  });
 
-conversationId = conversation.id;
+  conversationId = conversation.id;
+
+  clientChatLink = `${siteUrl}/${locale}/booking-chat/${rawToken}`;
+  ownerRequestLink = `${siteUrl}/${locale}/dashboard/inbox/${conversationId}`;
 
   await prisma.notification.create({
     data: {
@@ -294,16 +296,13 @@ conversationId = conversation.id;
       body: `${customerName} requested ${serviceName}`
     }
   });
-  
-  console.log("🔥 TRIGGERING PUSH NOW");
- await sendPushToBusiness(business.id, {
-  
-  title: "New booking request",
-  body: `${customerName} requested ${serviceName}`,
-  url: `/${locale}/dashboard?tab=inbox&conversation=${conversation.id}`
-});
 
-  clientChatLink = `${siteUrl}/${locale}/booking-chat/${rawToken}`;
+  await sendPushToBusiness(business.id, {
+    title: "New booking request",
+    body: `${customerName} requested ${serviceName}`,
+    url: `/${locale}/dashboard/inbox/${conversationId}`,
+    tag: `booking-${booking.id}`
+  });
 }
 
     
@@ -329,31 +328,43 @@ conversationId = conversation.id;
       manageLink,
     });
   } else {
-    await sendClientFollowUpEmail({
+   await sendClientFollowUpEmail({
       to: customerEmail,
       subject: `Booking request received: ${serviceName}`,
       html: `
         <p>Your booking request has been received.</p>
+
         <p>
           <strong>Business:</strong> ${business.name}<br/>
           <strong>Service:</strong> ${serviceName}<br/>
           <strong>Date:</strong> ${date}<br/>
           <strong>Time:</strong> ${time}
         </p>
+
         <p>The business will review your request and respond soon.</p>
+
         ${
           clientChatLink
-            ? `<p><a href="${clientChatLink}">Open booking chat</a></p>`
+            ? `
+              <p>
+                <a
+                  href="${clientChatLink}"
+                  style="display:inline-block;padding:12px 18px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600"
+                >
+                  Open booking chat
+                </a>
+              </p>
+            `
             : ""
         }
       `,
     });
   }
-   
-   
+
   if (business.ownerEmail) {
+    const ownerLink = ownerRequestLink || `${siteUrl}/${locale}/dashboard`;
+
     await sendClientFollowUpEmail({
-      
       to: business.ownerEmail,
       subject:
         booking.status === "PENDING"
@@ -361,6 +372,7 @@ conversationId = conversation.id;
           : `New booking: ${serviceName}`,
       html: `
         <p>You have a new ${booking.status === "PENDING" ? "booking request" : "booking"}.</p>
+
         <p>
           <strong>Customer:</strong> ${customerName}<br/>
           <strong>Email:</strong> ${customerEmail}<br/>
@@ -372,15 +384,15 @@ conversationId = conversation.id;
           <strong>Price:</strong> ${priceText}
           ${notes ? `<br/><strong>Notes:</strong> ${notes}` : ""}
         </p>
+
         <p>
-  <a href="${
-    conversationId
-      ? `${siteUrl}/${locale}/dashboard?tab=inbox&conversation=${conversationId}`
-      : `${siteUrl}/${locale}/dashboard`
-  }">
-    Open request
-  </a>
-</p>
+          <a
+            href="${ownerLink}"
+            style="display:inline-block;padding:12px 18px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600"
+          >
+            ${ownerRequestLink ? "Open booking request" : "Open dashboard"}
+          </a>
+        </p>
       `,
       replyTo: customerEmail,
     });

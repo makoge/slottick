@@ -1,19 +1,35 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { hasValidOrigin } from "@/lib/request-security";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 function getUnixPeriodEnd(sub: Stripe.Subscription): number | undefined {
-  // Some Stripe TS versions don't include current_period_end on the type.
   return (sub as any).current_period_end as number | undefined;
 }
 
-export async function POST(req: Request) {
-  if (!hasValidOrigin(req)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+function mapStripeStatus(
+  status: string
+): "TRIALING" | "ACTIVE" | "PAST_DUE" | "FAILED" | "CANCELED" | "INACTIVE" {
+  switch (status) {
+    case "trialing":
+      return "TRIALING";
+    case "active":
+      return "ACTIVE";
+    case "past_due":
+      return "PAST_DUE";
+    case "unpaid":
+    case "incomplete":
+    case "incomplete_expired":
+      return "FAILED";
+    case "canceled":
+      return "CANCELED";
+    default:
+      return "INACTIVE";
   }
+}
+
+export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -37,7 +53,6 @@ export async function POST(req: Request) {
   }
 
   try {
-    // 1) First successful checkout => link business.id <-> Stripe customer/subscription
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
 
@@ -52,12 +67,13 @@ export async function POST(req: Request) {
       const stripeSubscriptionId =
         typeof session.subscription === "string" ? session.subscription : null;
 
-      let status: string = "active";
+      let status: "TRIALING" | "ACTIVE" | "PAST_DUE" | "FAILED" | "CANCELED" | "INACTIVE" =
+        "ACTIVE";
       let currentPeriodEnd: Date | null = null;
 
       if (stripeSubscriptionId) {
         const sub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-        status = sub.status;
+        status = mapStripeStatus(sub.status);
 
         const periodEndUnix = getUnixPeriodEnd(sub);
         currentPeriodEnd = periodEndUnix ? new Date(periodEndUnix * 1000) : null;
@@ -68,6 +84,7 @@ export async function POST(req: Request) {
         data: {
           stripeCustomerId: stripeCustomerId ?? undefined,
           stripeSubscriptionId: stripeSubscriptionId ?? undefined,
+          billingProvider: "STRIPE",
           subscriptionStatus: status,
           currentPeriodEnd: currentPeriodEnd ?? undefined,
         },
@@ -76,7 +93,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true });
     }
 
-    // 2) Subscription status changes (renewals, past_due, cancel_at_period_end)
     if (event.type === "customer.subscription.updated") {
       const sub = event.data.object as Stripe.Subscription;
 
@@ -93,7 +109,8 @@ export async function POST(req: Request) {
           ],
         },
         data: {
-          subscriptionStatus: sub.status,
+          billingProvider: "STRIPE",
+          subscriptionStatus: mapStripeStatus(sub.status),
           currentPeriodEnd: periodEndUnix ? new Date(periodEndUnix * 1000) : null,
         },
       });
@@ -101,7 +118,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ received: true });
     }
 
-    // 3) Subscription ended/canceled
     if (event.type === "customer.subscription.deleted") {
       const sub = event.data.object as Stripe.Subscription;
 
@@ -116,7 +132,8 @@ export async function POST(req: Request) {
           ],
         },
         data: {
-          subscriptionStatus: "canceled",
+          billingProvider: "STRIPE",
+          subscriptionStatus: "CANCELED",
           currentPeriodEnd: null,
         },
       });

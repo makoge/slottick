@@ -106,7 +106,7 @@ export default function LoginClient() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-md px-6 py-14">
-        <section className="rounded-3xl border border-slate-200 p-8 shadow-sm">
+        <section className="rounded-3xl border border-slate-200 p-8 shadow-sm bg-lime-100">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-slate-600">Slottick</p>

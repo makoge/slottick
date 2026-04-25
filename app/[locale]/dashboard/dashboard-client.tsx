@@ -231,15 +231,15 @@ function BookingGalleryManager({ locale }: { locale: string }) {
   const side2 = images[2]?.url || "";
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="mt-6 rounded-2xl border border-slate-200 bg-[#071633] p-6 shadow-sm">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold">{t(messages, "dashboard.gallery.title")}</h2>
-          <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.gallery.lead")}</p>
+          <h2 className="text-base font-semibold text-white">{t(messages, "dashboard.gallery.title")}</h2>
+          <p className="mt-1 text-sm text-slate-300">{t(messages, "dashboard.gallery.lead")}</p>
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="inline-flex cursor-pointer items-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">
+          <label className="inline-flex cursor-pointer items-center rounded-xl bg-lime-100 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-500">
             {uploading ? t(messages, "dashboard.gallery.states.uploading") : t(messages, "dashboard.gallery.actions.upload")}
             <input
               type="file"
@@ -267,7 +267,7 @@ function BookingGalleryManager({ locale }: { locale: string }) {
       ) : null}
 
       {/* Preview */}
-      <div className="mt-5 grid gap-4 lg:grid-cols-12">
+      <div className="mt-5 grid gap-4 lg:grid-cols-12 bg-[#071633]">
         <div className="lg:col-span-8">
           <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
             {hero ? (

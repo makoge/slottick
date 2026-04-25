@@ -532,8 +532,8 @@
     "hours": { "start": "Start time", "end": "End time" },
     "break": { "start": "Break start (optional)", "end": "Break end (optional)" },
     "rules": {
-      "slotStep": "Slot step (minutes)",
-      "buffer": "Buffer between bookings (minutes)"
+      "slotStep": "Slot step (best 15 minutes)",
+      "buffer": "Break between bookings (minutes)"
     }
   },
 
@@ -1314,7 +1314,76 @@
 }
   }
     }
+  },
+  "subscribe": {
+  "badge": "Upgrade your business",
+  "title": "Unlock premium tools to grow faster with Slottick",
+  "lead": "Accept more bookings, look more professional, and save time with premium features built for service businesses.",
+
+  "plan": {
+    "label": "Subscription plan",
+    "title": "Simple pricing, serious growth",
+    "popular": "Most popular",
+    "noVisiblePrice": "Choose your preferred payment method below",
+    "desc": "Pick card or mobile money to activate premium tools for your business.",
+    "note": "Choose card or mobile money. Cancel anytime."
+  },
+
+  "card": {
+    "title": "Pay with card",
+    "desc": "Continue to Stripe checkout where your card subscription price will be shown.",
+    "button": "Pay with card"
+  },
+
+  "momo": {
+    "title": "Pay with mobile money",
+    "desc": "Use MTN MoMo or Orange Money. A payment prompt will be sent to your phone for confirmation.",
+    "networkLabel": "Choose network",
+    "mtn": "MTN MoMo",
+    "orange": "Orange Money",
+    "phoneLabel": "Mobile money number",
+    "phonePlaceholder": "e.g. 6XXXXXXXX or +2376XXXXXXXX",
+    "button": "Pay with mobile money",
+    "sending": "Sending prompt...",
+    "hint": "MTN MoMo and Orange Money are charged at 300 FCFA per month.",
+    "success": "Payment prompt sent to your phone. Please confirm on your device.",
+    "status": {
+  "title": "Payment status",
+  "reference": "Reference",
+  "check": "Check payment status",
+  "checking": "Checking...",
+  "pending": "Waiting for payment confirmation",
+  "success": "Payment confirmed successfully",
+  "completed": "Payment completed",
+  "failed": "Payment failed or expired"
+},
+    "errors": {
+      "phoneRequired": "Please enter a phone number.",
+      "requestFailed": "Could not start mobile money subscription.",
+      "statusFailed": "Could not check payment status.",
+      "generic": "Something went wrong."
+    }
+  },
+
+  "benefits": {
+    "title": "What you get with Slottick",
+    "items": [
+      "Professional booking page",
+      "More trust with a premium brand feel",
+      "Better client experience",
+      "More conversions from visitors",
+      "Cleaner business presentation",
+      "Time-saving booking automation",
+      "Access to future premium tools",
+      "Built to help you grow revenue"
+    ]
+  },
+
+  "why": {
+    "label": "Why subscribe",
+    "body": "Slottick makes your business look more serious, helps clients trust your brand, and gives you tools that support long-term growth instead of just basic booking."
   }
+}
 
 
 }

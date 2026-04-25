@@ -12,6 +12,23 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@keyframes availability-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.availability-marquee {
+  animation: availability-marquee 18s linear infinite;
+}
+
+.availability-marquee:hover {
+  animation-play-state: paused;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

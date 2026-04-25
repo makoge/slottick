@@ -337,7 +337,7 @@ export async function sendClientFollowUpEmail(args: {
   html: string;
   replyTo?: string;
   footer?: string;
-  scheduledAt?: string; // ISO string
+  scheduledAt?: string;
 }) {
   const to = String(args.to ?? "").trim();
   const subject = String(args.subject ?? "").trim();
@@ -360,9 +360,13 @@ export async function sendClientFollowUpEmail(args: {
     }
   }
 
+  const trimmedHtml = html.trim();
+
   const wrapped = wrap(
     subject,
-    html.startsWith("<") ? html : `<p>${escapeHtml(html).replaceAll("\n", "<br/>")}</p>`,
+    trimmedHtml.startsWith("<")
+      ? trimmedHtml
+      : `<p>${escapeHtml(trimmedHtml).replaceAll("\n", "<br/>")}</p>`,
     args.footer ?? "Powered by Slottick"
   );
 

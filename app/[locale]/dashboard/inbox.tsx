@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/lib/use-locale";
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useParams } from "next/navigation";
 
 type ConversationListItem = {
   id: string;
@@ -115,17 +115,22 @@ export default function Inbox() {
     return tr(`inbox.status.${key}`);
   }
 
-  const searchParams = useSearchParams();
-  const initialConversationId = searchParams.get("conversation") ?? "";
-  
+ const searchParams = useSearchParams();
+const params = useParams();
 
-  const [items, setItems] = useState<ConversationListItem[]>([]);
-  const [activeId, setActiveId] = useState<string>(initialConversationId);
-  const [active, setActive] = useState<ActiveConversation | null>(null);
-  useEffect(() => {
+const queryConversationId = searchParams.get("conversation") ?? "";
+const pathConversationId =
+  typeof params?.conversationId === "string" ? params.conversationId : "";
+
+const initialConversationId = pathConversationId || queryConversationId || "";
+
+const [activeId, setActiveId] = useState<string>(initialConversationId);
+const [items, setItems] = useState<ConversationListItem[]>([]);
+const [active, setActive] = useState<ActiveConversation | null>(null);
+
+useEffect(() => {
   if (initialConversationId) {
     setActiveId(initialConversationId);
-    setError(null);
   }
 }, [initialConversationId]);
   const [loadingList, setLoadingList] = useState(true);

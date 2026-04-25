@@ -506,8 +506,8 @@
     "hours": { "start": "Heure de début", "end": "Heure de fin" },
     "break": { "start": "Début de pause (optionnel)", "end": "Fin de pause (optionnel)" },
     "rules": {
-      "slotStep": "Pas des créneaux (minutes)",
-      "buffer": "Tampon entre réservations (minutes)"
+      "slotStep": "Intervalle de réservation (idéalement 15 minutes)",
+      "buffer": "Intervalle entre les rendez-vous (minutes)"
     }
   },
   "schedule": {
@@ -1279,6 +1279,75 @@
   "cta": "Créer un compte gratuit"
 }
   }
+  },
+  "subscribe": {
+  "badge": "Améliorez votre entreprise",
+  "title": "Débloquez des outils premium pour développer votre activité avec Slottick",
+  "lead": "Recevez plus de réservations, inspirez plus de confiance et gagnez du temps avec des fonctionnalités premium conçues pour les entreprises de services.",
+
+  "plan": {
+    "label": "Abonnement",
+    "title": "Tarif simple, vraie croissance",
+    "popular": "Le plus populaire",
+    "noVisiblePrice": "Choisissez votre moyen de paiement ci-dessous",
+    "desc": "Choisissez la carte ou le mobile money pour activer les outils premium de votre entreprise.",
+    "note": "Choisissez la carte ou le mobile money. Annulez à tout moment."
+  },
+
+  "card": {
+    "title": "Payer par carte",
+    "desc": "Continuez vers Stripe où le prix de votre abonnement par carte sera affiché.",
+    "button": "Payer par carte"
+  },
+
+  "momo": {
+    "title": "Payer avec le mobile money",
+    "desc": "Utilisez MTN MoMo ou Orange Money. Une demande de paiement sera envoyée sur votre téléphone pour confirmation.",
+    "networkLabel": "Choisir le réseau",
+    "mtn": "MTN MoMo",
+    "orange": "Orange Money",
+    "phoneLabel": "Numéro mobile money",
+    "phonePlaceholder": "ex. 6XXXXXXXX ou +2376XXXXXXXX",
+    "button": "Payer avec le mobile money",
+    "sending": "Envoi de la demande...",
+    "hint": "MTN MoMo et Orange Money sont facturés à 300 FCFA par mois.",
+    "success": "Une demande de paiement a été envoyée à votre téléphone. Veuillez confirmer sur votre appareil.",
+    "status": {
+  "title": "Statut du paiement",
+  "reference": "Référence",
+  "check": "Vérifier le statut du paiement",
+  "checking": "Vérification...",
+  "pending": "En attente de confirmation du paiement",
+  "success": "Paiement confirmé avec succès",
+  "completed": "Paiement terminé",
+  "failed": "Le paiement a échoué ou a expiré"
+},
+    "errors": {
+      "phoneRequired": "Veuillez entrer un numéro de téléphone.",
+      "requestFailed": "Impossible de lancer l’abonnement mobile money.",
+      "statusFailed": "Impossible de vérifier le statut du paiement.",
+      "generic": "Une erreur est survenue."
+    }
+  },
+
+  "benefits": {
+    "title": "Ce que vous obtenez avec Slottick",
+    "items": [
+      "Page de réservation professionnelle",
+      "Plus de confiance avec une image premium",
+      "Meilleure expérience client",
+      "Plus de conversions des visiteurs",
+      "Présentation plus soignée de votre entreprise",
+      "Automatisation des réservations pour gagner du temps",
+      "Accès aux futurs outils premium",
+      "Conçu pour vous aider à augmenter vos revenus"
+    ]
+  },
+
+  "why": {
+    "label": "Pourquoi s’abonner",
+    "body": "Slottick rend votre entreprise plus professionnelle, aide les clients à faire confiance à votre marque et vous donne des outils pensés pour une croissance durable, pas seulement pour une réservation de base."
   }
+}
 
 }
