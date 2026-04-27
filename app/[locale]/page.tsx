@@ -214,21 +214,19 @@ export default async function Home({ params }: { params: Promise<Params> }) {
     <main className="mx-auto w-full max-w-[1500px] px-3 sm:px-6 lg:px-8  bg-white text-slate-900">
       <div className=" w-full ">
         {/* HERO */}
-        <section className=" mt-8 grid gap-8  rounded-4xl  px-5 py-8   md:grid-cols-2 md:items-center ">
+        <section className=" mt-6 grid gap-8  rounded-4xl   py-16   md:grid-cols-2 md:items-center md:justify-items-center sm:py-20 lg:py-24 ">
 
           
           
-          <div className="relative rounded-4xl z-10 flex flex-col  bg-[#071633] text-white overflow-hidden">
+        
 
-     <div className="pointer-events-none absolute inset-0 ">       
-    <div className="absolute inset-y-0 right-0 w-full bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]" />
-  </div>
-          <div className="relative z-10 gap-6 px-5 py-8">  
+     
+          <div className="relative z-10  w-full max-w-xl  px-4 py-16 text-center rounded-4xl sm:px-6 sm:py-20 lg:px-10 lg:py-24 bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]">  
             <span className="inline-flex mb-6 w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium text-slate-900">
               {tr(dict, "home.hero.badge", "Booking system for service businesses")}
             </span>
 
-            <h1 className="text-4xl mb-6 font-bold tracking-tight sm:text-5xl">
+            <h1 className="text-4xl mb-6 font-bold tracking-tight sm:text-5xl text-slate-100">
               {tr(dict, "home.hero.h1Line1", "Booking management platform")}
               <br />
               {tr(dict, "home.hero.h1Line2", "that protects your time.")}
@@ -242,7 +240,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
               )}
             </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap justify-center gap-4">
               <Link
                 href={`/${locale}/register`}
                 prefetch
@@ -254,16 +252,16 @@ export default async function Home({ params }: { params: Promise<Params> }) {
               <Link
                 href={`/${locale}/explore`}
                 prefetch
-                className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold hover:bg-slate-900"
+                className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-100 hover:bg-slate-900"
               >
                 {tr(dict, "home.hero.ctaSecondary", "Explore Services")}
               </Link>
             </div>
           </div>
-          </div>
+          
 
           {/* VISUAL */}
-          <div className="  rounded-3xl border border-slate-200 bg-lime-100 p-8 shadow-sm ">
+          <div className=" w-full max-w-xl rounded-3xl border border-slate-200 bg-lime-100 p-8 shadow-sm sm:mt-16 ">
             <div className="space-y-4 text-sm text-slate-600">
               {heroChecks.map((x, i) => (
                 <p key={`${i}-${x}`}>✔ {x}</p>
@@ -272,9 +270,9 @@ export default async function Home({ params }: { params: Promise<Params> }) {
           </div>
         </section>
        {/* FEATURES BENTO GRID */}
-<section className=" md:mt-20 lg:mt-20 py-16 sm:py-20 lg:py-24">
-  <div className="mx-auto  px-4 sm:px-6 lg:px-10">
-    <div className="mb-10 rounded-[2rem] bg-slate-300 px-4 py-6 text-center sm:mb-12 sm:px-6 sm:py-8 lg:mb-16">
+<section className=" md:mt-16 lg:mt-16 py-16 sm:py-20 lg:py-24">
+  <div className="mx-auto w-full px-0">
+    <div className="mb-10 rounded-[2rem] bg-slate-300 px-6 py-10 text-center sm:mb-12 sm:px-8 sm:py-12 lg:mb-16">
       <h2 className="mb-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl md:text-5xl">
         {tr(dict, "home.features.title", "Master your calendar")}
       </h2>
@@ -428,7 +426,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
   </div>
 </section>
         {/* DASHBOARD PREVIEW */}
-        <section className="mt-20 grid gap-8 lg:grid-cols-12 lg:items-start">
+        <section className="mt-14 grid gap-8 lg:grid-cols-12 lg:items-start">
           {/* Left FAQ */}
           <div className="lg:col-span-5 min-w-0 shadow-sm bg-slate-400 rounded-4xl px-5 py-8">
             <span className="inline-flex w-fit rounded-full bg-slate-100 px-4 py-1 text-sm font-medium ring-emerald-200">
@@ -756,31 +754,29 @@ export default async function Home({ params }: { params: Promise<Params> }) {
         </section>
 
         {/* WHO IT'S FOR */}
-        <section className="mt-32 max-w-4xl">
-          <h2 className="text-3xl font-bold tracking-tight">
-            {tr(dict, "home.for.title", "Built for appointment-based businesses")}
-          </h2>
-          <p className="mt-4 text-lg text-slate-600">
-            {tr(
-              dict,
-              "home.for.desc",
-              "Perfect for salons, barbers, lash and nail studios, massage therapists, beauty clinics, personal trainers, and any service business that sells time."
-            )}
-          </p>
-        </section>
+        <section className="relative mt-20 overflow-hidden rounded-[2rem] px-4 py-16 text-center sm:px-6 sm:py-20 lg:px-10 lg:py-24 bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]">
 
-        {/* CTA SECTION */}
-<section className="relative rounded-4xl overflow-hidden px-4 py-16 text-center sm:px-6 sm:py-20 lg:py-24 md:mt-20 lg:mt-20 bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]">
-   <div className="pointer-events-none absolute inset-0 ">       
-    
-    </div>
-  <div className="rounded-4xl mx-auto max-w-4xl relative">
-    <h2 className="mb-6 text-3xl font-extrabold tracking-tight text-slate-200 sm:text-4xl md:text-5xl lg:text-6xl">
+  <div className="relative mx-auto max-w-4xl">
+
+    {/* BUILT FOR */}
+    <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+      {tr(dict, "home.for.title", "Built for appointment-based businesses")}
+    </h2>
+
+    <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
       {tr(
         dict,
-        "home.finalCta.title",
-        "Ready to elevate your schedule?"
+        "home.for.desc",
+        "Perfect for salons, barbers, lash and nail studios, massage therapists, beauty clinics, personal trainers, and any service business that sells time."
       )}
+    </p>
+
+    {/* DIVIDER SPACE */}
+    <div className="my-12 h-px w-full bg-white/10" />
+
+    {/* CTA */}
+    <h2 className="mb-6 text-3xl font-extrabold tracking-tight text-slate-200 sm:text-4xl md:text-5xl lg:text-6xl">
+      {tr(dict, "home.finalCta.title", "Ready to elevate your schedule?")}
     </h2>
 
     <p className="mx-auto mb-10 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
@@ -795,7 +791,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
       <Link
         href={`/${locale}/register`}
         prefetch
-        className="rounded-xl px-8 py-4 text-base font-bold text-white transition-transform bg-linear-to-r from-lime-400 to-green-500 hover:scale-105 hover:bg-slate-800 sm:px-10 sm:py-5 sm:text-lg"
+        className="rounded-xl px-8 py-4 text-base font-bold text-slate-950 transition-transform bg-gradient-to-r from-lime-400 to-green-500 hover:scale-105 sm:px-10 sm:py-5 sm:text-lg"
       >
         {tr(dict, "home.finalCta.button", "Get Started Free")}
       </Link>
@@ -808,6 +804,7 @@ export default async function Home({ params }: { params: Promise<Params> }) {
         )}
       </p>
     </div>
+
   </div>
 </section>
       </div>
