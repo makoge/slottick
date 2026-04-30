@@ -440,11 +440,12 @@ export default function BookingClient({
   }
 
   const createAccountHref = `/${locale}/customer/signup?next=${encodeURIComponent(
-    `/${locale}/book/${businessSlug}`
-  )}`;
-  const loginHref = `/${locale}/customer/login?next=${encodeURIComponent(
-    `/${locale}/book/${businessSlug}`
-  )}`;
+  `/${locale}/customer`
+)}`;
+
+const loginHref = `/${locale}/customer/login?next=${encodeURIComponent(
+  `/${locale}/customer`
+)}`;
 
   const addr = fullAddress(business);
   const mapsQuery = encodeURIComponent(addr || `${business.city ?? ""} ${business.country ?? ""}`.trim());
@@ -465,10 +466,7 @@ export default function BookingClient({
 
   return (
   <main
-    className="
-      min-h-screen text-slate-900
-      bg-[radial-gradient(1200px_circle_at_15%_-10%,rgba(236,72,153,0.18),transparent_55%),radial-gradient(900px_circle_at_90%_0%,rgba(99,102,241,0.16),transparent_50%),linear-gradient(to_bottom,#0b1220_0%,#0b1220_18%,#ffffff_45%,#ffffff_100%)]
-    "
+    className="min-h-screen text-slate-900 bg-[radial-gradient(1200px_circle_at_15%_-10%,rgba(236,72,153,0.18),transparent_55%),radial-gradient(900px_circle_at_90%_0%,rgba(99,102,241,0.16),transparent_50%),linear-gradient(to_bottom,#0b1220_0%,#0b1220_18%,#475569_45%,#475569_100%)"
   >
     
 
@@ -509,7 +507,7 @@ export default function BookingClient({
 
   {/* OVERLAYS (readability + premium fade) */}
   <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/20" />
-  <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-white" />
+  <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-slate-600" />
 
   {/* CONTENT */}
   <div className="relative w-full px-6 pt-16 pb-32 lg:px-20">
@@ -633,7 +631,7 @@ export default function BookingClient({
 </section>
 
     {/* BODY */}
-    <section className="bg-white">
+    <section className="relative w-screen left-1/2 -translate-x-1/2 -mt-1 bg-slate-600">
       <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-10">
         {/* Customer box */}
         {!loadingCustomer ? (
@@ -696,7 +694,7 @@ export default function BookingClient({
         ) : null}
 
         {/* PREMIUM BOOKING PANEL */}
-        <div className="mt-8 rounded-[32px] bg-white/80 shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-100 backdrop-blur">
+        <div className="mt-8 rounded-4xl  shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-100 backdrop-blur bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]">
           {/* Sticky stepper header */}
           <div className="sticky top-0 z-20 rounded-t-[32px] bg-white/80 backdrop-blur-xl ring-1 ring-white/60">
             <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-7">

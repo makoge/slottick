@@ -226,13 +226,23 @@ model EmailVerificationToken {
 model Customer {
   id                   String                @id @default(cuid())
   createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+
   email                String                @unique
-  passwordHash         String
+  passwordHash         String?
   name                 String?
   phone                String?
+
+  image                String?
+  authProvider         String?               // "credentials" | "google" | "facebook"
+  authProviderId       String?
+
   sessions             CustomerSession[]
   bookingConversations BookingConversation[]
   bookingMessages      BookingMessage[]
+
+  @@index([authProvider])
+  @@index([authProviderId])
 }
 
 model CustomerSession {
@@ -378,6 +388,8 @@ model BookingConversation {
   business Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customer Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
   messages BookingMessage[]
+
+  clientToken String? @unique
 
   @@index([businessId, updatedAt])
   @@index([customerId])

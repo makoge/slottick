@@ -136,7 +136,6 @@ useEffect(() => {
   const [loadingList, setLoadingList] = useState(true);
   const [loadingThread, setLoadingThread] = useState(false);
   const [sending, setSending] = useState(false);
-  const [acting, setActing] = useState<"" | "accept" | "decline">("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -227,44 +226,7 @@ useEffect(() => {
     }
   }
 
-  async function respond(action: "accept" | "decline") {
-    if (!active?.booking?.id || acting) return;
-
-    try {
-      setActing(action);
-      setError(null);
-
-      const res = await fetch(
-        `/api/dashboard/bookings/${encodeURIComponent(active.booking.id)}/respond`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action })
-        }
-      );
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(
-          data?.error ||
-            (action === "accept"
-              ? tr("inbox.errors.acceptBooking")
-              : tr("inbox.errors.declineBooking"))
-        );
-      }
-
-      await Promise.all([loadThread(activeId), loadList()]);
-    } catch (err: any) {
-      setError(
-        err?.message ||
-          (action === "accept"
-            ? tr("inbox.errors.acceptBooking")
-            : tr("inbox.errors.declineBooking"))
-      );
-    } finally {
-      setActing("");
-    }
-  }
+  
 
   useEffect(() => {
     loadList(false);
@@ -394,7 +356,7 @@ useEffect(() => {
           ) : (
             <>
               <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
-                <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div className="flex flex-col gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-xl font-semibold text-slate-900">
@@ -455,29 +417,7 @@ useEffect(() => {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() => respond("accept")}
-                      disabled={acting !== "" || active.booking.status === "CONFIRMED"}
-                      className="rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
-                    >
-                      {acting === "accept"
-                        ? tr("inbox.accepting")
-                        : tr("inbox.accept")}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => respond("decline")}
-                      disabled={acting !== "" || active.booking.status === "DECLINED"}
-                      className="rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
-                    >
-                      {acting === "decline"
-                        ? tr("inbox.declining")
-                        : tr("inbox.decline")}
-                    </button>
-                  </div>
+                  
                 </div>
               </div>
 

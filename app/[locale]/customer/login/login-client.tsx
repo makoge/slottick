@@ -3,13 +3,54 @@
 import { useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
+const dict = {
+  en: {
+    title: "Customer login",
+    subtitle: "Rebook faster and track your bookings.",
+    back: "Back",
+    google: "Continue with Google",
+    facebook: "Continue with Facebook",
+    or: "or",
+    email: "Email",
+    password: "Password",
+    logging: "Logging in...",
+    login: "Log in",
+    noAccount: "Don’t have an account?",
+    create: "Create one",
+    errEmail: "Enter your email.",
+    errPassword: "Enter your password.",
+    errFail: "Login failed",
+    errNetwork: "Network error. Try again.",
+  },
+  fr: {
+    title: "Connexion client",
+    subtitle: "Réservez plus vite et suivez vos réservations.",
+    back: "Retour",
+    google: "Continuer avec Google",
+    facebook: "Continuer avec Facebook",
+    or: "ou",
+    email: "E-mail",
+    password: "Mot de passe",
+    logging: "Connexion...",
+    login: "Se connecter",
+    noAccount: "Vous n’avez pas de compte ?",
+    create: "Créer un compte",
+    errEmail: "Entrez votre e-mail.",
+    errPassword: "Entrez votre mot de passe.",
+    errFail: "Échec de la connexion",
+    errNetwork: "Erreur réseau. Réessayez.",
+  },
+} as const;
+
 export default function CustomerLoginClient() {
   const router = useRouter();
   const params = useParams<{ locale?: string }>();
   const sp = useSearchParams();
 
-  const locale = params?.locale ?? "en";
-  const next = sp.get("next") || `/${locale}`;
+  const locale = params?.locale === "fr" ? "fr" : "en";
+  const t = dict[locale];
+
+  const next = sp.get("next") || `/${locale}/customer`;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,8 +70,8 @@ export default function CustomerLoginClient() {
     setError(null);
 
     const safeEmail = email.trim().toLowerCase();
-    if (!safeEmail) return setError("Enter your email.");
-    if (!password) return setError("Enter your password.");
+    if (!safeEmail) return setError(t.errEmail);
+    if (!password) return setError(t.errPassword);
 
     setLoading(true);
     try {
@@ -42,13 +83,13 @@ export default function CustomerLoginClient() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || "Login failed");
+        setError(data.error || t.errFail);
         return;
       }
 
       router.push(next);
     } catch {
-      setError("Network error. Try again.");
+      setError(t.errNetwork);
     } finally {
       setLoading(false);
     }
@@ -61,34 +102,36 @@ export default function CustomerLoginClient() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-slate-600">Slottick</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">Customer login</h1>
-              <p className="mt-2 text-slate-600">Rebook faster and track your bookings.</p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight">
+                {t.title}
+              </h1>
+              <p className="mt-2 text-slate-600">{t.subtitle}</p>
             </div>
 
             <a className="text-sm underline text-slate-600" href={`/${locale}`}>
-              Back
+              {t.back}
             </a>
           </div>
 
-          {/* Social (requires NextAuth setup) */}
           <div className="mt-6 grid gap-2">
             <a
               className="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold hover:bg-slate-50"
               href={`/api/auth/signin/google?callbackUrl=${encodeURIComponent(next)}`}
             >
-              Continue with Google
+              {t.google}
             </a>
+
             <a
               className="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold hover:bg-slate-50"
               href={`/api/auth/signin/facebook?callbackUrl=${encodeURIComponent(next)}`}
             >
-              Continue with Facebook
+              {t.facebook}
             </a>
           </div>
 
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-200" />
-            <div className="text-xs text-slate-500">or</div>
+            <div className="text-xs text-slate-500">{t.or}</div>
             <div className="h-px flex-1 bg-slate-200" />
           </div>
 
@@ -100,7 +143,7 @@ export default function CustomerLoginClient() {
             )}
 
             <label className="grid gap-1 text-sm">
-              Email
+              {t.email}
               <input
                 type="email"
                 className="rounded-xl border border-slate-200 px-3 py-2"
@@ -112,7 +155,7 @@ export default function CustomerLoginClient() {
             </label>
 
             <label className="grid gap-1 text-sm">
-              Password
+              {t.password}
               <input
                 type="password"
                 className="rounded-xl border border-slate-200 px-3 py-2"
@@ -128,13 +171,13 @@ export default function CustomerLoginClient() {
               disabled={loading}
               className="mt-2 rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
             >
-              {loading ? "Logging in..." : "Log in"}
+              {loading ? t.logging : t.login}
             </button>
 
             <div className="mt-2 text-sm text-slate-600">
-              Don’t have an account?{" "}
+              {t.noAccount}{" "}
               <a className="font-semibold underline" href={signupHref}>
-                Create one
+                {t.create}
               </a>
             </div>
           </form>

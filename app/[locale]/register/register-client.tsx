@@ -157,229 +157,234 @@ export default function RegisterClient() {
 
   return (
     <main className="min-h-screen bg-white/10 text-slate-900">
-      <div className="mx-auto max-w-2xl px-6 py-14">
-        <section className="rounded-3xl border border-slate-200 p-8 shadow-sm bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-slate-300">{t(messages, "brand.name")}</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">{t(messages, "register.title")}</h1>
-              <p className="mt-2 text-slate-200">{t(messages, "register.subtitle")}</p>
-            </div>
+  <div className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-6 sm:py-14">
+    <section className="overflow-hidden rounded-3xl border border-slate-200 p-4 shadow-sm sm:p-8 bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium text-slate-300">{t(messages, "brand.name")}</p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-100">
+            {t(messages, "register.title")}
+          </h1>
+          <p className="mt-2 text-slate-200">{t(messages, "register.subtitle")}</p>
+        </div>
 
-            <div className="text-right">
-              <a className="text-sm underline text-slate-200" href={`/${locale}`}>
-                {t(messages, "register.back")}
-              </a>
-              <div className="mt-2 text-sm text-slate-600">
-                {t(messages, "register.haveAccount")}{" "}
-                <a className="font-semibold underline text-slate-200" href={`/${locale}/login`}>
-                  {t(messages, "register.login")}
-                </a>
-              </div>
+        <div className="text-right">
+          <a className="text-sm underline text-slate-200" href={`/${locale}`}>
+            {t(messages, "register.back")}
+          </a>
+          <div className="mt-2 text-sm text-slate-600">
+            {t(messages, "register.haveAccount")}{" "}
+            <a className="font-semibold underline text-slate-200" href={`/${locale}/login`}>
+              {t(messages, "register.login")}
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={submit} className="mt-8 grid min-w-0 gap-5">
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.businessName")}
+            <input
+              className="w-full max-w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder={t(messages, "register.placeholders.businessName")}
+              required
+            />
+          </label>
+
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.category")}
+            <select
+              className="w-full max-w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              value={industry}
+              onChange={(e) => setIndustry(e.target.value as IndustryKey)}
+            >
+              {INDUSTRY_OPTIONS.map((o) => (
+                <option key={o.key} value={o.key}>
+                  {t(messages, o.labelKey)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.city")}
+            <input
+              className="w-full max-w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder={t(messages, "register.placeholders.city")}
+              required
+            />
+          </label>
+
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.country")}
+            <input
+              className="w-full max-w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              value={country}
+              onChange={(e) => setCountry(e.target.value.toUpperCase())}
+              placeholder="EE"
+              required
+            />
+          </label>
+        </div>
+
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.street")}
+            <input
+              className="w-full max-w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              value={street}
+              onChange={(e) => setStreet(e.target.value)}
+              placeholder={t(messages, "register.placeholders.street")}
+            />
+          </label>
+
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.postalCode")}
+            <input
+              className="w-full max-w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              value={postalCode}
+              onChange={(e) => setPostalCode(e.target.value)}
+              placeholder={t(messages, "register.placeholders.postalCode")}
+            />
+          </label>
+        </div>
+
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.website")}
+            <input
+              className="w-full max-w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="https://..."
+            />
+          </label>
+
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.email")}
+            <input
+              type="email"
+              className="w-full max-w-full min-w-0 rounded-xl text-slate-200 border border-slate-200 px-3 py-2"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t(messages, "register.placeholders.email")}
+              required
+            />
+          </label>
+        </div>
+
+        <div className="grid min-w-0 gap-2">
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.logo")}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              className="w-full max-w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                setLogoFile(f);
+
+                if (!f) {
+                  setLogoPreview("");
+                  return;
+                }
+
+                const url = URL.createObjectURL(f);
+                setLogoPreview(url);
+              }}
+            />
+          </label>
+
+          {logoPreview ? (
+            <div className="flex items-center gap-3">
+              <img
+                src={logoPreview}
+                alt={t(messages, "register.logoPreviewAlt")}
+                className="h-14 w-14 rounded-2xl border border-slate-200 object-cover"
+              />
+              <button
+                type="button"
+                className="text-sm underline text-slate-100"
+                onClick={() => {
+                  setLogoFile(null);
+                  setLogoPreview("");
+                }}
+              >
+                {t(messages, "register.remove")}
+              </button>
             </div>
+          ) : (
+            <p className="text-xs text-slate-200">{t(messages, "register.logoHint")}</p>
+          )}
+        </div>
+
+        <div className="grid min-w-0 gap-1 text-sm">
+          <div className="flex min-w-0 flex-col gap-1 text-slate-100 sm:flex-row sm:items-center sm:justify-between">
+            <label>{t(messages, "register.fields.slug")}</label>
+            <span className="break-all text-xs text-slate-200">
+              {t(messages, "register.yourLink")} /{locale}/book/{finalSlug || "your-slug"}
+            </span>
           </div>
 
-          <form onSubmit={submit} className="mt-8 grid gap-5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.businessName")}
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  placeholder={t(messages, "register.placeholders.businessName")}
-                  required
-                />
-              </label>
+          <input
+            className="w-full max-w-full min-w-0 rounded-xl text-slate-200 border border-slate-200 px-3 py-2"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder={suggestedSlug || "damino-studio"}
+          />
 
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.category")}
-                <select
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value as IndustryKey)}
-                >
-                  {INDUSTRY_OPTIONS.map((o) => (
-                    <option key={o.key} value={o.key}>
-                      {t(messages, o.labelKey)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+          <p className="text-xs text-slate-200">{t(messages, "register.slugHint")}</p>
+        </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.city")}
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder={t(messages, "register.placeholders.city")}
-                  required
-                />
-              </label>
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.password")}
+            <input
+              type="password"
+              className="w-full max-w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </label>
 
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.country")}
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value.toUpperCase())}
-                  placeholder="EE"
-                  required
-                />
-              </label>
-            </div>
+          <label className="grid min-w-0 gap-1 text-sm text-slate-100">
+            {t(messages, "register.fields.confirmPassword")}
+            <input
+              type="password"
+              className="w-full max-w-full min-w-0 rounded-xl border border-slate-200 px-3 py-2"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </label>
+        </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.street")}
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={street}
-                  onChange={(e) => setStreet(e.target.value)}
-                  placeholder={t(messages, "register.placeholders.street")}
-                />
-              </label>
+        <button
+          type="submit"
+          disabled={loading || logoUploading}
+          className="w-full max-w-full min-w-0 rounded-xl px-8 py-4 text-base font-bold text-white transition-transform bg-linear-to-r from-lime-400 to-green-500 hover:scale-[1.02] hover:bg-slate-800 sm:px-10 sm:py-5 sm:text-lg"
+        >
+          {logoUploading
+            ? t(messages, "register.states.uploadingLogo")
+            : loading
+              ? t(messages, "register.states.creating")
+              : t(messages, "register.states.createAccount")}
+        </button>
 
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.postalCode")}
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={postalCode}
-                  onChange={(e) => setPostalCode(e.target.value)}
-                  placeholder={t(messages, "register.placeholders.postalCode")}
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.website")}
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  placeholder="https://..."
-                />
-              </label>
-
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.email")}
-                <input
-                  type="email"
-                  className="rounded-xl text-slate-200 border border-slate-200 px-3 py-2"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t(messages, "register.placeholders.email")}
-                  required
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-2">
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.logo")}
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0] ?? null;
-                    setLogoFile(f);
-
-                    if (!f) {
-                      setLogoPreview("");
-                      return;
-                    }
-                    const url = URL.createObjectURL(f);
-                    setLogoPreview(url);
-                  }}
-                />
-              </label>
-
-              {logoPreview ? (
-                <div className="flex items-center gap-3">
-                  <img
-                    src={logoPreview}
-                    alt={t(messages, "register.logoPreviewAlt")}
-                    className="h-14 w-14 rounded-2xl border border-slate-200 object-cover"
-                  />
-                  <button
-                    type="button"
-                    className="text-sm underline text-slate-100"
-                    onClick={() => {
-                      setLogoFile(null);
-                      setLogoPreview("");
-                    }}
-                  >
-                    {t(messages, "register.remove")}
-                  </button>
-                </div>
-              ) : (
-                <p className="text-xs text-slate-200">{t(messages, "register.logoHint")}</p>
-              )}
-            </div>
-
-            <div className="grid gap-1 text-sm">
-              <div className="flex items-center justify-between text-slate-100">
-                <label>{t(messages, "register.fields.slug")}</label>
-                <span className="text-xs text-slate-200">
-                  {t(messages, "register.yourLink")} /{locale}/book/{finalSlug || "your-slug"}
-                </span>
-              </div>
-              <input
-                className="rounded-xl text-slate-200 border border-slate-200 px-3 py-2"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                placeholder={suggestedSlug || "damino-studio"}
-              />
-              <p className="text-xs text-slate-200">{t(messages, "register.slugHint")}</p>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.password")}
-                <input
-                  type="password"
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-              </label>
-
-              <label className="grid gap-1 text-sm text-slate-100">
-                {t(messages, "register.fields.confirmPassword")}
-                <input
-                  type="password"
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || logoUploading}
-             className="rounded-xl px-8 py-4 text-base font-bold text-white transition-transform bg-linear-to-r from-lime-400 to-green-500 hover:scale-105 hover:bg-slate-800 sm:px-10 sm:py-5 sm:text-lg"
-            >
-              {logoUploading
-                ? t(messages, "register.states.uploadingLogo")
-                : loading
-                  ? t(messages, "register.states.creating")
-                  : t(messages, "register.states.createAccount")}
-            </button>
-
-            <p className="text-xs text-slate-200">{t(messages, "register.nextHint")}</p>
-          </form>
-        </section>
-      </div>
-    </main>
+        <p className="text-xs text-slate-200">{t(messages, "register.nextHint")}</p>
+      </form>
+    </section>
+  </div>
+</main>
   );
 }

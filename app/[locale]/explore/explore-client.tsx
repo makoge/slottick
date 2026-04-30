@@ -582,96 +582,7 @@ export default function ExploreClient({
           </div>
         </section>
 
-        <section className="mt-8 grid gap-5 xl:grid-cols-3">
-          <div className="group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-900 via-[#0b1b3d] to-slate-800 p-6 text-white sm:p-8 xl:col-span-2">
-            <div className="absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-lime-300/10 blur-[100px] transition-all duration-700 group-hover:bg-lime-300/20" />
-
-            <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center">
-              <div className="flex-1">
-                <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-lime-300" />
-                  {t("explore.partnership.badge")}
-                </div>
-
-                <h2 className="max-w-xl text-2xl font-bold tracking-tight sm:text-3xl">
-                  {t("explore.partnership.title")}
-                </h2>
-
-                <p className="mt-4 max-w-md text-sm leading-7 text-slate-300 sm:text-base">
-                  {t("explore.partnership.description")}
-                </p>
-
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <Link
-                    href={`/${locale}/register`}
-                    className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    {t("explore.partnership.primaryCta")}
-                  </Link>
-
-                  <Link
-                    href={`/${locale}/tools`}
-                    className="inline-flex items-center gap-2 text-sm font-bold text-white transition hover:translate-x-1"
-                  >
-                    {t("explore.partnership.secondaryCta")}
-                    <span aria-hidden>↗</span>
-                  </Link>
-                </div>
-              </div>
-
-              <div className="relative z-10 min-h-[240px] w-full flex-1">
-                <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVmqGopDmuMgjLzDKFoSYqarLfMFVGkBW2pQZyX4Mx67eBYZ0xpvwhw_ABexUHQVCLdnmc3S0zP3VwBDShOE65ZJXg2ks7SkiQU1obV6bALXISJ6jpiKqVFsRXgI849ohXXd9hlZrt6EM2zAO72nupkLSsEf2UbjFasuU1dr9QD9TXQHrZAoCejDqJCGCVXYeW2BmtnyLSbZSbntV7EIo6mkIDceuw7GUOC2vAMtmcavdNW_WXEm6Nm-dABH3UetNq_OQ3GNDbb_zE"
-                  alt={t("explore.partnership.imageAlt")}
-                  className="h-full min-h-[240px] w-full rounded-[1.5rem] object-cover shadow-2xl transition-transform duration-500 group-hover:scale-[1.01] group-hover:rotate-0 lg:rotate-2"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-          </div>
-
-          {featuredInsight ? (
-            <div className="flex h-full flex-col justify-between rounded-[2rem] bg-lime-100 p-6 text-slate-900 sm:p-8">
-              <div>
-                <span className="mb-4 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-700/70">
-                  {featuredInsight.eyebrow}
-                </span>
-
-                <h3 className="mb-6 text-2xl font-black leading-tight tracking-tight">
-                  {featuredInsight.title}
-                </h3>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between rounded-2xl bg-white/60 p-3 backdrop-blur-sm">
-                    <span className="text-xs font-bold text-slate-700">
-                      {featuredInsight.metric1Label}
-                    </span>
-                    <span className="text-xs font-black text-green-700">
-                      {featuredInsight.metric1Value}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-2xl bg-white/60 p-3 backdrop-blur-sm">
-                    <span className="text-xs font-bold text-slate-700">
-                      {featuredInsight.metric2Label}
-                    </span>
-                    <span className="text-xs font-black text-slate-900">
-                      {featuredInsight.metric2Value}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <Link
-                href={featuredInsight.href}
-                className="mt-8 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-900 transition hover:translate-x-1"
-              >
-                {featuredInsight.cta}
-                <span aria-hidden>↗</span>
-              </Link>
-            </div>
-          ) : null}
-        </section>
+        
 
         <section className="mt-8">
   <div className="mb-4 text-sm text-slate-600">
@@ -824,6 +735,97 @@ export default function ExploreClient({
     </div>
   )}
 </section>
+
+<section className="mt-8 grid gap-5 xl:grid-cols-3">
+          <div className="group relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-900 via-[#0b1b3d] to-slate-800 p-6 text-white sm:p-8 xl:col-span-2">
+            <div className="absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-lime-300/10 blur-[100px] transition-all duration-700 group-hover:bg-lime-300/20" />
+
+            <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center">
+              <div className="flex-1">
+                <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-lime-300" />
+                  {t("explore.partnership.badge")}
+                </div>
+
+                <h2 className="max-w-xl text-2xl font-bold tracking-tight sm:text-3xl">
+                  {t("explore.partnership.title")}
+                </h2>
+
+                <p className="mt-4 max-w-md text-sm leading-7 text-slate-300 sm:text-base">
+                  {t("explore.partnership.description")}
+                </p>
+
+                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Link
+                    href={`/${locale}/register`}
+                    className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    {t("explore.partnership.primaryCta")}
+                  </Link>
+
+                  <Link
+                    href={`/${locale}/tools`}
+                    className="inline-flex items-center gap-2 text-sm font-bold text-white transition hover:translate-x-1"
+                  >
+                    {t("explore.partnership.secondaryCta")}
+                    <span aria-hidden>↗</span>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="relative z-10 min-h-[240px] w-full flex-1">
+                <img
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVmqGopDmuMgjLzDKFoSYqarLfMFVGkBW2pQZyX4Mx67eBYZ0xpvwhw_ABexUHQVCLdnmc3S0zP3VwBDShOE65ZJXg2ks7SkiQU1obV6bALXISJ6jpiKqVFsRXgI849ohXXd9hlZrt6EM2zAO72nupkLSsEf2UbjFasuU1dr9QD9TXQHrZAoCejDqJCGCVXYeW2BmtnyLSbZSbntV7EIo6mkIDceuw7GUOC2vAMtmcavdNW_WXEm6Nm-dABH3UetNq_OQ3GNDbb_zE"
+                  alt={t("explore.partnership.imageAlt")}
+                  className="h-full min-h-[240px] w-full rounded-[1.5rem] object-cover shadow-2xl transition-transform duration-500 group-hover:scale-[1.01] group-hover:rotate-0 lg:rotate-2"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </div>
+
+          {featuredInsight ? (
+            <div className="flex h-full flex-col justify-between rounded-[2rem] bg-lime-100 p-6 text-slate-900 sm:p-8">
+              <div>
+                <span className="mb-4 block text-[10px] font-black uppercase tracking-[0.2em] text-slate-700/70">
+                  {featuredInsight.eyebrow}
+                </span>
+
+                <h3 className="mb-6 text-2xl font-black leading-tight tracking-tight">
+                  {featuredInsight.title}
+                </h3>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between rounded-2xl bg-white/60 p-3 backdrop-blur-sm">
+                    <span className="text-xs font-bold text-slate-700">
+                      {featuredInsight.metric1Label}
+                    </span>
+                    <span className="text-xs font-black text-green-700">
+                      {featuredInsight.metric1Value}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-2xl bg-white/60 p-3 backdrop-blur-sm">
+                    <span className="text-xs font-bold text-slate-700">
+                      {featuredInsight.metric2Label}
+                    </span>
+                    <span className="text-xs font-black text-slate-900">
+                      {featuredInsight.metric2Value}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <Link
+                href={featuredInsight.href}
+                className="mt-8 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-slate-900 transition hover:translate-x-1"
+              >
+                {featuredInsight.cta}
+                <span aria-hidden>↗</span>
+              </Link>
+            </div>
+          ) : null}
+        </section>
       </div>
     </main>
   );

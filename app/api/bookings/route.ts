@@ -262,7 +262,12 @@ let conversationId: string | null = null;
 let clientChatLink: string | null = null;
 let ownerRequestLink: string | null = null;
 
-if (business.bookingApprovalRequired) {
+
+const businessTz = business.availabilityRule?.timezone || "UTC";
+const { date, time } = formatBookingDateParts(startsAt, businessTz);
+const priceText = formatMoneySimple(price, currency);
+
+
   const rawToken = crypto.randomBytes(32).toString("hex");
   const clientTokenHash = hashToken(rawToken);
 
@@ -270,12 +275,16 @@ if (business.bookingApprovalRequired) {
     data: {
       bookingId: booking.id,
       businessId: business.id,
+      clientToken: rawToken,
       clientTokenHash,
       lastMessageAt: new Date(),
       messages: {
         create: {
           senderType: "SYSTEM",
-          body: "Booking request created."
+          body:
+  booking.status === "PENDING"
+    ? `New request: ${customerName} wants ${serviceName} on ${date} at ${time}.`
+    : `Confirmed: ${customerName} booked ${serviceName} on ${date} at ${time}.`
         }
       }
     },
@@ -298,12 +307,15 @@ if (business.bookingApprovalRequired) {
   });
 
   await sendPushToBusiness(business.id, {
-    title: "New booking request",
-    body: `${customerName} requested ${serviceName}`,
-    url: `/${locale}/dashboard/inbox/${conversationId}`,
-    tag: `booking-${booking.id}`
-  });
-}
+  title: booking.status === "PENDING" ? "New booking request" : "New booking",
+  body:
+    booking.status === "PENDING"
+      ? `${customerName} requested ${serviceName}`
+      : `${customerName} booked ${serviceName}`,
+  url: `/${locale}/dashboard/inbox/${conversationId}`,
+  tag: `booking-${booking.id}`
+});
+
 
     
 
@@ -311,9 +323,7 @@ if (business.bookingApprovalRequired) {
       booking.id
     )}`;
 
-    const businessTz = business.availabilityRule?.timezone || "UTC";
-    const { date, time } = formatBookingDateParts(startsAt, businessTz);
-    const priceText = formatMoneySimple(price, currency);
+    
 
     try {
   if (booking.status === "CONFIRMED") {
@@ -326,6 +336,7 @@ if (business.bookingApprovalRequired) {
       durationMin,
       priceText,
       manageLink,
+      locale,
     });
   } else {
    await sendClientFollowUpEmail({

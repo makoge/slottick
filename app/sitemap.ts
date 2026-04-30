@@ -33,6 +33,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   "client-follow-up-automation",
       ] as const;
 
+      const GUIDE_SLUGS = [
+  "buzz-cut-blond",
+  "cut-and-blow",
+  "buzz-cut",
+  "mens-haircut-styles",
+  "zoomer-perm"
+] as const;
+
   const useLocales = locales.filter((l) =>
     (INDEX_LOCALES as readonly string[]).includes(l)
   );
@@ -112,6 +120,18 @@ for (const locale of useLocales) {
       });
     }
   }
+
+  // ✅ Editorial guide pages: /[locale]/guides/[slug]
+for (const locale of useLocales) {
+  for (const slug of GUIDE_SLUGS) {
+    urls.push({
+      url: `${site}/${locale}/guides/${slug}`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.7
+    });
+  }
+}
 
   // ✅ Guides: /[locale]/guides/[locationSlug]/[serviceSlug]
   for (const locale of useLocales) {
