@@ -1,3 +1,4 @@
+// app/[locale]/explore/page.tsx
 import type { Metadata } from "next";
 import ExploreClient from "./explore-client";
 import { locales } from "@/lib/i18n";
@@ -8,7 +9,10 @@ import { getDictionary } from "@/lib/dictionaries";
 export const revalidate = 3600;
 
 function envBaseUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(
+    /\/$/,
+    "",
+  );
 }
 
 function normalize(s: unknown) {
@@ -48,7 +52,7 @@ function toIndustryEnum(input: unknown): Industry | undefined {
     "Services créatifs": Industry.CREATIVE_SERVICES,
     "Maison & local": Industry.HOME_AND_LOCAL,
     "Éducation & professionnels": Industry.EDUCATION_AND_PROFESSIONALS,
-    "Education & professionnels": Industry.EDUCATION_AND_PROFESSIONALS
+    "Education & professionnels": Industry.EDUCATION_AND_PROFESSIONALS,
   };
 
   return map[raw];
@@ -87,7 +91,7 @@ function toServiceCategoryFromQuery(q: string): ServiceCategory | undefined {
     tattoo: ServiceCategory.TATTOO,
     fitness: ServiceCategory.FITNESS,
 
-    other: ServiceCategory.OTHER
+    other: ServiceCategory.OTHER,
   };
 
   if (map[s]) return map[s];
@@ -97,7 +101,7 @@ function toServiceCategoryFromQuery(q: string): ServiceCategory | undefined {
 
 export async function generateMetadata({
   params,
-  searchParams
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -109,9 +113,14 @@ export async function generateMetadata({
   const baseUrl = envBaseUrl();
 
   const canonical = `${baseUrl}/${locale}/explore`;
-  const languages = Object.fromEntries(locales.map((l) => [l, `${baseUrl}/${l}/explore`]));
+  const languages = Object.fromEntries(
+    locales.map((l) => [l, `${baseUrl}/${l}/explore`]),
+  );
 
-  const title = locale === "fr" ? "Explorer des services près de vous" : "Explore services near you";
+  const title =
+    locale === "fr"
+      ? "Explorer des services près de vous"
+      : "Explore services near you";
   const description =
     locale === "fr"
       ? "Explorez et réservez des entreprises fiables près de chez vous. Recherchez un service, filtrez par ville et secteur."
@@ -124,7 +133,9 @@ export async function generateMetadata({
     title: `${title} | ${siteName}`,
     description,
     alternates: { canonical, languages },
-    robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
+    robots: filtered
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
     openGraph: {
       type: "website",
       url: canonical,
@@ -132,20 +143,22 @@ export async function generateMetadata({
       title,
       description,
       locale: ogLocale(locale),
-      images: [{ url: `${baseUrl}/og.png`, width: 1200, height: 630, alt: siteName }]
+      images: [
+        { url: `${baseUrl}/og.png`, width: 1200, height: 630, alt: siteName },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [`${baseUrl}/og.png`]
-    }
+      images: [`${baseUrl}/og.png`],
+    },
   };
 }
 
 export default async function Page({
   params,
-  searchParams
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -164,10 +177,10 @@ export default async function Page({
 
   const industriesRaw = await prisma.business.findMany({
     where: {
-      services: { some: {} }
+      services: { some: {} },
     },
     select: { industry: true },
-    distinct: ["industry"]
+    distinct: ["industry"],
   });
 
   const industries = industriesRaw
@@ -180,16 +193,12 @@ export default async function Page({
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const now = new Date();
-  const next14Days = new Date();
-  next14Days.setDate(next14Days.getDate() + 14);
-
   const businesses = await prisma.business.findMany({
     take: 500,
     orderBy: { createdAt: "desc" },
     where: {
       services: {
-        some: {}
+        some: {},
       },
       ...(city ? { city } : {}),
       ...(industryEnum ? { industry: industryEnum } : {}),
@@ -204,14 +213,16 @@ export default async function Page({
                   some: {
                     OR: [
                       { name: { contains: qLower, mode: "insensitive" } },
-                      ...(serviceCategoryFromQ ? [{ category: { equals: serviceCategoryFromQ } }] : [])
-                    ]
-                  }
-                }
-              }
-            ]
+                      ...(serviceCategoryFromQ
+                        ? [{ category: { equals: serviceCategoryFromQ } }]
+                        : []),
+                    ],
+                  },
+                },
+              },
+            ],
           }
-        : {})
+        : {}),
     },
     select: {
       name: true,
@@ -225,12 +236,12 @@ export default async function Page({
       ratingCount: true,
 
       galleryImages: {
-    orderBy: { sort: "asc" },
-    take: 1,
-    select: {
-      url: true
-    }
-  },
+        orderBy: { sort: "asc" },
+        take: 1,
+        select: {
+          url: true,
+        },
+      },
 
       services: {
         select: {
@@ -239,24 +250,22 @@ export default async function Page({
           price: true,
           currency: true,
           category: true,
-          durationMin: true
-        }
+          durationMin: true,
+        },
       },
 
-      // For trending / market insight card
       bookings: {
         where: {
           createdAt: { gte: thirtyDaysAgo },
-          status: { in: [BookingStatus.CONFIRMED, BookingStatus.DONE] }
+          status: { in: [BookingStatus.CONFIRMED, BookingStatus.DONE] },
         },
         select: {
           id: true,
           startsAt: true,
-          durationMin: true
-        }
+          durationMin: true,
+        },
       },
 
-      // For future next-slot logic
       availabilityRule: {
         select: {
           timezone: true,
@@ -266,16 +275,10 @@ export default async function Page({
           breakStart: true,
           breakEnd: true,
           bufferMin: true,
-          slotStepMin: true
-        }
+          slotStepMin: true,
+        },
       },
-
-      // Upcoming occupied times
-      // named differently to avoid collision would require client change,
-      // so we keep one bookings field for now and client can still use it
-      // for trending count. If you later want exact next-slot + trending separately,
-      // split them into separate server-side computed values.
-    }
+    },
   });
 
   const itemListJsonLd = {
@@ -286,29 +289,42 @@ export default async function Page({
       "@type": "ListItem",
       position: i + 1,
       url: `${baseUrl}/${locale}/book/${encodeURIComponent(String(b.slug ?? ""))}`,
-      name: String(b.name ?? "")
-    }))
+      name: String(b.name ?? ""),
+    })),
   };
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: `${baseUrl}/${locale}` },
-      { "@type": "ListItem", position: 2, name: "Explore", item: `${baseUrl}/${locale}/explore` }
-    ]
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: `${baseUrl}/${locale}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Explore",
+        item: `${baseUrl}/${locale}/explore`,
+      },
+    ],
   };
-  
 
   return (
-    <>
+    <div className="w-full min-h-screen bg-slate-300">
       <ExploreClient
         businesses={businesses as any}
-        industries={industries.length ? (industries as any) : ([Industry.BEAUTY_AND_CARE] as any)}
+        industries={
+          industries.length
+            ? (industries as any)
+            : ([Industry.BEAUTY_AND_CARE] as any)
+        }
         initialQ={qRaw}
         initialCity={normalize(sp.city)}
         initialIndustry={(normalize(sp.industry) || "All") as any}
-        dict={dict} // ✅ required by the fixed ExploreClient
+        dict={dict}
       />
 
       <script
@@ -319,6 +335,6 @@ export default async function Page({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-    </>
+    </div>
   );
 }

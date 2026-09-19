@@ -20,12 +20,7 @@ const providers = [
 
 const handler = NextAuth({
   providers,
-
   session: { strategy: "jwt" },
-
-  pages: {
-    signIn: "/en/customer/login",
-  },
 
   callbacks: {
     async redirect({ url, baseUrl }) {
@@ -34,6 +29,8 @@ const handler = NextAuth({
       return `${baseUrl}/en/customer`;
     },
   },
+
+  debug: process.env.NODE_ENV === "development",
 });
 
 export { handler as GET, handler as POST };

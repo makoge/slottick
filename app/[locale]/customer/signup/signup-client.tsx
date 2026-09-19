@@ -135,13 +135,14 @@ export default function CustomerSignupClient() {
 
           {/* OAuth */}
           <div className="mt-6 grid gap-2">
-            <a
-              className="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold hover:bg-slate-50"
-              href={`/api/auth/signin/google?callbackUrl=${encodeURIComponent(next)}`}
-            >
-              {t.google}
-            </a>
-
+       <a
+  className="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold hover:bg-slate-50"
+  href={`/api/auth/signin/google?callbackUrl=${encodeURIComponent(
+    `${window.location.origin}/${locale}/customer`
+  )}`}
+>
+  {t.google}
+</a>
             <a
               className="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold hover:bg-slate-50"
               href={`/api/auth/signin/facebook?callbackUrl=${encodeURIComponent(next)}`}

@@ -33,30 +33,67 @@ export default async function Page({ params }: PageProps) {
   const messages = await getMessages(locale);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
-      <ProfitCalculator />
+    <div className="w-full pb-20">
+      {/* 1. HERO HEADER */}
+      <section className="relative w-full border-b border-slate-400/30 bg-white/40 px-4 py-8 shadow-xs backdrop-blur-xl sm:px-8 sm:py-12">
+        <div className="mx-auto max-w-5xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-lime-300/80 bg-lime-100 px-3.5 py-1 text-xs font-bold text-lime-950 shadow-xs">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-lime-900 text-[10px] text-white">
+              ✓
+            </span>
+            <span className="font-mono uppercase tracking-wider">
+              Financial Engine
+            </span>
+          </div>
 
-      <section className="mx-auto mt-16 max-w-3xl text-slate-700">
-        <h2 className="text-2xl font-semibold">
-          {t(messages, "profit.seo.h2")}
-        </h2>
-
-        <p className="mt-4">{t(messages, "profit.seo.p1")}</p>
-
-        <h3 className="mt-8 text-xl font-semibold">
-          {t(messages, "profit.seo.h3a")}
-        </h3>
-
-        <p className="mt-3">{t(messages, "profit.seo.p2")}</p>
-
-        <h3 className="mt-8 text-xl font-semibold">
-          {t(messages, "profit.seo.h3b")}
-        </h3>
-
-        <p className="mt-3">{t(messages, "profit.seo.p3")}</p>
-
-        <p className="mt-6">{t(messages, "profit.seo.p4")}</p>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+            Beauty Service Profit Calculator
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700 sm:text-base">
+            Calculate your true take-home earnings, margin breakdowns, and
+            optimal service duration pricing.
+          </p>
+        </div>
       </section>
-    </main>
+
+      {/* 2. MAIN INTERACTIVE CALCULATOR */}
+      <div className="mx-auto mt-8 max-w-5xl px-4 sm:px-8">
+        <ProfitCalculator />
+
+        {/* 3. SEO & METHODOLOGY CARD */}
+        <section className="mt-12 rounded-3xl border border-slate-400/40 bg-white/65 p-6 shadow-sm backdrop-blur-xl sm:p-10">
+          <div className="flex items-center gap-2 border-b border-slate-300/70 pb-4">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-lime-300/80 bg-lime-100 font-mono text-xs font-bold text-lime-950">
+              ✓
+            </span>
+            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+              {t(messages, "profit.seo.h2")}
+            </h2>
+          </div>
+
+          <div className="mt-5 space-y-4 text-sm leading-relaxed text-slate-700 sm:text-base">
+            <p>{t(messages, "profit.seo.p1")}</p>
+
+            <div className="pt-2">
+              <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-900">
+                {t(messages, "profit.seo.h3a")}
+              </h3>
+              <p className="mt-1.5">{t(messages, "profit.seo.p2")}</p>
+            </div>
+
+            <div className="pt-2">
+              <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-900">
+                {t(messages, "profit.seo.h3b")}
+              </h3>
+              <p className="mt-1.5">{t(messages, "profit.seo.p3")}</p>
+            </div>
+
+            <p className="border-t border-slate-300/60 pt-4 text-slate-600">
+              {t(messages, "profit.seo.p4")}
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }

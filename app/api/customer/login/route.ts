@@ -16,15 +16,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing email or password" }, { status: 400 });
   }
 
-  const customer = await prisma.customer.findUnique({ where: { email } });
-  if (!customer) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
-  }
+  const customer = await prisma.customer.findUnique({
+  where: { email },
+});
 
-  const ok = await bcrypt.compare(password, customer.passwordHash);
-  if (!ok) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
-  }
+if (!customer || !customer.passwordHash) {
+  return NextResponse.json(
+    { error: "Invalid email or password" },
+    { status: 401 }
+  );
+}
+
+const ok = await bcrypt.compare(password, customer.passwordHash);
+
+if (!ok) {
+  return NextResponse.json(
+    { error: "Invalid email or password" },
+    { status: 401 }
+  );
+}
 
   // new session
   const token = crypto.randomUUID();
