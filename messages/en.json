@@ -1,11 +1,10 @@
 {
   "brand": { "name": "Slottick" },
 
-  "nav": { 
+  "nav": {
     "login": "Login",
     "tools": "Tools"
-
-},
+  },
 
   "footer": {
     "blog": "Blog",
@@ -52,7 +51,6 @@
       "softwareDesc": "Booking management platform for service businesses. Set services and availability once and share a booking link that shows real-time availability.",
       "pageName": "Slottick Home"
     },
-
     "hero": {
       "badge": "Booking management for service businesses",
       "h1Line1": "Booking management platform",
@@ -62,13 +60,13 @@
       "ctaSecondary": "Explore Services",
       "checks": [
         "Services, durations & pricing",
+        "Multi-staff schedules & individual chairs",
         "Availability rules & breaks",
         "Buffer time between clients",
         "One booking link as your website",
         "Track revenue, bookings, and client growth"
       ]
     },
-
     "faq": {
       "badge": "FAQ",
       "title": "Why do service businesses need a booking system?",
@@ -100,7 +98,6 @@
         }
       ]
     },
-
     "preview": {
       "badge": "Dashboard preview",
       "businessName": "Lash Studio Tallinn",
@@ -116,84 +113,95 @@
       "upcomingTitle": "Upcoming bookings",
       "today": "Today",
       "bookings": [
-        { "header": "10:30 • Maria K.", "service": "Lash refill • 60 min", "price": "€55" },
-        { "header": "12:00 • Anna P.", "service": "Classic lashes • 90 min", "price": "€70" },
-        { "header": "15:30 • Kristi S.", "service": "Brow shape • 30 min", "price": "€25" }
+        {
+          "header": "10:30 • Maria K.",
+          "service": "Lash refill • 60 min",
+          "price": "€55"
+        },
+        {
+          "header": "12:00 • Anna P.",
+          "service": "Classic lashes • 90 min",
+          "price": "€70"
+        },
+        {
+          "header": "15:30 • Kristi S.",
+          "service": "Brow shape • 30 min",
+          "price": "€25"
+        }
       ],
       "note": "Clients only see real available slots — no double booking."
     },
-   "features": {
-  "title": "Master your calendar",
-  "subtitle": "Elite tools designed to give you back your hours and provide a seamless booking journey for your clients.",
-  "card1": {
-    "title": "Intelligent Availability Rules",
-    "desc": "Set complex recurring schedules, holiday overrides, and specific window blocks. Your calendar works on your terms, always."
-  },
-  "card2": {
-    "title": "Smart Buffer Times",
-    "desc": "Automatically add travel or prep time between appointments to prevent burnout."
-  },
-  "card3": {
-    "title": "Real-time Scheduling",
-    "desc": "Instant synchronization across all your personal and professional calendars to eliminate double bookings."
-  },
-  "card4": {
-    "title": "Digital Concierge Experience",
-    "desc": "A beautifully branded booking page that acts as an extension of your business identity, not just another form."
-  },
-  "cta": "Explore all features"
-},
-  "why": {
-  "badge": "Why Slottick",
-  "title": "Why choose Slottick as your booking system?",
-  "lead": "Less time in DMs, fewer mistakes, and a cleaner way for clients to book you.",
-  "items": [
-    {
-      "q": "It manages your time automatically",
-      "a": "Set working hours, breaks, buffer time, and services once. Slottick only shows slots that fit your real schedule—no double bookings, no back-and-forth."
+    "features": {
+      "title": "Master your calendar",
+      "subtitle": "Elite tools designed to give you back your hours and provide a seamless booking journey for your clients.",
+      "card1": {
+        "title": "Intelligent Availability Rules",
+        "desc": "Set complex recurring schedules, holiday overrides, and specific window blocks. Your calendar works on your terms, always."
+      },
+      "card2": {
+        "title": "Smart Buffer Times",
+        "desc": "Automatically add travel or prep time between appointments to prevent burnout."
+      },
+      "card3": {
+        "title": "Real-time Scheduling",
+        "desc": "Instant synchronization across all your specialists and chairs to eliminate double bookings."
+      },
+      "card4": {
+        "title": "Digital Concierge Experience",
+        "desc": "A beautifully branded booking page that acts as an extension of your business identity, not just another form."
+      },
+      "cta": "Explore all features"
     },
-    {
-      "q": "It helps market your business",
-      "a": "Your booking page works everywhere: Instagram bio, WhatsApp, Google Business Profile, ads. Clients book instantly without messaging first."
+    "why": {
+      "badge": "Why Slottick",
+      "title": "Why choose Slottick as your booking system?",
+      "lead": "Less time in DMs, fewer mistakes, and a cleaner way for clients to book you.",
+      "items": [
+        {
+          "q": "It manages your time automatically",
+          "a": "Set working hours, breaks, buffer time, and services once. Slottick only shows slots that fit your real schedule—no double bookings, no back-and-forth."
+        },
+        {
+          "q": "It helps market your business",
+          "a": "Your booking page works everywhere: Instagram bio, WhatsApp, Google Business Profile, ads. Clients book instantly without messaging first."
+        },
+        {
+          "q": "You can get new clients through Slottick",
+          "a": "Get discovered in the Slottick Explore marketplace so new customers can find and book you even if they’ve never heard of you."
+        },
+        {
+          "q": "No website? No problem.",
+          "a": "Slottick acts like your booking website. One clean link shows your services, prices, and live availability, always up to date."
+        },
+        {
+          "q": "Simple, fast, and easy to use",
+          "a": "Clients book in seconds. You manage everything from one dashboard—no complicated setup, no tech knowledge required."
+        }
+      ],
+      "visual": {
+        "kicker": "How it feels",
+        "title": "One link → bookings → dashboard",
+        "desc": "Time protection + marketing in one system.",
+        "panelTitle": "Slottick Flow",
+        "aria": "Illustration showing booking link, booking page, explore marketplace, and dashboard stats",
+        "shareableLink": "Shareable Link",
+        "bookingPage": "Booking Page",
+        "bookSlot": "Book a time slot",
+        "exploreMarket": "Explore Market",
+        "discover": "New clients discover you",
+        "dashboard": "Dashboard",
+        "totalBookings": "Total bookings",
+        "revenue": "Revenue (W / M / Y)",
+        "customers": "Customers",
+        "namesCountries": "Names + countries from bookings",
+        "pillars": [
+          { "k": "Time", "v": "Real availability" },
+          { "k": "Marketing", "v": "One link everywhere" },
+          { "k": "Growth", "v": "Explore marketplace" }
+        ]
+      }
     },
-    {
-      "q": "You can get new clients through Slottick",
-      "a": "Get discovered in the Slottick Explore marketplace so new customers can find and book you even if they’ve never heard of you."
-    },
-    {
-      "q": "No website? No problem.",
-      "a": "Slottick acts like your booking website. One clean link shows your services, prices, and live availability, always up to date."
-    },
-    {
-      "q": "Simple, fast, and easy to use",
-      "a": "Clients book in seconds. You manage everything from one dashboard—no complicated setup, no tech knowledge required."
-    }
-  ],
-  "visual": {
-    "kicker": "How it feels",
-    "title": "One link → bookings → dashboard",
-    "desc": "Time protection + marketing in one system.",
-    "panelTitle": "Slottick Flow",
-    "aria": "Illustration showing booking link, booking page, explore marketplace, and dashboard stats",
-    "shareableLink": "Shareable Link",
-    "bookingPage": "Booking Page",
-    "bookSlot": "Book a time slot",
-    "exploreMarket": "Explore Market",
-    "discover": "New clients discover you",
-    "dashboard": "Dashboard",
-    "totalBookings": "Total bookings",
-    "revenue": "Revenue (W / M / Y)",
-    "customers": "Customers",
-    "namesCountries": "Names + countries from bookings",
-    "pillars": [
-      { "k": "Time", "v": "Real availability" },
-      { "k": "Marketing", "v": "One link everywhere" },
-      { "k": "Growth", "v": "Explore marketplace" }
-    ]
-  }
-},
-
-"how": {
+    "how": {
       "items": [
         {
           "title": "Set services and rules",
@@ -205,16 +213,14 @@
         },
         {
           "title": "Get booked correctly",
-          "desc": "Clients choose a service and time slot that matches your schedule."
+          "desc": "Clients choose a service, specialist, and time slot that matches your schedule."
         }
       ]
     },
-
     "for": {
       "title": "Built for appointment-based businesses",
       "desc": "Perfect for salons, barbers, lash and nail studios, massage therapists, beauty clinics, personal trainers, and any service business that sells time."
     },
-
     "cta": {
       "title": "Your availability is your business.",
       "desc": "Set your schedule once. Share one link. Get booked without chaos.",
@@ -222,22 +228,20 @@
       "secondary": "Explore Services"
     },
     "finalCta": {
-  "title": "Ready to elevate your schedule?",
-  "desc": "Join thousands of service professionals who have reclaimed their time with Slottick.",
-  "button": "Get Started Free",
-  "note": "No credit card required • 14-day trial"
-}
+      "title": "Ready to elevate your schedule?",
+      "desc": "Join thousands of service professionals who have reclaimed their time with Slottick.",
+      "button": "Get Started Free",
+      "note": "No credit card required • 14-day trial"
+    }
   },
 
   "register": {
     "brandLabel": "Slottick",
-
     "title": "Create your account",
     "subtitle": "Create your business profile and get your booking link.",
     "back": "Back",
     "haveAccount": "Already have an account?",
     "login": "Log in",
-
     "fields": {
       "businessName": "Business name",
       "category": "Category",
@@ -252,7 +256,6 @@
       "password": "Password",
       "confirmPassword": "Confirm password"
     },
-
     "placeholders": {
       "businessName": "e.g. Damino Studio",
       "city": "Tallinn",
@@ -264,7 +267,6 @@
       "password": "••••••••",
       "slug": "damino-studio"
     },
-
     "industry": {
       "beauty": "Beauty & care",
       "wellness": "Wellness & lifestyle",
@@ -272,22 +274,17 @@
       "home": "Home & local",
       "education": "Education & professionals"
     },
-
     "logoPreviewAlt": "Logo preview",
     "remove": "Remove",
     "logoHint": "Shows on Explore after listing. Best: square, ≤ 2MB.",
-
     "yourLink": "Your link:",
     "slugHint": "Leave blank to use the auto-slug from your business name.",
-
     "states": {
       "uploadingLogo": "Uploading logo…",
       "creating": "Creating…",
       "createAccount": "Create account"
     },
-
     "nextHint": "Next: add your services + availability and share your booking link.",
-
     "errors": {
       "businessNameRequired": "Business name is required.",
       "slugRequired": "Booking slug is required.",
@@ -306,7 +303,6 @@
 
   "dashboard": {
     "title": "Dashboard",
-
     "actions": {
       "editProfile": "Edit profile",
       "openBookingPage": "Open booking page",
@@ -314,17 +310,14 @@
       "refreshingStats": "Refreshing…",
       "logout": "Log out"
     },
-
     "header": {
       "industryFallback": "Industry",
       "kicker": "Business dashboard"
     },
-
     "profile": {
       "title": "Business profile",
       "subtitle": "Update your public info. Changes reflect on your booking page.",
-      "lead": "Update your business details and branding.",
-
+      "lead": "Update your business details, branding, and approval rules.",
       "fields": {
         "name": "Business name",
         "website": "Website (optional)",
@@ -332,35 +325,24 @@
         "country": "Country (code)",
         "street": "Street (optional)",
         "postalCode": "Postal code (optional)",
-        "logo": "Logo (optional)"
+        "logo": "Logo (optional)",
+        "approval": "Require Booking Approval",
+        "approvalHint": "New appointments start as Pending requests until accepted"
       },
-      "desc": {
-    "title": "Booking page description",
-    "subtitle": "Shows on your booking hero. Keep it local + clear (max 600 words).",
-    "placeholder": "Example: We’re a Tallinn-based nail studio specializing in...",
-    "words": "{n}/600 words",
-    "tooLong": "Too long — max 600 words.",
-    "saveFailed": "Failed to save",
-    "saving": "Saving…"
-  },
-
       "placeholders": {
         "website": "https://...",
         "country": "EE"
       },
-
       "logo": {
         "previewAlt": "Logo preview",
         "remove": "Remove",
         "hint": "Best: square, ≤ 2MB."
       },
-
       "save": {
         "saving": "Saving…",
         "uploadingLogo": "Uploading logo…",
         "saveChanges": "Save changes"
       },
-
       "errors": {
         "nameRequired": "Business name is required.",
         "cityRequired": "City is required.",
@@ -369,12 +351,49 @@
         "updateFailed": "Failed to update profile.",
         "network": "Network error. Try again."
       },
-      "actions":{
-          "saveChanges": "Save changes",
-          "removeLogo":"Remove logo",
-          "cancel": "Cancel"
+      "actions": {
+        "saveChanges": "Save changes",
+        "removeLogo": "Remove logo",
+        "cancel": "Cancel"
       }
-    
+    },
+
+    "staff": {
+      "title": "Staff & Specialists",
+      "lead": "Manage your barbers, stylists, chairs, and individual assignments.",
+      "states": {
+        "loading": "Loading team members…",
+        "saving": "Saving…",
+        "uploadingAvatar": "Uploading photo…"
+      },
+      "actions": {
+        "add": "Add Specialist",
+        "save": "Save Changes",
+        "cancel": "Cancel",
+        "edit": "Edit",
+        "delete": "Remove",
+        "setActive": "Active",
+        "setInactive": "Inactive"
+      },
+      "list": {
+        "empty": "No team members added yet. Add your first specialist or chair above.",
+        "activeCount": "{n} active specialists"
+      },
+      "fields": {
+        "name": "Full Name",
+        "namePlaceholder": "e.g. Alex Rivera",
+        "title": "Role / Chair Title",
+        "titlePlaceholder": "e.g. Senior Barber or Chair 1",
+        "avatar": "Profile Photo",
+        "services": "Assigned Services",
+        "isActive": "Available for bookings"
+      },
+      "errors": {
+        "loadFailed": "Failed to load staff roster.",
+        "nameRequired": "Specialist name is required.",
+        "saveFailed": "Failed to save team member.",
+        "deleteFailed": "Failed to remove team member."
+      }
     },
 
     "stats": {
@@ -410,26 +429,24 @@
       "copyFailed": "Copy failed — please copy manually."
     },
 
-     "gallery": {
+    "gallery": {
       "title": "Booking page images",
       "lead": "First image = hero. Next two = side images. These show on your booking page.",
-
       "actions": {
-        "upload": "Upload images", 
+        "upload": "Upload images",
         "uploading": "Uploading…",
         "refresh": "Refresh",
         "up": "Up",
         "down": "Down",
         "remove": "Remove"
       },
-
       "errors": {
         "load": "Failed to load gallery",
         "upload": "Upload failed",
         "delete": "Delete failed",
-        "reorder": "Reorder failed"
+        "reorder": "Reorder failed",
+        "loadFailed": "Failed to load gallery."
       },
-
       "preview": {
         "hero": "Hero image preview",
         "side1": "Side image 1",
@@ -441,7 +458,6 @@
         "sideAlt1": "Side preview 1",
         "sideAlt2": "Side preview 2"
       },
-
       "list": {
         "title": "Your images",
         "loading": "Loading…",
@@ -457,17 +473,14 @@
       "title": "Booking page description",
       "lead": "Shows on your booking hero. Keep it local + clear (max 600 words).",
       "placeholder": "Example: We’re a Tallinn-based nail studio specializing in...",
-      "words": "{count}/600 words",
-
+      "words": "{n}/600 words",
       "actions": {
         "save": "Save",
         "clear": "Clear"
       },
-
       "states": {
         "saving": "Saving…"
       },
-
       "errors": {
         "tooLong": "Too long — max 600 words.",
         "saveFailed": "Failed to save",
@@ -475,36 +488,39 @@
       }
     },
 
-"panels": {
-  "schedule": {
-    "title": "Schedule overview",
-    "subtitle": "See your timeline and upcoming slots.",
-    "lead": "See your timeline and upcoming slots."  
-  },
-  "inbox": {
+    "panels": {
+      "schedule": {
+        "title": "Schedule overview",
+        "subtitle": "See your timeline and upcoming slots.",
+        "lead": "See your timeline and upcoming slots."
+      },
+      "inbox": {
         "title": "Inbox",
         "lead": "Review booking requests, chat with clients, and accept or decline bookings."
       },
-  "bookings": {
-    "title": "Bookings",
-    "subtitle": "Track requests, confirmations, and status.",
-    "lead": "Track requests, confirmations, and status."
+      "bookings": {
+        "title": "Bookings",
+        "subtitle": "Track requests, confirmations, and status.",
+        "lead": "Track requests, confirmations, and status."
+      },
+      "availability": {
+        "title": "Availability",
+        "subtitle": "Set your working hours, breaks, and staff rules.",
+        "lead": "Set your working hours, breaks, and staff rules."
+      },
+      "services": {
+        "title": "Services & pricing",
+        "subtitle": "Add services, duration, assigned staff, and price.",
+        "lead": "Add services, duration, assigned staff, and price."
+      },
+      "staff": {
+        "title": "Staff & Chairs",
+        "subtitle": "Manage team members, roles, and schedules.",
+        "lead": "Manage team members, roles, and schedules."
+      }
+    }
   },
-  "availability": {
-    "title": "Availability",
-    "subtitle": "Set your working hours and breaks.",
-    "lead": "Set your working hours and breaks."
-  },
-  "services": {
-    "title": "Services & pricing",
-    "subtitle": "Add services, duration, and price.",
-    "lead": "Add services, duration, and price."
-  }
-}
 
-  },
-
-  
   "availability": {
     "title": "Availability",
     "lead": "Set your working days and hours. This controls what clients can book.",
@@ -527,10 +543,21 @@
     },
     "workingDays": {
       "title": "Working days",
-      "days": { "sun": "Sun", "mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu", "fri": "Fri", "sat": "Sat" }
+      "days": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      }
     },
     "hours": { "start": "Start time", "end": "End time" },
-    "break": { "start": "Break start (optional)", "end": "Break end (optional)" },
+    "break": {
+      "start": "Break start (optional)",
+      "end": "Break end (optional)"
+    },
     "rules": {
       "slotStep": "Slot step (best 15 minutes)",
       "buffer": "Break between bookings (minutes)"
@@ -538,36 +565,32 @@
   },
 
   "schedule": {
-  "title": "Schedule",
-  "subtitle": "{title} appointments • Tap a day.",
-  "subtitleUpcomingExtra": "({total} total)",
-  "subtitleLoadingExtra": "• Loading…",
-
-  "modes": {
-    "today": "Today",
-    "upcoming": "Upcoming",
-    "all": "All"
+    "title": "Schedule",
+    "subtitle": "{title} appointments • Tap a day.",
+    "subtitleUpcomingExtra": "({total} total)",
+    "subtitleLoadingExtra": "• Loading…",
+    "modes": {
+      "today": "Today",
+      "upcoming": "Upcoming",
+      "all": "All"
+    },
+    "actions": {
+      "prev": "Prev",
+      "next": "Next",
+      "nextBookedDay": "Next booked day"
+    },
+    "emptyDay": "No appointments for this day.",
+    "minutes": "min",
+    "weekdays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
   },
-
-  "actions": {
-    "prev": "Prev",
-    "next": "Next",
-    "nextBookedDay": "Next booked day"
-  },
-
-  "emptyDay": "No appointments for this day.",
-  "minutes": "min",
-
-  "weekdays": {
-    "mon": "Mon",
-    "tue": "Tue",
-    "wed": "Wed",
-    "thu": "Thu",
-    "fri": "Fri",
-    "sat": "Sat",
-    "sun": "Sun"
-  }
-},
 
   "bookings": {
     "title": "Bookings",
@@ -578,6 +601,9 @@
     "loading": "Loading bookings…",
     "emptyUpcoming": "No upcoming bookings yet.",
     "pastTitle": "Past",
+    "specialist": "Specialist",
+    "allSpecialists": "All Specialists",
+    "unassigned": "Unassigned",
     "buttons": {
       "refresh": "Refresh",
       "refreshing": "Refreshing…",
@@ -592,9 +618,11 @@
     "title": "Services",
     "lead": "Add your services with category, duration and price. Category helps Explore search + SEO. Optional: require a deposit. Add photos so customers see your work.",
     "minutes": "min",
-
-    "status": { "loading": "Loading…", "saving": "Saving…", "saved": "Saved ✓" },
-
+    "status": {
+      "loading": "Loading…",
+      "saving": "Saving…",
+      "saved": "Saved ✓"
+    },
     "errors": {
       "loadFailed": "Failed to load services",
       "saveFailed": "Failed to save services",
@@ -602,7 +630,6 @@
       "networkSave": "Network error saving services",
       "uploadFailed": "Upload failed"
     },
-
     "categories": {
       "Hair": "Hair",
       "Barber": "Barber",
@@ -619,20 +646,17 @@
       "Facial": "Facial",
       "Other": "Other"
     },
-
     "form": {
       "name": "Service name",
       "namePlaceholder": "Haircut",
       "category": "Category",
       "duration": "Duration (minutes)",
       "price": "Price",
-      "currency": "Currency"
+      "currency": "Currency",
+      "staff": "Assigned Specialists"
     },
-
     "actions": { "add": "Add service", "delete": "Delete", "remove": "Remove" },
-
     "edit": { "name": "Name", "category": "Category", "duration": "Duration" },
-
     "photos": {
       "title": "Work photos (optional)",
       "workTitle": "Work photos (optional)",
@@ -643,7 +667,6 @@
       "altNew": "Service photo",
       "altWork": "{name} work photo"
     },
-
     "deposit": {
       "require": "Require deposit for booking",
       "requireShort": "Require deposit",
@@ -658,213 +681,204 @@
       "labelAmount": "Deposit: {amount}",
       "none": "No deposit"
     },
-
     "list": {
       "loading": "Loading services…",
       "empty": "No services yet, add your first one."
     }
   },
+
   "explore": {
-  "brandLine": "Slottick • Explore",
-  "heading": "Book trusted businesses",
-  "intro": "Find services near you and book instantly.",
-  "help": "Search businesses by what you need (e.g. “massage”, “tattoo”, “manicure”) and filter by city and industry.",
-  "cta": {
-    "listBusiness": "List your business"
-  },
-
-  "filters": {
-    "search": "Search",
-    "searchPlaceholder": "e.g. massage, tattoo, nails, Tallinn...",
-    "city": "City",
-    "allCities": "All cities",
-    "industry": "Industry",
-    "all": "All"
-  },
-  "quickFilters": {
-  "label": "Quick Filters:",
-  "items": {
-    "all": "All Industry",
-    "beauty": "Beauty & Care",
-    "wellness": "Wellness & Lifestyle",
-    "creative": "Creative Services",
-    "home": "Home & Local",
-    "education": "Education & Professionals"
-  }
-},
-
-  "results": {
-    "showing": "Showing {n} businesses",
-    "empty": "No businesses found. Try another city, industry or search term."
-  },
-
-  "card": {
-    "industryFallback": "Industry",
-    "cityFallback": "—",
-    "reviews": "{n} reviews",
-    "book": "Book",
-    "logoAlt": "{name} logo",
-    "noReviews": "No reviews yet",
-    "nextSlot": "Next slot:",
-    "noReviewsShort": "New",
-  "startingAt": "Starting at",
-  "viewStudio": "View Studio",
-  "heroAlt": "{name} cover image",
-"nextSlotValues": {
-  "today": "Today",
-  "tomorrow": "Tomorrow",
-  "in2days": "In 2 days",
-  "later": "Soon",
-  "noReviewsShort": "New",
-  "startingAt": "Starting at",
-  "viewStudio": "View Studio"
-}
-
-  },
-   "hero": {
-    "titleStart": "Discover your next",
-    "titleAccent": "strategic partner",
-    "description":
-      "Connect with editorial-grade stylists, wellness practitioners, and luxury studio owners. Elevate your client experience through collaborative booking.",
-    "searchButton": "Search Directory"
-  },
-
-  "industries": {
-    "BEAUTY_AND_CARE": "Beauty & care",
-    "WELLNESS_AND_LIFESTYLE": "Wellness & lifestyle",
-    "CREATIVE_SERVICES": "Creative services",
-    "HOME_AND_LOCAL": "Home & local",
-    "EDUCATION_AND_PROFESSIONALS": "Education & professionals"
-  },
-  "partnership": {
-    "badge": "Open for Partnerships",
-    "title": "Expand your service menu with shared spaces",
-    "description":
-      "Join local businesses cross-booking specialized treatment rooms. Lower overhead and reach new clients faster.",
-    "primaryCta": "Find a Venue",
-    "secondaryCta": "Learn more",
-    "imageAlt":
-      "Two business owners discussing a collaboration in a premium minimalist lobby"
-  },
-  "insights": {
-    "eyebrow": "Market Insights",
-    "title": "Trending in your market: premium wellness bookings",
-    "metric1Label": "Demand Growth",
-    "metric1Value": "+24%",
-    "metric2Label": "Average Booking Value",
-    "metric2Value": "€120",
-    "cta": "View Full Report",
-    "trendingEyebrow": "Trending Bookings",
-  "trendingTitle": "Most booked in {city}",
-  "priceEyebrow": "Best Price",
-  "priceTitle": "Lowest starting price in {city}",
-  "bookings": "Bookings (30 days)",
-  "business": "Business",
-  "startingAt": "Starting at",
-  "service": "Service",
-  "viewBusiness": "View Business",
-  "bookNow": "Book Now",
-  "yourArea": "your area"
-  }
-  },
-  
-  "booking": {
-  "lightbox": {
-    "close": "Close",
-    "photoAlt": "Photo",
-    "viewPhoto": "View photo"
-  },
-
-  "hero": {
-    "industryFallback": "Service",
-    "noDescription": "No description added yet.",
-    "stepPill": "Step {step} of {total}",
-    "timezoneLabel": "Timezone:",
-    "visitWebsite": "Visit website",
-    "logoAlt": "{name} logo",
-    "mainPhotoAlt": "{name} main",
-    "photoAlt": "{name} photo {n}"
-  },
-
-  "options": {
-    "title": "Booking options",
-    "signedInAs": "Signed in as",
-    "guest": "You’re booking as guest.",
-    "createAccount": "Create account",
-    "login": "Log in"
-  },
-
-  "deposit": {
-    "amount": "Deposit required: {amount}",
-    "percent": "Deposit required: {n}%"
-  },
-
-  "common": {
-    "minutes": "{n} min"
-  },
-
-  "sections": {
-    "service": {
-      "title": "Choose a service",
-      "loading": "Loading services...",
-      "empty": "No services available yet.",
-      "selected": "Selected",
-      "noPhotos": "No photos yet.",
-      "photosCount": "{n} photos",
-      "servicePhotoAlt": "{name} photo"
+    "brandLine": "Slottick • Explore",
+    "heading": "Book trusted businesses",
+    "intro": "Find services near you and book instantly.",
+    "help": "Search businesses by what you need (e.g. “massage”, “tattoo”, “manicure”) and filter by city and industry.",
+    "cta": {
+      "listBusiness": "List your business"
     },
-    "date": {
-      "title": "Pick a date",
-      "needService": "Select a service first.",
-      "label": "Date"
+    "filters": {
+      "search": "Search",
+      "searchPlaceholder": "e.g. massage, tattoo, nails, Tallinn...",
+      "city": "City",
+      "allCities": "All cities",
+      "industry": "Industry",
+      "all": "All"
     },
-    "time": {
-      "title": "Pick a time",
-      "needServiceDate": "Select a service and date first.",
-      "empty": "No available slots on this date."
+    "quickFilters": {
+      "label": "Quick Filters:",
+      "items": {
+        "all": "All Industry",
+        "beauty": "Beauty & Care",
+        "wellness": "Wellness & Lifestyle",
+        "creative": "Creative Services",
+        "home": "Home & Local",
+        "education": "Education & Professionals"
+      }
     },
-    "details": {
-      "title": "Your details",
-      "needAll": "Finish service + date + time first."
+    "results": {
+      "showing": "Showing {n} businesses",
+      "empty": "No businesses found. Try another city, industry or search term."
+    },
+    "card": {
+      "industryFallback": "Industry",
+      "cityFallback": "—",
+      "reviews": "{n} reviews",
+      "book": "Book",
+      "logoAlt": "{name} logo",
+      "noReviews": "No reviews yet",
+      "nextSlot": "Next slot:",
+      "noReviewsShort": "New",
+      "startingAt": "Starting at",
+      "viewStudio": "View Studio",
+      "heroAlt": "{name} cover image",
+      "nextSlotValues": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "in2days": "In 2 days",
+        "later": "Soon",
+        "noReviewsShort": "New",
+        "startingAt": "Starting at",
+        "viewStudio": "View Studio"
+      }
+    },
+    "hero": {
+      "titleStart": "Discover your next",
+      "titleAccent": "strategic partner",
+      "description": "Connect with editorial-grade stylists, wellness practitioners, and luxury studio owners. Elevate your client experience through collaborative booking.",
+      "searchButton": "Search Directory"
+    },
+    "industries": {
+      "BEAUTY_AND_CARE": "Beauty & care",
+      "WELLNESS_AND_LIFESTYLE": "Wellness & lifestyle",
+      "CREATIVE_SERVICES": "Creative services",
+      "HOME_AND_LOCAL": "Home & local",
+      "EDUCATION_AND_PROFESSIONALS": "Education & professionals"
+    },
+    "partnership": {
+      "badge": "Open for Partnerships",
+      "title": "Expand your service menu with shared spaces",
+      "description": "Join local businesses cross-booking specialized treatment rooms. Lower overhead and reach new clients faster.",
+      "primaryCta": "Find a Venue",
+      "secondaryCta": "Learn more",
+      "imageAlt": "Two business owners discussing a collaboration in a premium minimalist lobby"
+    },
+    "insights": {
+      "eyebrow": "Market Insights",
+      "title": "Trending in your market: premium wellness bookings",
+      "metric1Label": "Demand Growth",
+      "metric1Value": "+24%",
+      "metric2Label": "Average Booking Value",
+      "metric2Value": "€120",
+      "cta": "View Full Report",
+      "trendingEyebrow": "Trending Bookings",
+      "trendingTitle": "Most booked in {city}",
+      "priceEyebrow": "Best Price",
+      "priceTitle": "Lowest starting price in {city}",
+      "bookings": "Bookings (30 days)",
+      "business": "Business",
+      "startingAt": "Starting at",
+      "service": "Service",
+      "viewBusiness": "View Business",
+      "bookNow": "Book Now",
+      "yourArea": "your area"
     }
   },
 
-  "form": {
-    "fullName": "Full name",
-    "fullNamePlaceholder": "Your name",
-    "phone": "Phone",
-    "phonePlaceholder": "+372...",
-    "emailLabel": "Email*",
-    "emailPlaceholder": "your@email.com",
-    "notes": "Notes (optional)",
-    "notesPlaceholder": "Any details...",
-    "confirm": "Confirm booking",
-    "confirming": "Confirming..."
+  "booking": {
+    "lightbox": {
+      "close": "Close",
+      "photoAlt": "Photo",
+      "viewPhoto": "View photo"
+    },
+    "hero": {
+      "industryFallback": "Service",
+      "noDescription": "No description added yet.",
+      "stepPill": "Step {step} of {total}",
+      "timezoneLabel": "Timezone:",
+      "visitWebsite": "Visit website",
+      "logoAlt": "{name} logo",
+      "mainPhotoAlt": "{name} main",
+      "photoAlt": "{name} photo {n}"
+    },
+    "options": {
+      "title": "Booking options",
+      "signedInAs": "Signed in as",
+      "guest": "You’re booking as guest.",
+      "createAccount": "Create account",
+      "login": "Log in"
+    },
+    "deposit": {
+      "amount": "Deposit required: {amount}",
+      "percent": "Deposit required: {n}%"
+    },
+    "common": {
+      "minutes": "{n} min"
+    },
+    "sections": {
+      "service": {
+        "title": "Choose a service",
+        "loading": "Loading services...",
+        "empty": "No services available yet.",
+        "selected": "Selected",
+        "noPhotos": "No photos yet.",
+        "photosCount": "{n} photos",
+        "servicePhotoAlt": "{name} photo"
+      },
+      "staff": {
+        "title": "Select a specialist",
+        "any": "Any specialist",
+        "anyDesc": "First available opening",
+        "selected": "Selected specialist"
+      },
+      "date": {
+        "title": "Pick a date",
+        "needService": "Select a service first.",
+        "label": "Date"
+      },
+      "time": {
+        "title": "Pick a time",
+        "needServiceDate": "Select a service and date first.",
+        "empty": "No available slots on this date."
+      },
+      "details": {
+        "title": "Your details",
+        "needAll": "Finish service + specialist + date + time first."
+      }
+    },
+    "form": {
+      "fullName": "Full name",
+      "fullNamePlaceholder": "Your name",
+      "phone": "Phone",
+      "phonePlaceholder": "+372...",
+      "emailLabel": "Email*",
+      "emailPlaceholder": "your@email.com",
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Any details...",
+      "confirm": "Confirm booking",
+      "confirming": "Confirming..."
+    },
+    "location": {
+      "title": "Location",
+      "noAddress": "Address not provided.",
+      "openMaps": "Open in Maps",
+      "mapTitle": "{name} map",
+      "ownerNoAddress": "The business owner hasn’t added an address yet."
+    },
+    "errors": {
+      "selectService": "Select a service.",
+      "selectDate": "Select a date.",
+      "selectTime": "Select a time.",
+      "enterName": "Enter your full name.",
+      "enterPhone": "Enter your phone.",
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Enter a valid email.",
+      "justBooked": "That time was just booked. Pick another slot.",
+      "failed": "Booking failed",
+      "missingId": "Booking created but missing id.",
+      "network": "Network error. Try again."
+    }
   },
 
-  "location": {
-    "title": "Location",
-    "noAddress": "Address not provided.",
-    "openMaps": "Open in Maps",
-    "mapTitle": "{name} map",
-    "ownerNoAddress": "The business owner hasn’t added an address yet."
-  },
-
-  "errors": {
-    "selectService": "Select a service.",
-    "selectDate": "Select a date.",
-    "selectTime": "Select a time.",
-    "enterName": "Enter your full name.",
-    "enterPhone": "Enter your phone.",
-    "emailRequired": "Email is required.",
-    "emailInvalid": "Enter a valid email.",
-    "justBooked": "That time was just booked. Pick another slot.",
-    "failed": "Booking failed",
-    "missingId": "Booking created but missing id.",
-    "network": "Network error. Try again."
-  }
-},
-"bookingSuccess": {
+  "bookingSuccess": {
     "pending": {
       "title": "Request sent",
       "description": "Your booking request has been sent to the business. They will review it and respond soon."
@@ -893,6 +907,7 @@
       "status": "Status",
       "business": "Business",
       "service": "Service",
+      "specialist": "Specialist",
       "whenYourTime": "When (your time)",
       "name": "Name"
     },
@@ -907,12 +922,14 @@
       "fallbackCategory": "Service"
     }
   },
+
   "bookingChat": {
     "title": "Booking chat",
     "loading": "Loading conversation…",
     "labels": {
       "business": "Business",
       "service": "Service",
+      "specialist": "Specialist",
       "status": "Status"
     },
     "placeholders": {
@@ -928,6 +945,7 @@
       "notFound": "Conversation not found."
     }
   },
+
   "inbox": {
     "title": "Inbox",
     "subtitle": "Booking requests and client conversations",
@@ -947,6 +965,7 @@
     "replyingTo": "Replying to {customer} about {service}",
     "labels": {
       "service": "Service",
+      "specialist": "Specialist",
       "time": "Time",
       "price": "Price",
       "email": "Email",
@@ -969,7 +988,8 @@
       "declineBooking": "Failed to decline booking."
     }
   },
-"tools": {
+
+  "tools": {
     "meta": {
       "title": "Free Tools for Beauty & Service Businesses | Slottick",
       "description": "Free calculators and tools for beauty and service businesses. Improve pricing, profit, deposits, and scheduling with simple tools built for hairstylists, nail techs, barbers, massage therapists and more.",
@@ -995,13 +1015,11 @@
         "title": "Deposit & No-Show Cost Calculator",
         "desc": "Estimate how much no-shows cost you monthly and choose a fair deposit that protects your income."
       },
-
       "followUp": {
-      "title": "Client Follow-Up & Reminder Automation Tool",
-      "desc": "Send birthday wishes, appointment reminders, check-ins, and win-back messages automatically."
-    }
-       
-  },
+        "title": "Client Follow-Up & Reminder Automation Tool",
+        "desc": "Send birthday wishes, appointment reminders, check-ins, and win-back messages automatically."
+      }
+    },
     "why": {
       "title": "Why these tools exist",
       "body": "Many service businesses underprice without realizing the impact of product costs, platform fees, taxes, and fixed expenses. These tools help you see your real numbers so you can charge confidently and grow sustainably."
@@ -1021,6 +1039,7 @@
       "button": "See Slottick"
     }
   },
+
   "profit": {
     "seo": {
       "h2": "How to calculate real profit for your beauty business",
@@ -1088,32 +1107,50 @@
       }
     }
   },
+
   "clientFollowUpAutomation": {
     "ui": {
       "badge": "Free tool",
       "hero": {
         "h1": "Automate client follow-ups that bring people back",
-        "lead": "Schedule birthday wishes, appointment reminders, and win-back messages,then let it run.",
+        "lead": "Schedule birthday wishes, appointment reminders, and win-back messages, then let it run.",
         "ctaPrimary": "Start automating",
         "ctaSecondary": "How it works",
         "trust": "No credit card, Works without Slottick"
       },
-      
       "preview": {
         "title": "What you can automate",
         "items": [
-          { "t": "Birthdays & important dates", "d": "Send a warm message that feels personal." },
-          { "t": "Appointment reminders", "d": "Reduce no-shows with the right timing." },
-          { "t": "Win-back check-ins", "d": "Bring back inactive clients automatically." }
+          {
+            "t": "Birthdays & important dates",
+            "d": "Send a warm message that feels personal."
+          },
+          {
+            "t": "Appointment reminders",
+            "d": "Reduce no-shows with the right timing."
+          },
+          {
+            "t": "Win-back check-ins",
+            "d": "Bring back inactive clients automatically."
+          }
         ]
       },
       "why": {
         "title": "Why this works",
         "lead": "Most businesses lose repeat revenue because they forget to follow up.",
         "items": [
-          { "t": "Personal, not spam", "d": "Uses client details so messages feel human." },
-          { "t": "Perfect timing", "d": "Triggers send the right message at the right moment." },
-          { "t": "More repeat bookings", "d": "Follow-ups turn one-time clients into regulars." }
+          {
+            "t": "Personal, not spam",
+            "d": "Uses client details so messages feel human."
+          },
+          {
+            "t": "Perfect timing",
+            "d": "Triggers send the right message at the right moment."
+          },
+          {
+            "t": "More repeat bookings",
+            "d": "Follow-ups turn one-time clients into regulars."
+          }
         ]
       },
       "how": {
@@ -1148,242 +1185,235 @@
         "button": "See Slottick"
       },
       "clients": {
-         "title": "Clients",
-        "subtitle": "Add a few clients to preview your message. Works         locally       for non slottick users.",
-         "add": "Add client",
+        "title": "Clients",
+        "subtitle": "Add a few clients to preview your message. Works locally for non-Slottick users.",
+        "add": "Add client",
         "importCsv": "Import CSV",
         "emptyTitle": "No clients yet",
         "emptyBody": "Add 1–3 clients to preview your follow-ups with real names.",
         "birthday": "Birthday",
         "lastVisit": "Last visit"
-        
       },
-  "saved": {
-    "title": "Saved automations",
-    "subtitle": "Your automations are saved in this browser (local).",
-    "export": "Copy export",
-    "empty": "No automations yet. Create one on the right.",
-    "trigger": "Trigger",
-    "audience": "Audience",
-    "created": "Created",
-    "saveFail": "Could not save automation",
-    "selectClient": "Select a client first"
-  },
-  "builder": {
-    "title": "Automation builder",
-    "subtitle": "Pick a trigger, choose who gets it, then write a template with variables.",
-    "reset": "Reset",
-    "create": "Create automation"
-  },
-  "summary": {
-    "trigger": "Trigger",
-    "audience": "Audience",
-    "previewClient": "Preview client"
-  },
-  "fields": {
-    "name": "Automation name",
-    "namePh": "e.g. Birthday wish (VIP)",
-    "previewClient": "Preview with",
-    "noClients": "Add a client first"
-  },
-  "trigger": {
-    "title": "Trigger",
-    "subtitle": "When should this message be sent?",
-    "hoursBefore": "Send before appointment",
-    "hours": "hours",
-    "daysSince": "Send if last visit was",
-    "days": "days ago",
-    "sendAt": "Send date & time",
-    "sendAtHint": "Uses your device time.",
-    "birthdayHint": "This sends on each client’s birthday (if provided).",
-    "customDateLimit": "Custom date scheduling works within 1 month. For longer-term automations, upgrade your plan."
-  },
-  "triggers": {
-    "birthday": "Birthday",
-    "reminder": "Appointment reminder",
-    "winback": "Win-back",
-    "customDate": "Custom date",
-    "comingSoon": "Coming soon"
-    
-  },
-  "audience": {
-    "title": "Audience",
-    "subtitle": "Who should receive it?",
-    "all": "All clients",
-    "segment": "Segment",
-    "segmentPick": "Choose a segment",
-    "segmentHint": "Segments are basic for now.",
-    "allHint": "Sends to everyone in your list.",
-    "hasBirthday": "Only clients with birthday",
-    "inactive30": "Inactive (30+ days)",
-    "inactive60": "Inactive (60+ days)"
-  },
-  "template": {
-    "title": "Message template",
-    "subtitle": "Use variables to personalize the message.",
-    "subject": "Subject",
-    "subjectPh": "e.g. Happy birthday 🎉",
-    "body": "Email body",
-    "bodyPh": "Write your message here…",
-    "hint": "Tip: keep it short, friendly, and clear."
-  },
-  "preview": {
+      "saved": {
+        "title": "Saved automations",
+        "subtitle": "Your automations are saved in this browser (local).",
+        "export": "Copy export",
+        "empty": "No automations yet. Create one on the right.",
+        "trigger": "Trigger",
+        "audience": "Audience",
+        "created": "Created",
+        "saveFail": "Could not save automation",
+        "selectClient": "Select a client first"
+      },
+      "builder": {
+        "title": "Automation builder",
+        "subtitle": "Pick a trigger, choose who gets it, then write a template with variables.",
+        "reset": "Reset",
+        "create": "Create automation"
+      },
+      "summary": {
+        "trigger": "Trigger",
+        "audience": "Audience",
+        "previewClient": "Preview client"
+      },
+      "fields": {
+        "name": "Automation name",
+        "namePh": "e.g. Birthday wish (VIP)",
+        "previewClient": "Preview with",
+        "noClients": "Add a client first"
+      },
+      "trigger": {
+        "title": "Trigger",
+        "subtitle": "When should this message be sent?",
+        "hoursBefore": "Send before appointment",
+        "hours": "hours",
+        "daysSince": "Send if last visit was",
+        "days": "days ago",
+        "sendAt": "Send date & time",
+        "sendAtHint": "Uses your device time.",
+        "birthdayHint": "This sends on each client’s birthday (if provided).",
+        "customDateLimit": "Custom date scheduling works within 1 month. For longer-term automations, upgrade your plan."
+      },
+      "triggers": {
+        "birthday": "Birthday",
+        "reminder": "Appointment reminder",
+        "winback": "Win-back",
+        "customDate": "Custom date",
+        "comingSoon": "Coming soon"
+      },
+      "audience": {
+        "title": "Audience",
+        "subtitle": "Who should receive it?",
+        "all": "All clients",
+        "segment": "Segment",
+        "segmentPick": "Choose a segment",
+        "segmentHint": "Segments are basic for now.",
+        "allHint": "Sends to everyone in your list.",
+        "hasBirthday": "Only clients with birthday",
+        "inactive30": "Inactive (30+ days)",
+        "inactive60": "Inactive (60+ days)"
+      },
+      "template": {
+        "title": "Message template",
+        "subtitle": "Use variables to personalize the message.",
+        "subject": "Subject",
+        "subjectPh": "e.g. Happy birthday 🎉",
+        "body": "Email body",
+        "bodyPh": "Write your message here…",
+        "hint": "Tip: keep it short, friendly, and clear."
+      },
+      "preview": {
         "title": "Preview",
-    "subject": "Subject",
-    "body": "Message",
-    "summary": "Summary",
-    "reminderHint": "Will send {n} hours before the appointment.",
-    "winbackHint": "Will send after {n} days without a visit.",
-    "customHint": "Will send on {date}."
-  },
-  "privacy": {
-    "title": "Privacy note",
-    "body": "Only add clients who gave consent. Always include an opt-out in real campaigns."
-  },
-  "vars": {
-    "firstName": "Client first name",
-    "name": "Client full name",
-    "email": "Client email"
-  },
-  "clientFields": {
-    "name": "Name",
-    "email": "Email",
-    "phone": "Phone",
-    "birthday": "Birthday",
-    "lastVisit": "Last visit"
-  },
-  "modal": {
-    "addClientTitle": "Add client",
-    "addClientSubtitle": "Used for preview + targeting.",
-    "addClientCta": "Add client",
-    "csvTitle": "Import CSV",
-    "csvSubtitle": "Paste CSV text to quickly add clients.",
-    "csvFormatTitle": "CSV format",
-    "csvFormatBody": "Columns: name,email,phone,birthday,lastVisit (birthday/lastVisit in YYYY-MM-DD).",
-    "csvPh": "Paste CSV here…",
-    "csvCta": "Import"
-  },
-  "toast": {
-    "clientMissing": "Enter name and email.",
-    "clientEmailBad": "Email looks invalid.",
-    "clientDuplicate": "That email is already added.",
-    "clientAdded": "Client added ✓",
-    "autoNameMissing": "Add an automation name.",
-    "templateMissing": "Add subject and message.",
-    "autoCreated": "Automation created ✓",
-    "autoDeleted": "Automation removed ✓",
-    "templateReset": "Template reset ✓",
-    "exportCopied": "Export copied ✓",
-    "exportFailed": "Export failed.",
-    "csvEmpty": "CSV is empty.",
-    "csvImported": "Imported {n} clients ✓",
-    "csvNone": "No valid rows found.",
-    "selectClient": "Select a client first",
-    "guestLimit": "You’ve reached the free limit of 10 clients. Create a free Slottick account to send unlimited automations and save your campaigns.",
-    "autoScheduled": "Automation scheduled successfully",
-    "customDateTooFar": "Custom date must be within 1 month. Upgrade your plan for longer-term automations.",
-    "appointmentMissing": "Add appointment date and time for this client first",
-    "appointmentInvalid": "Invalid appointment date or time",
-    "triggerUnavailable": "This automation is not available yet"
-  },
-  "templates": {
-    "birthday": {
-      "name": "Birthday wish",
-      "subject": "Happy birthday, {firstName}! 🎉",
-      "body": "Hi {firstName},\n\nHappy birthday! 🎉 Wishing you a great day.\n\nIf you want to treat yourself this week, here’s a small offer: 10% off.\n\nSee you soon,\n— {name}"
-    },
-    "reminder": {
-      "name": "Appointment reminder",
-      "subject": "Reminder: your appointment is coming up",
-      "body": "Hi {firstName},\n\nQuick reminder about your appointment.\n\nIf you need to reschedule, reply to this email.\n\nSee you soon,\n— {name}"
-    },
-    "winback": {
-      "name": "Win-back",
-      "subject": "We haven’t seen you in a while",
-      "body": "Hi {firstName},\n\nJust checking in — we haven’t seen you in a while.\n\nIf you’d like to book again, reply to this message.\n\n— {name}"
-    },
-    "custom": {
-      "name": "Custom message",
-      "subject": "Quick update",
-      "body": "Hi {firstName},\n\nJust a quick message for you.\n\n— {name}"
-    },
-    "upgrade": {
-  "title": "Unlock unlimited automations",
-  "body": "You reached the free limit of 10 clients. Create a free Slottick account to send unlimited follow-up automations and save your campaigns.",
-  "cta": "Create free account"
-}
-  }
+        "subject": "Subject",
+        "body": "Message",
+        "summary": "Summary",
+        "reminderHint": "Will send {n} hours before the appointment.",
+        "winbackHint": "Will send after {n} days without a visit.",
+        "customHint": "Will send on {date}."
+      },
+      "privacy": {
+        "title": "Privacy note",
+        "body": "Only add clients who gave consent. Always include an opt-out in real campaigns."
+      },
+      "vars": {
+        "firstName": "Client first name",
+        "name": "Client full name",
+        "email": "Client email"
+      },
+      "clientFields": {
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "birthday": "Birthday",
+        "lastVisit": "Last visit"
+      },
+      "modal": {
+        "addClientTitle": "Add client",
+        "addClientSubtitle": "Used for preview + targeting.",
+        "addClientCta": "Add client",
+        "csvTitle": "Import CSV",
+        "csvSubtitle": "Paste CSV text to quickly add clients.",
+        "csvFormatTitle": "CSV format",
+        "csvFormatBody": "Columns: name,email,phone,birthday,lastVisit (birthday/lastVisit in YYYY-MM-DD).",
+        "csvPh": "Paste CSV here…",
+        "csvCta": "Import"
+      },
+      "toast": {
+        "clientMissing": "Enter name and email.",
+        "clientEmailBad": "Email looks invalid.",
+        "clientDuplicate": "That email is already added.",
+        "clientAdded": "Client added ✓",
+        "autoNameMissing": "Add an automation name.",
+        "templateMissing": "Add subject and message.",
+        "autoCreated": "Automation created ✓",
+        "autoDeleted": "Automation removed ✓",
+        "templateReset": "Template reset ✓",
+        "exportCopied": "Export copied ✓",
+        "exportFailed": "Export failed.",
+        "csvEmpty": "CSV is empty.",
+        "csvImported": "Imported {n} clients ✓",
+        "csvNone": "No valid rows found.",
+        "selectClient": "Select a client first",
+        "guestLimit": "You’ve reached the free limit of 10 clients. Create a free Slottick account to send unlimited automations and save your campaigns.",
+        "autoScheduled": "Automation scheduled successfully",
+        "customDateTooFar": "Custom date must be within 1 month. Upgrade your plan for longer-term automations.",
+        "appointmentMissing": "Add appointment date and time for this client first",
+        "appointmentInvalid": "Invalid appointment date or time",
+        "triggerUnavailable": "This automation is not available yet"
+      },
+      "templates": {
+        "birthday": {
+          "name": "Birthday wish",
+          "subject": "Happy birthday, {firstName}! 🎉",
+          "body": "Hi {firstName},\n\nHappy birthday! 🎉 Wishing you a great day.\n\nIf you want to treat yourself this week, here’s a small offer: 10% off.\n\nSee you soon,\n— {name}"
+        },
+        "reminder": {
+          "name": "Appointment reminder",
+          "subject": "Reminder: your appointment is coming up",
+          "body": "Hi {firstName},\n\nQuick reminder about your appointment.\n\nIf you need to reschedule, reply to this email.\n\nSee you soon,\n— {name}"
+        },
+        "winback": {
+          "name": "Win-back",
+          "subject": "We haven’t seen you in a while",
+          "body": "Hi {firstName},\n\nJust checking in — we haven’t seen you in a while.\n\nIf you’d like to book again, reply to this message.\n\n— {name}"
+        },
+        "custom": {
+          "name": "Custom message",
+          "subject": "Quick update",
+          "body": "Hi {firstName},\n\nJust a quick message for you.\n\n— {name}"
+        },
+        "upgrade": {
+          "title": "Unlock unlimited automations",
+          "body": "You reached the free limit of 10 clients. Create a free Slottick account to send unlimited follow-up automations and save your campaigns.",
+          "cta": "Create free account"
+        }
+      }
     }
   },
+
   "subscribe": {
-  "badge": "Upgrade your business",
-  "title": "Unlock premium tools to grow faster with Slottick",
-  "lead": "Accept more bookings, look more professional, and save time with premium features built for service businesses.",
-
-  "plan": {
-    "label": "Subscription plan",
-    "title": "Simple pricing, serious growth",
-    "popular": "Most popular",
-    "noVisiblePrice": "Choose your preferred payment method below",
-    "desc": "Pick card or mobile money to activate premium tools for your business.",
-    "note": "Choose card or mobile money. Cancel anytime."
-  },
-
-  "card": {
-    "title": "Pay with card",
-    "desc": "Continue to Stripe checkout where your card subscription price will be shown.",
-    "button": "Pay with card"
-  },
-
-  "momo": {
-    "title": "Pay with mobile money",
-    "desc": "Use MTN MoMo or Orange Money. A payment prompt will be sent to your phone for confirmation.",
-    "networkLabel": "Choose network",
-    "mtn": "MTN MoMo",
-    "orange": "Orange Money",
-    "phoneLabel": "Mobile money number",
-    "phonePlaceholder": "e.g. 6XXXXXXXX or +2376XXXXXXXX",
-    "button": "Pay with mobile money",
-    "sending": "Sending prompt...",
-    "hint": "MTN MoMo and Orange Money are charged at 300 FCFA per month.",
-    "success": "Payment prompt sent to your phone. Please confirm on your device.",
-    "status": {
-  "title": "Payment status",
-  "reference": "Reference",
-  "check": "Check payment status",
-  "checking": "Checking...",
-  "pending": "Waiting for payment confirmation",
-  "success": "Payment confirmed successfully",
-  "completed": "Payment completed",
-  "failed": "Payment failed or expired"
-},
-    "errors": {
-      "phoneRequired": "Please enter a phone number.",
-      "requestFailed": "Could not start mobile money subscription.",
-      "statusFailed": "Could not check payment status.",
-      "generic": "Something went wrong."
+    "badge": "Upgrade your business",
+    "title": "Unlock premium tools to grow faster with Slottick",
+    "lead": "Accept more bookings, look more professional, and save time with premium features built for service businesses.",
+    "plan": {
+      "label": "Subscription plan",
+      "title": "Simple pricing, serious growth",
+      "popular": "Most popular",
+      "noVisiblePrice": "Choose your preferred payment method below",
+      "desc": "Pick card or mobile money to activate premium tools for your business.",
+      "note": "Choose card or mobile money. Cancel anytime."
+    },
+    "card": {
+      "title": "Pay with card",
+      "desc": "Continue to Stripe checkout where your card subscription price will be shown.",
+      "button": "Pay with card"
+    },
+    "momo": {
+      "title": "Pay with mobile money",
+      "desc": "Use MTN MoMo or Orange Money. A payment prompt will be sent to your phone for confirmation.",
+      "networkLabel": "Choose network",
+      "mtn": "MTN MoMo",
+      "orange": "Orange Money",
+      "phoneLabel": "Mobile money number",
+      "phonePlaceholder": "e.g. 6XXXXXXXX or +2376XXXXXXXX",
+      "button": "Pay with mobile money",
+      "sending": "Sending prompt...",
+      "hint": "MTN MoMo and Orange Money are charged at 300 FCFA per month.",
+      "success": "Payment prompt sent to your phone. Please confirm on your device.",
+      "status": {
+        "title": "Payment status",
+        "reference": "Reference",
+        "check": "Check payment status",
+        "checking": "Checking...",
+        "pending": "Waiting for payment confirmation",
+        "success": "Payment confirmed successfully",
+        "completed": "Payment completed",
+        "failed": "Payment failed or expired"
+      },
+      "errors": {
+        "phoneRequired": "Please enter a phone number.",
+        "requestFailed": "Could not start mobile money subscription.",
+        "statusFailed": "Could not check payment status.",
+        "generic": "Something went wrong."
+      }
+    },
+    "benefits": {
+      "title": "What you get with Slottick",
+      "items": [
+        "Professional booking page",
+        "Multi-staff & individual chair management",
+        "More trust with a premium brand feel",
+        "Better client experience",
+        "More conversions from visitors",
+        "Cleaner business presentation",
+        "Time-saving booking automation",
+        "Access to future premium tools",
+        "Built to help you grow revenue"
+      ]
+    },
+    "why": {
+      "label": "Why subscribe",
+      "body": "Slottick makes your business look more serious, helps clients trust your brand, and gives you tools that support long-term growth instead of just basic booking."
     }
-  },
-
-  "benefits": {
-    "title": "What you get with Slottick",
-    "items": [
-      "Professional booking page",
-      "More trust with a premium brand feel",
-      "Better client experience",
-      "More conversions from visitors",
-      "Cleaner business presentation",
-      "Time-saving booking automation",
-      "Access to future premium tools",
-      "Built to help you grow revenue"
-    ]
-  },
-
-  "why": {
-    "label": "Why subscribe",
-    "body": "Slottick makes your business look more serious, helps clients trust your brand, and gives you tools that support long-term growth instead of just basic booking."
   }
-}
-
-
 }

@@ -5,12 +5,10 @@ import { ServiceCategory } from "@prisma/client";
 import { hasValidOrigin } from "@/lib/request-security";
 import { businessHasAccess } from "@/lib/subscription";
 
+export const runtime = "nodejs";
+
 type DepositType = "PERCENT" | "AMOUNT";
 
-/**
- * UI labels (pretty). Keep in sync with dropdown.
- * DB stores enum values (ServiceCategory).
- */
 const SERVICE_CATEGORY_LABELS = [
   "Hair",
   "Barber",
@@ -25,30 +23,28 @@ const SERVICE_CATEGORY_LABELS = [
   "Tattoo",
   "Waxing",
   "Facial",
-  "Other"
+  "Other",
 ] as const;
 
 type ServiceCategoryLabel = (typeof SERVICE_CATEGORY_LABELS)[number];
 
-/** Label -> enum */
 const LABEL_TO_ENUM: Record<ServiceCategoryLabel, ServiceCategory> = {
   Hair: ServiceCategory.HAIR,
   Barber: ServiceCategory.BARBER,
   Lash: ServiceCategory.LASH,
   Brows: ServiceCategory.BROWS,
   Nails: ServiceCategory.NAILS,
-  Manicure: ServiceCategory.NAILS,  // opinion: manicure/pedicure are nails
+  Manicure: ServiceCategory.NAILS,
   Pedicure: ServiceCategory.NAILS,
   Makeup: ServiceCategory.MAKEUP,
   Skincare: ServiceCategory.SKINCARE,
   Massage: ServiceCategory.MASSAGE,
   Tattoo: ServiceCategory.TATTOO,
-  Waxing: ServiceCategory.OTHER,    // if you want real enums for these, add them to schema
-  Facial: ServiceCategory.SKINCARE, // or OTHER
-  Other: ServiceCategory.OTHER
+  Waxing: ServiceCategory.OTHER,
+  Facial: ServiceCategory.SKINCARE,
+  Other: ServiceCategory.OTHER,
 };
 
-/** Enum -> label (for UI) */
 const ENUM_TO_LABEL: Record<ServiceCategory, ServiceCategoryLabel> = {
   LASH: "Lash",
   NAILS: "Nails",
@@ -59,8 +55,8 @@ const ENUM_TO_LABEL: Record<ServiceCategory, ServiceCategoryLabel> = {
   MAKEUP: "Makeup",
   SKINCARE: "Skincare",
   TATTOO: "Tattoo",
-  FITNESS: "Other", // not in your UI list; map safely
-  OTHER: "Other"
+  FITNESS: "Other",
+  OTHER: "Other",
 };
 
 function toCurrency(x: unknown) {
@@ -96,37 +92,26 @@ function normalizeImageUrls(raw: unknown) {
   return Array.from(new Set(cleaned)).slice(0, 12);
 }
 
-/**
- * Accepts:
- * - "Hair" (label)
- * - "HAIR" (enum)
- * - unknown -> OTHER
- */
 function toServiceCategoryEnum(x: unknown): ServiceCategory {
   const raw = String(x ?? "").trim();
   if (!raw) return ServiceCategory.OTHER;
 
-  // enum form
   if (Object.values(ServiceCategory).includes(raw as ServiceCategory)) {
     return raw as ServiceCategory;
   }
 
-  // label form
-  const hit = SERVICE_CATEGORY_LABELS.find((c) => c === raw) as ServiceCategoryLabel | undefined;
+  const hit = SERVICE_CATEGORY_LABELS.find((c) => c === raw) as
+    | ServiceCategoryLabel
+    | undefined;
   if (hit) return LABEL_TO_ENUM[hit];
 
   return ServiceCategory.OTHER;
 }
 
-function toServiceCategoryLabel(x: unknown): ServiceCategoryLabel {
-  const en = toServiceCategoryEnum(x);
-  return ENUM_TO_LABEL[en] ?? "Other";
-}
-
 type NormalizedService = {
-  id: string;
+  id?: string;
   name: string;
-  category: ServiceCategory; // ✅ enum for DB
+  category: ServiceCategory;
   durationMin: number;
   price: number;
   currency: string;
@@ -134,6 +119,7 @@ type NormalizedService = {
   depositType: DepositType;
   depositValue: number | null;
   imageUrls: string[];
+  staffIds?: string[];
 };
 
 function normalizeServices(raw: unknown): NormalizedService[] {
@@ -141,7 +127,7 @@ function normalizeServices(raw: unknown): NormalizedService[] {
 
   return arr
     .map((s: any) => {
-      const id = String(s?.id ?? "").trim();
+      const id = String(s?.id ?? "").trim() || undefined;
       const name = String(s?.name ?? "").trim();
       const category = toServiceCategoryEnum(s?.category);
 
@@ -150,7 +136,9 @@ function normalizeServices(raw: unknown): NormalizedService[] {
       const currency = toCurrency(s?.currency);
 
       const depositEnabled = toBool(s?.depositEnabled);
-      const depositType: DepositType = depositEnabled ? toDepositType(s?.depositType) : "PERCENT";
+      const depositType: DepositType = depositEnabled
+        ? toDepositType(s?.depositType)
+        : "PERCENT";
 
       let depositValue: number | null = null;
       if (depositEnabled) {
@@ -162,6 +150,9 @@ function normalizeServices(raw: unknown): NormalizedService[] {
       }
 
       const imageUrls = normalizeImageUrls(s?.images ?? s?.imageUrls);
+      const staffIds = Array.isArray(s?.staffIds)
+        ? s.staffIds.map((id: unknown) => String(id).trim()).filter(Boolean)
+        : undefined;
 
       return {
         id,
@@ -173,10 +164,11 @@ function normalizeServices(raw: unknown): NormalizedService[] {
         depositEnabled,
         depositType,
         depositValue,
-        imageUrls
+        imageUrls,
+        staffIds,
       };
     })
-    .filter((s) => s.id && s.name && s.durationMin > 0);
+    .filter((s) => s.name && s.durationMin > 0);
 }
 
 // GET: public by slug OR owner by session
@@ -189,13 +181,14 @@ export async function GET(req: Request) {
   if (businessSlug) {
     const biz = await prisma.business.findUnique({
       where: { slug: businessSlug },
-      select: { id: true }
+      select: { id: true },
     });
     if (!biz) return NextResponse.json({ services: [] });
     businessId = biz.id;
   } else {
     const authed = await getAuthedBusiness();
-    if (!authed) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!authed)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     businessId = authed.id;
   }
 
@@ -212,108 +205,191 @@ export async function GET(req: Request) {
       depositEnabled: true,
       depositType: true,
       depositValue: true,
-      images: { select: { url: true }, orderBy: { sort: "asc" } }
-    }
+      images: { select: { url: true }, orderBy: { sort: "asc" } },
+      staff: {
+        where: { isActive: true },
+        select: {
+          id: true,
+          name: true,
+          title: true,
+        },
+      },
+    },
   });
 
   const mapped = services.map((s) => ({
     id: s.id,
     name: s.name,
-    category: ENUM_TO_LABEL[s.category] ?? "Other", // ✅ UI label
+    category: ENUM_TO_LABEL[s.category] ?? "Other",
     durationMin: s.durationMin,
     price: s.price,
     currency: s.currency,
     depositEnabled: s.depositEnabled,
     depositType: s.depositType,
     depositValue: s.depositValue,
-    images: s.images.map((i) => i.url)
+    images: s.images.map((i) => i.url),
+    staff: s.staff,
   }));
 
   return NextResponse.json({ services: mapped });
 }
 
-// PUT: owner-only, replaces all services + images
+// PUT: owner-only upsert of services, images, and staff linkages
 export async function PUT(req: Request) {
-
   if (!hasValidOrigin(req)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const business = await getAuthedBusiness();
-  if (!business) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+  if (!business)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   if (!businessHasAccess(business)) {
     return NextResponse.json(
       {
         error: "Your free trial has ended. Please subscribe to continue.",
-        code: "TRIAL_EXPIRED"
+        code: "TRIAL_EXPIRED",
       },
-      { status: 402 }
+      { status: 402 },
     );
   }
-  
 
   const body = await req.json().catch(() => ({}));
   const next = normalizeServices(body.services);
 
-  const saved = await prisma.$transaction(async (tx) => {
-    await tx.serviceImage.deleteMany({ where: { service: { businessId: business.id } } });
-    await tx.service.deleteMany({ where: { businessId: business.id } });
+  try {
+    const saved = await prisma.$transaction(async (tx) => {
+      // 1. Identify which services to keep vs. delete
+      const incomingIds = next.map((s) => s.id).filter(Boolean) as string[];
 
-    if (next.length === 0) return [];
+      // Delete services omitted from the payload, but only if they don't have bookings
+      if (incomingIds.length > 0) {
+        const toDelete = await tx.service.findMany({
+          where: {
+            businessId: business.id,
+            id: { notIn: incomingIds },
+          },
+          select: {
+            id: true,
+            _count: { select: { bookings: true, bookingItems: true } },
+          },
+        });
 
-    for (const s of next) {
-      await tx.service.create({
-        data: {
-          id: s.id,
-          businessId: business.id,
+        for (const item of toDelete) {
+          // If referenced by previous bookings, avoid crash: skip deletion or un-link
+          if (item._count.bookings === 0 && item._count.bookingItems === 0) {
+            await tx.serviceImage.deleteMany({ where: { serviceId: item.id } });
+            await tx.service.delete({ where: { id: item.id } });
+          }
+        }
+      }
+
+      // 2. Upsert each service
+      for (const s of next) {
+        const baseData = {
           name: s.name,
-          category: s.category, // ✅ enum-safe now
+          category: s.category,
           durationMin: s.durationMin,
           price: s.price,
           currency: s.currency,
           depositEnabled: s.depositEnabled,
           depositType: s.depositType,
           depositValue: s.depositValue ?? undefined,
-          images: {
-            create: s.imageUrls.map((url, idx) => ({ url, sort: idx }))
-          }
-        }
-      });
-    }
+        };
 
-    const services = await tx.service.findMany({
-      where: { businessId: business.id },
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        category: true,
-        durationMin: true,
-        price: true,
-        currency: true,
-        depositEnabled: true,
-        depositType: true,
-        depositValue: true,
-        images: { select: { url: true }, orderBy: { sort: "asc" } }
+        const staffConnect = s.staffIds ? s.staffIds.map((id) => ({ id })) : [];
+
+        let targetId = s.id;
+
+        if (targetId) {
+          await tx.service.upsert({
+            where: { id: targetId },
+            update: {
+              ...baseData,
+              staff: {
+                set: staffConnect, // ✅ 'set' is valid for update
+              },
+            },
+            create: {
+              ...baseData,
+              id: targetId,
+              businessId: business.id,
+              staff:
+                staffConnect.length > 0 ? { connect: staffConnect } : undefined, // ✅ 'connect' for create
+            },
+          });
+        } else {
+          const created = await tx.service.create({
+            data: {
+              ...baseData,
+              businessId: business.id,
+              staff:
+                staffConnect.length > 0 ? { connect: staffConnect } : undefined, // ✅ 'connect' for create
+            },
+          });
+          targetId = created.id;
+        }
+
+        // Replace images for this service
+        await tx.serviceImage.deleteMany({ where: { serviceId: targetId } });
+        if (s.imageUrls.length > 0) {
+          await tx.serviceImage.createMany({
+            data: s.imageUrls.map((url, idx) => ({
+              serviceId: targetId!,
+              url,
+              sort: idx,
+            })),
+          });
+        }
       }
+
+      // 3. Return updated list
+      const services = await tx.service.findMany({
+        where: { businessId: business.id },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          durationMin: true,
+          price: true,
+          currency: true,
+          depositEnabled: true,
+          depositType: true,
+          depositValue: true,
+          images: { select: { url: true }, orderBy: { sort: "asc" } },
+          staff: {
+            where: { isActive: true },
+            select: {
+              id: true,
+              name: true,
+              title: true,
+            },
+          },
+        },
+      });
+
+      return services.map((s) => ({
+        id: s.id,
+        name: s.name,
+        category: ENUM_TO_LABEL[s.category] ?? "Other",
+        durationMin: s.durationMin,
+        price: s.price,
+        currency: s.currency,
+        depositEnabled: s.depositEnabled,
+        depositType: s.depositType,
+        depositValue: s.depositValue,
+        images: s.images.map((i) => i.url),
+        staff: s.staff,
+      }));
     });
 
-    return services.map((s) => ({
-      id: s.id,
-      name: s.name,
-      category: ENUM_TO_LABEL[s.category] ?? "Other",
-      durationMin: s.durationMin,
-      price: s.price,
-      currency: s.currency,
-      depositEnabled: s.depositEnabled,
-      depositType: s.depositType,
-      depositValue: s.depositValue,
-      images: s.images.map((i) => i.url)
-    }));
-  });
-
-  return NextResponse.json({ services: saved });
+    return NextResponse.json({ services: saved });
+  } catch (err: any) {
+    console.error("PUT /api/services failed:", err);
+    return NextResponse.json(
+      { error: err.message || "Failed to save services" },
+      { status: 500 },
+    );
+  }
 }
-

@@ -32,7 +32,7 @@ function formatBookingDateParts(startsAt: Date | string, timeZone: string) {
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
@@ -56,13 +56,21 @@ export async function POST(
         startsAt: true,
         serviceName: true,
         customerEmail: true,
+        staffId: true,
+        staff: {
+          select: {
+            name: true,
+            title: true,
+          },
+        },
         business: {
           select: {
             name: true,
             slug: true,
-            availabilityRule: {
+            availabilityRules: {
               select: {
                 timezone: true,
+                staffId: true,
               },
             },
           },
@@ -81,6 +89,7 @@ export async function POST(
       where: { id: booking.id },
       data: {
         status: "DONE",
+        statusUpdatedAt: new Date(),
         reviewTokenHash,
         reviewEmailSentAt: new Date(),
       },
@@ -88,12 +97,21 @@ export async function POST(
 
     if (booking.customerEmail) {
       const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+        "https://slottick.com";
 
-      const timeZone = booking.business.availabilityRule?.timezone || "UTC";
+      const rules = booking.business.availabilityRules || [];
+      const matchedRule =
+        rules.find((r) => r.staffId === booking.staffId) ||
+        rules.find((r) => !r.staffId) ||
+        rules[0];
+
+      const timeZone = matchedRule?.timezone || "UTC";
       const { date, time } = formatBookingDateParts(booking.startsAt, timeZone);
 
-      const reviewLink = `${siteUrl}/${locale}/book/${booking.business.slug}/review?token=${encodeURIComponent(rawToken)}`;
+      const reviewLink = `${siteUrl}/${locale}/book/${booking.business.slug}/review?token=${encodeURIComponent(
+        rawToken,
+      )}`;
 
       try {
         await sendReviewRequestEmail({
@@ -114,8 +132,7 @@ export async function POST(
     console.error("POST /api/bookings/[id]/done failed:", err);
     return NextResponse.json(
       { error: "Failed to mark booking as done." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

@@ -1,370 +1,423 @@
 {
   "brand": { "name": "Slottick" },
 
-  "nav": { 
+  "nav": {
     "login": "Connexion",
     "tools": "Outils"
-   },
+  },
 
   "footer": {
     "blog": "Blog",
     "privacy": "Confidentialité",
     "terms": "Conditions",
-    "contact": "Nous contacter"
+    "contact": "Contactez-nous"
   },
 
   "meta": {
     "home": {
-      "title": "Plateforme de gestion de réservations pour les services",
-      "description": "Gérez vos services, la disponibilité du personnel et les réservations en ligne au même endroit. Partagez un lien unique qui affiche toujours votre vrai planning — idéal pour salons, barbiers, beauté et bien-être."
+      "title": "Plateforme de gestion de réservations pour professionnels de services",
+      "description": "Gérez vos prestations, la disponibilité de votre équipe et vos réservations en ligne au même endroit. Partagez un lien unique reflétant votre planning en temps réel—conçu pour les salons, barbiers, soins et bien-être."
     },
     "explore": {
-      "title": "Explorer des services près de chez vous",
-      "description": "Explorez et réservez des entreprises fiables près de chez vous. Recherchez un service et filtrez par ville et secteur."
+      "title": "Découvrez des services près de chez vous",
+      "description": "Découvrez et réservez auprès d'entreprises de confiance près de chez vous. Recherchez par service et filtrez par ville et secteur d'activité."
     },
     "clientFollowUpAutomation": {
-      "title": "Outil d’automatisation des relances et rappels clients",
-      "description": "Envoyez automatiquement des emails clients pour anniversaires, rappels de rendez-vous, suivis et relances. Planification simple et modèles pour les services."
+      "title": "Outil d'automatisation des rappels et du suivi client",
+      "description": "Envoyez des e-mails automatisés pour les anniversaires, rappels de rendez-vous, suivis et réactivations de clients inactifs. Modèles et planification simplifiés pour entreprises de services."
     }
   },
 
   "common": {
-  "loading": "Chargement…",
-  "loadingDots": "Chargement...",
-  "refresh": "Actualiser",
-  "refreshing": "Actualisation…",
-  "save": "Enregistrer",
-  "saving": "Enregistrement…",
-  "saved": "Enregistré ✓",
-  "cancel": "Annuler",
-  "clear": "Effacer",
-  "remove": "Retirer",
-  "copy": "Copier",
-  "copied": "Copié ✓",
-  "back": "Retour",
-  "unknown": "Inconnu",
-  "optional": "(optionnel)",
-  "up": "Monter",
-  "down": "Descendre"
-},
-
+    "loading": "Chargement…",
+    "loadingDots": "Chargement...",
+    "refresh": "Actualiser",
+    "refreshing": "Actualisation…",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saved": "Enregistré ✓",
+    "cancel": "Annuler",
+    "clear": "Effacer",
+    "remove": "Supprimer",
+    "copy": "Copier",
+    "copied": "Copié ✓",
+    "back": "Retour",
+    "unknown": "Inconnu",
+    "optional": "(facultatif)"
+  },
 
   "home": {
     "jsonld": {
-      "softwareDesc": "Plateforme de gestion de réservations pour les services. Définissez services et disponibilités puis partagez un lien de réservation avec disponibilité en temps réel.",
+      "softwareDesc": "Plateforme de gestion de réservations pour professionnels de services. Configurez vos prestations et disponibilités une seule fois et partagez un lien de réservation affichant votre planning en temps réel.",
       "pageName": "Accueil Slottick"
     },
 
     "hero": {
-      "badge": "Gestion des réservations pour les services",
-      "h1Line1": "Plateforme de réservation",
-      "h1Line2": "qui protège votre temps.",
-      "lead": "Slottick transforme vos disponibilités en un site de réservation partageable. Les clients réservent sur votre vrai planning, sans allers-retours, sans double réservation.",
+      "badge": "Gestion de réservations pour professionnels de services",
+      "h1Line1": "La plateforme de réservation",
+      "h1Line2": "qui protège votre temps précieux.",
+      "lead": "Slottick transforme vos disponibilités en un site web de réservation prêt à partager. Vos clients réservent sur vos vrais créneaux : fini les échanges interminables et les doubles réservations.",
       "ctaPrimary": "Créer votre page de réservation",
       "ctaSecondary": "Explorer les services",
       "checks": [
-        "Services, durées et tarifs",
-        "Règles de disponibilité et pauses",
-        "Temps tampon entre clients",
-        "Un lien unique pour votre bio",
-        "Planning en temps réel (pas de double réservation)"
+        "Services, durées et tarifs personnalisés",
+        "Gestion multi-spécialistes et fauteuils individuels",
+        "Règles de disponibilité et gestion des pauses",
+        "Temps tampon automatique entre chaque client",
+        "Un lien de réservation unique servant de site vitrine",
+        "Suivi du chiffre d'affaires, des réservations et des clients"
       ]
     },
 
     "faq": {
       "badge": "FAQ",
-      "title": "Pourquoi les entreprises de services ont besoin d’un système de réservation ?",
-      "lead": "Réponses courtes aux questions que vos clients (et vous) ressentez chaque semaine.",
+      "title": "Pourquoi adopter un système de réservation professionnel ?",
+      "lead": "Des réponses claires aux questions que vous et vos clients vous posez chaque semaine.",
       "items": [
         {
           "q": "Quels problèmes un système de réservation résout-il ?",
-          "a": "Il évite les allers-retours, empêche les doubles réservations et garde votre planning à jour en temps réel."
+          "a": "Il élimine les échanges de messages incessants, prévient les doubles réservations et maintient votre planning à jour en temps réel."
         },
         {
-          "q": "Peut-il réduire les absences ?",
-          "a": "Oui. Les confirmations et rappels aident les clients à venir plus souvent, et votre temps reste protégé."
+          "q": "Permet-il de réduire les rendez-vous manqués (no-shows) ?",
+          "a": "Oui. Les confirmations automatiques et les rappels incitent les clients à honorer leurs créneaux, sécurisant ainsi votre journée."
         },
         {
-          "q": "Pourquoi ne pas prendre les réservations via Instagram DM ?",
-          "a": "Les DM ne comprennent pas votre disponibilité. Un système de réservation ne montre que les créneaux qui respectent votre planning, vos pauses et votre temps tampon."
+          "q": "Pourquoi ne pas simplement gérer mes rendez-vous par messages privés (Instagram/WhatsApp) ?",
+          "a": "Les messageries ne connaissent pas vos disponibilités réelles. Un système de réservation ne propose que les créneaux réellement libres, en respectant vos pauses et temps de battement."
         },
         {
-          "q": "Ai-je besoin d’un site web pour utiliser Slottick ?",
-          "a": "Non. Vous obtenez un lien de réservation unique à mettre sur votre bio Instagram, WhatsApp, Google Business Profile, ou ailleurs."
+          "q": "Dois-je posséder un site internet pour utiliser Slottick ?",
+          "a": "Non. Vous disposez d'un lien de réservation dédié à intégrer dans votre bio Instagram, WhatsApp, fiche Google Business ou vos réseaux sociaux."
         },
         {
-          "q": "Et si je change mon planning plus tard ?",
-          "a": "Votre page de réservation se met à jour automatiquement, les clients voient toujours votre dernière disponibilité."
+          "q": "Que se passe-t-il si je modifie mes horaires plus tard ?",
+          "a": "Votre page de réservation s'ajuste instantanément : vos clients voient systématiquement vos toutes dernières disponibilités."
         },
         {
-          "q": "Est-ce adapté aux salons, barbiers, beauté et bien-être ?",
-          "a": "Oui. Toute activité qui vend du temps (rendez-vous) en profite : cheveux, ongles, cils, massage, fitness, cliniques, etc."
+          "q": "Est-ce adapté aux salons de coiffure, barbiers, esthétique et bien-être ?",
+          "a": "Absolument. Toute activité vendant du temps (rendez-vous) en tire profit : coiffure, ongles, cils, massages, coaching, cliniques de beauté et plus encore."
         }
       ]
     },
 
     "preview": {
       "badge": "Aperçu du tableau de bord",
-      "businessName": "Lash Studio Tallinn",
-      "liveDemo": "Démo",
+      "businessName": "Studio Cils & Beauté",
+      "liveDemo": "Démonstration en direct",
       "stats": [
         { "t": "Réservations totales", "v": "28", "s": "Ce mois-ci" },
-        { "t": "Revenu", "v": "€1,240", "s": "Confirmé" },
-        { "t": "Clients", "v": "19", "s": "Récurrents : 6" }
+        { "t": "Chiffre d'affaires", "v": "1 240 €", "s": "Confirmé" },
+        { "t": "Clients", "v": "19", "s": "Fidèles : 6" }
       ],
       "linkTitle": "Votre lien de réservation",
       "copy": "Copier",
-      "shareHint": "Partagez sur bio Instagram, WhatsApp, site web.",
-      "upcomingTitle": "Réservations à venir",
-      "today": "Aujourd’hui",
+      "shareHint": "Partagez sur Instagram, WhatsApp, ou votre site.",
+      "upcomingTitle": "Prochaines réservations",
+      "today": "Aujourd'hui",
       "bookings": [
-        { "header": "10:30 • Maria K.", "service": "Retouche cils • 60 min", "price": "€55" },
-        { "header": "12:00 • Anna P.", "service": "Cils classiques • 90 min", "price": "€70" },
-        { "header": "15:30 • Kristi S.", "service": "Sourcils • 30 min", "price": "€25" }
+        {
+          "header": "10:30 • Sophie M.",
+          "service": "Remplissage cils • 60 min",
+          "price": "55 €"
+        },
+        {
+          "header": "12:00 • Anna P.",
+          "service": "Pose complète classique • 90 min",
+          "price": "70 €"
+        },
+        {
+          "header": "15:30 • Christine S.",
+          "service": "Restructuration sourcils • 30 min",
+          "price": "25 €"
+        }
       ],
-      "note": "Les clients ne voient que les vrais créneaux disponibles — pas de double réservation."
+      "note": "Les clients ne visualisent que les créneaux réellement libres — aucun risque de conflit."
     },
-   "features": {
-  "title": "Maîtrisez votre agenda",
-  "subtitle": "Des outils puissants conçus pour vous faire gagner du temps et offrir une expérience de réservation fluide à vos clients.",
-  "card1": {
-    "title": "Règles de disponibilité intelligentes",
-    "desc": "Définissez des horaires récurrents complexes, des exceptions pour les jours fériés et des plages spécifiques. Votre agenda fonctionne selon vos règles."
-  },
-  "card2": {
-    "title": "Temps tampon intelligents",
-    "desc": "Ajoutez automatiquement du temps de préparation ou de déplacement entre les rendez-vous pour éviter la surcharge."
-  },
-  "card3": {
-    "title": "Planification en temps réel",
-    "desc": "Synchronisation instantanée avec tous vos calendriers personnels et professionnels pour éviter les doubles réservations."
-  },
-  "card4": {
-    "title": "Expérience de conciergerie digitale",
-    "desc": "Une page de réservation élégante et personnalisée qui reflète votre marque, pas juste un simple formulaire."
-  },
-  "cta": "Découvrir toutes les fonctionnalités"
-}, 
-"why": {
-  "badge": "Pourquoi Slottick",
-  "title": "Pourquoi choisir Slottick comme système de réservation ?",
-  "lead": "Moins de temps en messages, moins d’erreurs, et une façon plus propre pour vos clients de réserver.",
-  "items": [
-    {
-      "q": "Il gère votre temps automatiquement",
-      "a": "Définissez horaires, pauses, temps tampon et services une seule fois. Slottick ne montre que les créneaux compatibles avec votre vrai planning — pas de doubles réservations, pas d’allers-retours."
+
+    "features": {
+      "title": "Maîtrisez pleinement votre calendrier",
+      "subtitle": "Des outils précis conçus pour vous faire gagner de précieuses heures et offrir une expérience fluide à vos clients.",
+      "card1": {
+        "title": "Règles intelligentes de disponibilité",
+        "desc": "Définissez des horaires récurrents, des exceptions de jours fériés et des plages spécifiques. Votre calendrier s'adapte à votre rythme."
+      },
+      "card2": {
+        "title": "Temps tampon intelligent",
+        "desc": "Insérez automatiquement un temps de préparation ou de battement entre les prestations pour éviter la surcharge."
+      },
+      "card3": {
+        "title": "Planification multi-postes en temps réel",
+        "desc": "Synchronisation instantanée entre tous vos spécialistes et fauteuils pour bannir définitivement les conflits de planning."
+      },
+      "card4": {
+        "title": "Expérience soignée et valorisante",
+        "desc": "Une page de réservation élégante et personnalisée à votre image de marque, bien plus engageante qu'un simple formulaire."
+      },
+      "cta": "Découvrir toutes les fonctionnalités"
     },
-    {
-      "q": "Il aide à promouvoir votre activité",
-      "a": "Votre page de réservation marche partout : bio Instagram, WhatsApp, Google Business Profile, publicités. Les clients réservent sans vous écrire d’abord."
+
+    "why": {
+      "badge": "Pourquoi Slottick",
+      "title": "Pourquoi choisir Slottick pour gérer vos réservations ?",
+      "lead": "Moins de temps perdu en messagerie, zéro erreur de calendrier et un parcours fluide pour vos clients.",
+      "items": [
+        {
+          "q": "Une gestion automatisée de votre temps",
+          "a": "Définissez vos horaires, vos pauses, vos temps tampons et vos prestations une seule fois. Slottick n'affiche que les plages compatibles avec votre emploi du temps."
+        },
+        {
+          "q": "Un levier direct pour votre visibilité",
+          "a": "Votre lien fonctionne partout : bio Instagram, statut WhatsApp, fiche Google, campagnes publicitaires. Vos clients réservent d'eux-mêmes sans hésiter."
+        },
+        {
+          "q": "Attirez de nouveaux clients grâce à la plateforme",
+          "a": "Soyez référencé dans l'annuaire Slottick Explorer afin que de nouveaux clients puissent vous trouver et réserver facilement."
+        },
+        {
+          "q": "Pas de site internet ? Aucun souci.",
+          "a": "Slottick fait office de site vitrine complet. Un lien sobre et moderne présente vos prestations, vos tarifs et vos disponibilités en temps réel."
+        },
+        {
+          "q": "Simple, véloce et accessible",
+          "a": "Vos clients réservent en quelques clics. Vous pilotez l'activité depuis un tableau de bord épuré, sans compétences techniques requises."
+        }
+      ],
+      "visual": {
+        "kicker": "Le fonctionnement",
+        "title": "Un lien unique → réservations → tableau de bord",
+        "desc": "Protection du temps et acquisition client réunies dans un même outil.",
+        "panelTitle": "Parcours Slottick",
+        "aria": "Illustration présentant le lien partagé, la page de réservation, l'annuaire Explore et les statistiques",
+        "shareableLink": "Lien de réservation",
+        "bookingPage": "Page de réservation",
+        "bookSlot": "Choix du créneau",
+        "exploreMarket": "Annuaire Explore",
+        "discover": "Découverte par de nouveaux clients",
+        "dashboard": "Tableau de bord",
+        "totalBookings": "Total réservations",
+        "revenue": "Chiffre d'affaires (S / M / A)",
+        "customers": "Fichier clients",
+        "namesCountries": "Coordonnées issues des réservations",
+        "pillars": [
+          { "k": "Temps", "v": "Disponibilité réelle" },
+          { "k": "Visibilité", "v": "Un lien partout" },
+          { "k": "Croissance", "v": "Annuaire Explore" }
+        ]
+      }
     },
-    {
-      "q": "Vous gagnez de nouveaux clients via Slottick",
-      "a": "Soyez découvert dans le marketplace Explorer de Slottick pour que de nouveaux clients puissent vous trouver et réserver même s’ils ne vous connaissent pas encore."
-    },
-    {
-      "q": "Pas de site web ? Pas de souci.",
-      "a": "Slottick devient votre site de réservation. Un lien propre affiche services, prix et disponibilités en direct, toujours à jour."
-    },
-    {
-      "q": "Simple, rapide et facile",
-      "a": "Les clients réservent en quelques secondes. Vous gérez tout depuis un seul tableau de bord — sans setup compliqué."
-    }
-  ],
-  "visual": {
-    "kicker": "L’expérience",
-    "title": "Un lien → réservations → tableau de bord",
-    "desc": "Protection du temps + marketing dans un seul système.",
-    "panelTitle": "Flux Slottick",
-    "aria": "Illustration montrant le lien de réservation, la page de réservation, le marketplace Explorer et les stats du tableau de bord",
-    "shareableLink": "Lien partageable",
-    "bookingPage": "Page de réservation",
-    "bookSlot": "Réserver un créneau",
-    "exploreMarket": "Marketplace Explorer",
-    "discover": "De nouveaux clients vous découvrent",
-    "dashboard": "Tableau de bord",
-    "totalBookings": "Réservations totales",
-    "revenue": "Revenu (S / M / A)",
-    "customers": "Clients",
-    "namesCountries": "Noms + pays depuis les réservations",
-    "pillars": [
-      { "k": "Temps", "v": "Disponibilités réelles" },
-      { "k": "Marketing", "v": "Un lien partout" },
-      { "k": "Croissance", "v": "Marketplace Explorer" }
-    ]
-  }
-},
 
     "how": {
       "items": [
         {
-          "title": "Définissez services et règles",
-          "desc": "Ajoutez services, durées, tarifs, horaires, pauses et temps tampon."
+          "title": "Configurez services et plannings",
+          "desc": "Indiquez vos prestations, durées, tarifs, horaires d'ouverture, pauses et temps tampon."
         },
         {
-          "title": "Partagez un lien unique",
-          "desc": "Mettez-le sur votre site, Google Business Profile et bio Instagram."
+          "title": "Partagez votre lien exclusif",
+          "desc": "Ajoutez-le sur votre profil Instagram, votre fiche d'établissement Google ou par message."
         },
         {
-          "title": "Soyez réservé correctement",
-          "desc": "Les clients choisissent un service et un créneau qui correspond à votre planning."
+          "title": "Recevez des réservations confirmées",
+          "desc": "Vos clients sélectionnent leur prestation, leur spécialiste et le créneau idéal."
         }
       ]
     },
 
     "for": {
-      "title": "Conçu pour les entreprises sur rendez-vous",
-      "desc": "Parfait pour salons, barbiers, studios cils/ongles, masseurs, cliniques beauté, coachs, et tout service qui vend du temps."
+      "title": "Pensé pour les professionnels sur rendez-vous",
+      "desc": "Idéal pour les salons de coiffure, barbiers, studios de manucure et de regard, masseurs, esthéticiennes, coachs et tout créateur de service vendant son temps."
     },
 
     "cta": {
-      "title": "Votre disponibilité, c’est votre business.",
-      "desc": "Définissez votre planning une fois. Partagez un lien. Recevez des réservations sans chaos.",
+      "title": "Votre disponibilité est votre capital.",
+      "desc": "Organisez vos plannings une bonne fois. Partagez votre lien. Encaissez et travaillez en toute sérénité.",
       "primary": "Créer votre page de réservation",
       "secondary": "Explorer les services"
     },
     "finalCta": {
-  "title": "Prêt à améliorer votre agenda ?",
-  "desc": "Rejoignez des milliers de professionnels du service qui ont repris le contrôle de leur temps avec Slottick.",
-  "button": "Commencer gratuitement",
-  "note": "Aucune carte bancaire requise • Essai de 14 jours"
-}
+      "title": "Prêt à optimiser vos rendez-vous ?",
+      "desc": "Rejoignez les professionnels qui ont retrouvé la maîtrise de leur temps grâce à Slottick.",
+      "button": "Démarrer gratuitement",
+      "note": "Aucune carte bancaire requise • Essai de 14 jours"
+    }
   },
 
   "register": {
     "brandLabel": "Slottick",
-
     "title": "Créer votre compte",
-    "subtitle": "Créez votre profil d’entreprise et obtenez votre lien de réservation.",
+    "subtitle": "Configurez le profil de votre établissement et obtenez votre lien de réservation.",
     "back": "Retour",
     "haveAccount": "Vous avez déjà un compte ?",
     "login": "Se connecter",
-
     "fields": {
-      "businessName": "Nom de l’entreprise",
+      "businessName": "Nom de l'établissement",
       "category": "Catégorie",
       "city": "Ville",
-      "country": "Pays (code)",
-      "street": "Rue (optionnel)",
-      "postalCode": "Code postal (optionnel)",
-      "website": "Site web (optionnel)",
-      "email": "Email (propriétaire)",
-      "logo": "Logo (optionnel)",
-      "slug": "Slug de réservation",
+      "country": "Pays (code, ex. FR)",
+      "street": "Adresse (facultatif)",
+      "postalCode": "Code postal (facultatif)",
+      "website": "Site web (facultatif)",
+      "email": "E-mail du responsable",
+      "logo": "Logo (facultatif)",
+      "slug": "Identifiant du lien (slug)",
       "password": "Mot de passe",
       "confirmPassword": "Confirmer le mot de passe"
     },
-
     "placeholders": {
-      "businessName": "ex : Damino Studio",
-      "city": "Tallinn",
-      "country": "EE",
-      "street": "ex : Pärnu mnt 10",
-      "postalCode": "ex : 10145",
+      "businessName": "ex. Atelier Beauté & Coiffure",
+      "city": "Paris",
+      "country": "FR",
+      "street": "ex. 12 rue de la Paix",
+      "postalCode": "ex. 75001",
       "website": "https://...",
       "email": "vous@domaine.com",
       "password": "••••••••",
-      "slug": "damino-studio"
+      "slug": "atelier-beaute"
     },
-
     "industry": {
-      "beauty": "Beauté & soins",
-      "wellness": "Bien-être & lifestyle",
+      "beauty": "Beauté & Soins",
+      "wellness": "Bien-être & Santé",
       "creative": "Services créatifs",
-      "home": "Maison & local",
-      "education": "Éducation & professionnels"
+      "home": "Services à domicile & de proximité",
+      "education": "Formation & Conseil"
     },
-
     "logoPreviewAlt": "Aperçu du logo",
-    "remove": "Retirer",
-    "logoHint": "S’affiche sur Explorer après mise en ligne. Idéal : carré, ≤ 2 Mo.",
-
-    "yourLink": "Votre lien :",
-    "slugHint": "Laissez vide pour utiliser le slug automatique basé sur le nom.",
-
+    "remove": "Supprimer",
+    "logoHint": "Affiché sur l'annuaire Explore. Format carré recommandé, ≤ 2 Mo.",
+    "yourLink": "Votre lien personnalisé :",
+    "slugHint": "Laissez vide pour générer automatiquement l'identifiant à partir du nom.",
     "states": {
-      "uploadingLogo": "Téléversement du logo…",
-      "creating": "Création…",
-      "createAccount": "Créer le compte"
+      "uploadingLogo": "Téléchargement du logo…",
+      "creating": "Création du compte…",
+      "createAccount": "Créer mon compte"
     },
-
-    "nextHint": "Ensuite : ajoutez vos services + disponibilités et partagez votre lien de réservation.",
-
+    "nextHint": "Étape suivante : ajoutez vos prestations, définissez vos horaires et partagez votre lien.",
     "errors": {
-      "businessNameRequired": "Le nom de l’entreprise est obligatoire.",
-      "slugRequired": "Le slug de réservation est obligatoire.",
+      "businessNameRequired": "Le nom de l'établissement est obligatoire.",
+      "slugRequired": "L'identifiant du lien est obligatoire.",
       "cityRequired": "La ville est obligatoire.",
-      "countryRequired": "Le code pays est obligatoire (ex : EE).",
-      "emailInvalid": "Veuillez saisir un email valide.",
-      "passwordMin": "Le mot de passe doit contenir au moins 8 caractères.",
+      "countryRequired": "Le code pays est obligatoire (ex. FR).",
+      "emailInvalid": "Veuillez saisir une adresse e-mail valide.",
+      "passwordMin": "Le mot de passe doit comporter au moins 8 caractères.",
       "passwordMismatch": "Les mots de passe ne correspondent pas.",
-      "logoTooLarge": "Logo trop volumineux (max 2 Mo).",
-      "logoType": "Type de fichier logo non supporté.",
-      "logoUploadFailed": "Échec du téléversement du logo.",
-      "createFailed": "Échec de la création du compte.",
-      "network": "Erreur réseau. Réessayez."
+      "logoTooLarge": "Le fichier du logo est trop volumineux (max 2 Mo).",
+      "logoType": "Format d'image non pris en charge.",
+      "logoUploadFailed": "Échec du téléchargement du logo.",
+      "createFailed": "Impossible de créer le compte.",
+      "network": "Erreur réseau. Veuillez réessayer."
     }
   },
 
   "dashboard": {
     "title": "Tableau de bord",
-
     "actions": {
       "editProfile": "Modifier le profil",
-      "openBookingPage": "Ouvrir la page de réservation",
-      "refreshStats": "Actualiser les stats",
-      "refreshing": "Actualisation…",
-      "logout": "Se déconnecter"
+      "openBookingPage": "Voir ma page client",
+      "refreshStats": "Actualiser les données",
+      "refreshingStats": "Actualisation…",
+      "logout": "Déconnexion"
     },
-
     "header": {
-      "kicker": "Tableau de bord",
-      "industryFallback": "Secteur"
+      "industryFallback": "Activité",
+      "kicker": "Espace professionnel"
     },
-
     "profile": {
-      "title": "Profil entreprise",
-      "subtitle": "Mettez à jour vos infos publiques. Les changements s’affichent sur votre page de réservation.",
-      "lead": "Mettez à jour les informations et l'image de votre entreprise.",
-
+      "title": "Profil de l'établissement",
+      "subtitle": "Modifiez vos informations publiques visibles sur votre page de réservation.",
+      "lead": "Personnalisez les coordonnées, la marque et les règles d'approbation de votre salon.",
       "fields": {
-        "businessName": "Nom de l’entreprise",
-        "website": "Site web (optionnel)",
+        "name": "Nom de l'établissement",
+        "website": "Site web (facultatif)",
         "city": "Ville",
-        "country": "Pays (code)",
-        "street": "Rue (optionnel)",
-        "postalCode": "Code postal (optionnel)",
-        "logo": "Logo (optionnel)"
+        "country": "Pays (code, ex. FR)",
+        "street": "Adresse (facultatif)",
+        "postalCode": "Code postal (facultatif)",
+        "logo": "Logo (facultatif)",
+        "approval": "Exiger une validation manuelle",
+        "approvalHint": "Les nouveaux rendez-vous restent en attente jusqu'à votre acceptation"
       },
-
-      "logoHint": "Idéal : carré, ≤ 2 Mo.",
-
-      "saveButton": {
-        "uploading": "Téléversement du logo…",
-        "saving": "Enregistrement…",
-        "saveChanges": "Enregistrer"
+      "placeholders": {
+        "website": "https://...",
+        "country": "FR"
+      },
+      "logo": {
+        "previewAlt": "Aperçu du logo",
+        "remove": "Supprimer le logo",
+        "hint": "Idéal : image carrée, ≤ 2 Mo."
+      },
+      "save": {
+        "saving": "Enregistrement en cours…",
+        "uploadingLogo": "Téléchargement du logo…",
+        "saveChanges": "Enregistrer les modifications"
+      },
+      "errors": {
+        "nameRequired": "Le nom de l'établissement est requis.",
+        "cityRequired": "La ville est requise.",
+        "countryRequired": "Le code pays est requis (ex. FR).",
+        "websiteInvalid": "L'adresse du site web est invalide.",
+        "updateFailed": "Impossible de mettre à jour le profil.",
+        "network": "Erreur réseau. Veuillez réessayer."
       },
       "actions": {
+        "saveChanges": "Enregistrer les modifications",
         "removeLogo": "Supprimer le logo",
+        "cancel": "Annuler"
+      }
+    },
+
+    "staff": {
+      "title": "Équipe & Spécialistes",
+      "lead": "Gérez vos barbiers, coiffeurs, fauteuils et plannings individuels.",
+      "states": {
+        "loading": "Chargement des membres de l'équipe…",
+        "saving": "Enregistrement…",
+        "uploadingAvatar": "Téléchargement de la photo…"
+      },
+      "actions": {
+        "add": "Ajouter un spécialiste",
+        "save": "Enregistrer les modifications",
         "cancel": "Annuler",
-        "saveChanges": "Enregistrer les modifications"
+        "edit": "Modifier",
+        "delete": "Supprimer",
+        "setActive": "Actif",
+        "setInactive": "Inactif"
+      },
+      "list": {
+        "empty": "Aucun membre d'équipe enregistré. Ajoutez votre premier spécialiste ou poste de travail ci-dessus.",
+        "activeCount": "{n} spécialistes actifs"
+      },
+      "fields": {
+        "name": "Nom complet",
+        "namePlaceholder": "ex. Alexandre Dupont",
+        "title": "Titre / Poste / Fauteuil",
+        "titlePlaceholder": "ex. Barbier Senior ou Fauteuil 1",
+        "avatar": "Photo de profil",
+        "services": "Prestations attribuées",
+        "isActive": "Disponible à la réservation"
+      },
+      "errors": {
+        "loadFailed": "Impossible de charger la liste de l'équipe.",
+        "nameRequired": "Le nom du spécialiste est obligatoire.",
+        "saveFailed": "Impossible d'enregistrer le profil du collaborateur.",
+        "deleteFailed": "Impossible de supprimer ce collaborateur."
       }
     },
 
     "stats": {
       "totalBookings": {
-        "title": "Réservations totales",
+        "title": "Total des réservations",
         "subLoading": "Chargement…",
-        "sub": "Depuis le début (non annulées)"
+        "sub": "Depuis l'origine (hors annulations)"
       },
       "revenue": {
-        "title": "Revenu généré",
+        "title": "Chiffre d'affaires généré",
         "subLoading": "Chargement…",
-        "sub": "Confirmées dans le passé",
+        "sub": "Rendez-vous confirmés passés",
         "weekly": "Semaine",
         "monthly": "Mois",
         "yearly": "Année",
-        "mixed": "Mixte"
+        "mixed": "Devises mixtes"
       },
       "customers": {
         "title": "Clients",
@@ -372,116 +425,113 @@
         "sub": "Clients uniques"
       }
     },
-      "share": {
-  "title": "Votre lien de réservation partageable",
-  "copyLink": "Copier le lien",
-  "copied": "Copié ✓",
-  "shareHint": "Partagez-le sur Instagram, WhatsApp, votre site web, partout.",
-  "copy": "Copier le site",
-  "help": "Ceci est votre site de réservation. Partagez-le avec vos clients et sur les réseaux sociaux pour permettre une réservation facile.",
-  "tip": "Astuce : gardez vos disponibilités à jour, votre page de réservation reflète toujours les changements.",
-  "copyFailed": "Échec de la copie — veuillez copier manuellement."
-},
+
+    "share": {
+      "title": "Votre lien direct de réservation",
+      "copyLink": "Copier le lien",
+      "copied": "Copié ✓",
+      "shareHint": "Diffusez-le sur Instagram, WhatsApp, vos fiches d'avis ou votre site web.",
+      "copy": "Copier le lien du site",
+      "help": "Voici la page de réservation vue par vos clients. Partagez-la sur vos canaux de communication.",
+      "tip": "Conseil : Gardez vos horaires et indisponibilités à jour ; ils s'actualisent en direct sur cette page.",
+      "copyFailed": "Échec de la copie automatique — veuillez copier manuellement."
+    },
 
     "gallery": {
-      "title": "Images de la page de réservation",
-      "lead": "La 1ère image = hero. Les 2 suivantes = images latérales. Elles s’affichent sur votre page de réservation.",
-
+      "title": "Photos de votre établissement",
+      "lead": "1re image = bannière principale. Les deux suivantes = vignettes latérales affichées sur votre page.",
       "actions": {
-        "upload": "Téléverser des images",
-        "uploading": "Téléversement…",
+        "upload": "Ajouter des photos",
+        "uploading": "Téléchargement…",
         "refresh": "Actualiser",
         "up": "Monter",
         "down": "Descendre",
         "remove": "Supprimer"
       },
-
       "errors": {
         "load": "Impossible de charger la galerie",
-        "upload": "Échec du téléversement",
+        "upload": "Échec du téléchargement",
         "delete": "Échec de la suppression",
-        "reorder": "Échec du réordonnancement"
+        "reorder": "Échec du réordonnancement",
+        "loadFailed": "Impossible de charger la galerie."
       },
-
       "preview": {
-        "hero": "Aperçu de l’image hero",
-        "side1": "Image latérale 1",
-        "side2": "Image latérale 2",
-        "heroAlt": "Aperçu hero",
+        "hero": "Aperçu de la photo principale",
+        "side1": "Photo secondaire 1",
+        "side2": "Photo secondaire 2",
+        "heroAlt": "Aperçu principal",
         "heroEmpty": "Téléchargez votre photo principale",
-        "side1Empty": "Téléchargez une photo de la galerie",
-        "side2Empty": "Téléchargez une autre photo de la galerie",
-        "sideAlt1": "Aperçu latéral 1",
-        "sideAlt2": "Aperçu latéral 2"
+        "side1Empty": "Téléchargez une photo secondaire",
+        "side2Empty": "Téléchargez une seconde photo secondaire",
+        "sideAlt1": "Aperçu secondaire 1",
+        "sideAlt2": "Aperçu secondaire 2"
       },
-
       "list": {
-        "title": "Vos images",
+        "title": "Vos photos actuelles",
         "loading": "Chargement…",
-        "empty": "Aucune image. Téléversez-en 3 pour la mise en page complète.",
-        "hero": "Hero",
-        "side1": "Côté 1",
-        "side2": "Côté 2",
-        "imageN": "Image {n}"
+        "empty": "Aucune photo pour l'instant. Ajoutez-en 3 pour compléter la mise en page.",
+        "hero": "Bannière",
+        "side1": "Latérale 1",
+        "side2": "Latérale 2",
+        "imageN": "Photo {n}"
       }
     },
 
     "description": {
-      "title": "Description de la page de réservation",
-      "lead": "S’affiche sur le hero de votre page de réservation. Restez local + clair (max 600 mots).",
-      "placeholder": "Exemple : Nous sommes un studio d’ongles à Tallinn spécialisé dans…",
-      "words": "{count}/600 mots",
-
+      "title": "Présentation de l'établissement",
+      "lead": "Texte mis en avant sur votre page de réservation. Soyez clair, concis et chaleureux (max 600 mots).",
+      "placeholder": "Exemple : Salon de coiffure et barbier situé au cœur de Paris, spécialisé dans...",
+      "words": "{n}/600 mots",
       "actions": {
         "save": "Enregistrer",
         "clear": "Effacer"
       },
-
       "states": {
         "saving": "Enregistrement…"
       },
-
       "errors": {
-        "tooLong": "Trop long — 600 mots max.",
-        "saveFailed": "Échec de l’enregistrement",
-        "saveFailedApi": "Échec de l’enregistrement de la description"
+        "tooLong": "Texte trop long — 600 mots au maximum.",
+        "saveFailed": "Échec de l'enregistrement",
+        "saveFailedApi": "Impossible d'enregistrer la description"
       }
     },
 
-"panels": {
-  "schedule": {
-    "title": "Aperçu du planning",
-    "subtitle": "Consultez votre planning et les créneaux à venir.",
-    "lead": "Consultez votre planning et les créneaux à venir." 
-  },
-  "inbox": {
-        "title": "Boîte de réception",
-        "lead": "Consultez les demandes de réservation, discutez avec les clients et acceptez ou refusez les réservations."
+    "panels": {
+      "schedule": {
+        "title": "Vue chronologique",
+        "subtitle": "Consultez votre journée et les créneaux à venir.",
+        "lead": "Visualisez le déroulement de votre planning et vos rendez-vous."
       },
-  "bookings": {
-    "title": "Réservations",
-    "subtitle": "Suivez les demandes, confirmations et statuts.",
-    "lead": "Suivez les demandes, confirmations et statuts."
+      "inbox": {
+        "title": "Messagerie",
+        "lead": "Examinez les demandes de réservation, échangez avec vos clients et validez ou refusez les créneaux."
+      },
+      "bookings": {
+        "title": "Réservations",
+        "subtitle": "Suivez les demandes, statuts et rendez-vous confirmés.",
+        "lead": "Gérez l'ensemble des rendez-vous et leur statut d'avancement."
+      },
+      "availability": {
+        "title": "Disponibilités",
+        "subtitle": "Paramétrez vos jours, horaires et pauses d'équipe.",
+        "lead": "Définissez vos horaires d'ouverture et plannings collaborateurs."
+      },
+      "services": {
+        "title": "Prestations & Tarifs",
+        "subtitle": "Gérez les prestations, durées, spécialistes assignés et prix.",
+        "lead": "Détaillez vos services et associez-les à vos collaborateurs."
+      },
+      "staff": {
+        "title": "Équipe & Postes",
+        "subtitle": "Gérez les collaborateurs, rôles et plannings dédiés.",
+        "lead": "Supervisez votre équipe, assignez des compétences et organisez les présences."
+      }
+    }
   },
+
   "availability": {
     "title": "Disponibilités",
-    "subtitle": "Définissez vos horaires de travail et vos pauses.",
-    "lead": "Définissez vos horaires de travail et vos pauses."
-  },
-  "services": {
-    "title": "Services et tarifs",
-    "subtitle": "Ajoutez des services, durées et prix.",
-    "lead": "Ajoutez des services, durées et prix."
-  }
-}
-
-
-  },
-
-  
-  "availability": {
-    "title": "Disponibilités",
-    "lead": "Définissez vos jours et heures de travail. Cela contrôle ce que les clients peuvent réserver.",
+    "lead": "Définissez vos jours et plages d'ouverture. Ces réglages déterminent les créneaux réservables par vos clients.",
     "states": {
       "loading": "Chargement…",
       "saving": "Enregistrement…",
@@ -489,45 +539,56 @@
       "save": "Enregistrer"
     },
     "errors": {
-      "invalidTimezone": "Fuseau horaire invalide. Exemple : Europe/Tallinn",
-      "saveFailed": "Échec de l’enregistrement"
+      "invalidTimezone": "Fuseau horaire invalide. Exemple : Europe/Paris",
+      "saveFailed": "Échec de l'enregistrement"
     },
     "timezone": {
       "title": "Fuseau horaire",
-      "label": "Fuseau horaire (IANA)",
-      "hint": "Exemple : Europe/Tallinn, Africa/Douala, America/New_York",
-      "useDetected": "Détecté : {tz}",
+      "label": "Fuseau horaire (identifiant IANA)",
+      "hint": "Exemple : Europe/Paris, Africa/Douala, America/Montreal",
+      "useDetected": "Utiliser le fuseau détecté : {tz}",
       "invalid": "Fuseau horaire invalide"
     },
     "workingDays": {
-      "title": "Jours de travail",
-      "days": { "sun": "Dim", "mon": "Lun", "tue": "Mar", "wed": "Mer", "thu": "Jeu", "fri": "Ven", "sat": "Sam" }
+      "title": "Jours travaillés",
+      "days": {
+        "sun": "Dim",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mer",
+        "thu": "Jeu",
+        "fri": "Ven",
+        "sat": "Sam"
+      }
     },
-    "hours": { "start": "Heure de début", "end": "Heure de fin" },
-    "break": { "start": "Début de pause (optionnel)", "end": "Fin de pause (optionnel)" },
+    "hours": { "start": "Heure d'ouverture", "end": "Heure de fermeture" },
+    "break": {
+      "start": "Début de pause (facultatif)",
+      "end": "Fin de pause (facultatif)"
+    },
     "rules": {
-      "slotStep": "Intervalle de réservation (idéalement 15 minutes)",
-      "buffer": "Intervalle entre les rendez-vous (minutes)"
+      "slotStep": "Intervalle entre créneaux (15 min recommandé)",
+      "buffer": "Temps tampon entre chaque rendez-vous (en minutes)"
     }
   },
+
   "schedule": {
     "title": "Planning",
-    "subtitle": "{title} rendez-vous • Touchez un jour.",
-    "emptyDay": "Aucun rendez-vous ce jour.",
-    "minutes": "min",
-
+    "subtitle": "{title} rendez-vous • Touchez un jour pour filtrer.",
+    "subtitleUpcomingExtra": "({total} au total)",
+    "subtitleLoadingExtra": "• Chargement…",
     "modes": {
-      "today": "Aujourd’hui",
+      "today": "Aujourd'hui",
       "upcoming": "À venir",
-      "all": "Tout"
+      "all": "Tous"
     },
-
     "actions": {
-      "prev": "Préc",
-      "next": "Suiv",
-      "nextBookedDay": "Prochain jour réservé"
+      "prev": "Précédent",
+      "next": "Suivant",
+      "nextBookedDay": "Prochain jour planifié"
     },
-
+    "emptyDay": "Aucun rendez-vous sur cette journée.",
+    "minutes": "min",
     "weekdays": {
       "mon": "Lun",
       "tue": "Mar",
@@ -542,43 +603,47 @@
   "bookings": {
     "title": "Réservations",
     "minutes": "min",
-    "notes": "Notes",
+    "notes": "Remarques",
     "upcomingCount": "{n} à venir",
     "loadingShort": "Chargement…",
-    "loading": "Chargement des réservations…",
-    "emptyUpcoming": "Aucune réservation à venir.",
-    "pastTitle": "Passées",
+    "loading": "Chargement des rendez-vous…",
+    "emptyUpcoming": "Aucun rendez-vous à venir pour le moment.",
+    "pastTitle": "Historique",
+    "specialist": "Spécialiste",
+    "allSpecialists": "Tous les spécialistes",
+    "unassigned": "Non assigné",
     "buttons": {
       "refresh": "Actualiser",
       "refreshing": "Actualisation…",
       "done": "Terminé",
       "cancel": "Annuler",
       "saving": "Enregistrement…",
-      "cancelling": "Annulation…"
+      "cancelling": "Annulation en cours…"
     }
   },
 
   "services": {
-    "title": "Services",
-    "lead": "Ajoutez vos services avec catégorie, durée et prix. La catégorie aide Explorer + SEO. Optionnel : demander un acompte. Ajoutez des photos pour montrer votre travail.",
+    "title": "Prestations",
+    "lead": "Ajoutez vos services avec leur catégorie, durée et prix. Les catégories améliorent votre visibilité sur l'annuaire Explore et les moteurs de recherche. Ajoutez des photos pour valoriser votre travail.",
     "minutes": "min",
-
-    "status": { "loading": "Chargement…", "saving": "Enregistrement…", "saved": "Enregistré ✓" },
-
-    "errors": {
-      "loadFailed": "Échec du chargement des services",
-      "saveFailed": "Échec de l’enregistrement des services",
-      "networkLoad": "Erreur réseau lors du chargement",
-      "networkSave": "Erreur réseau lors de l’enregistrement",
-      "uploadFailed": "Échec du téléversement"
+    "status": {
+      "loading": "Chargement…",
+      "saving": "Enregistrement…",
+      "saved": "Enregistré ✓"
     },
-
+    "errors": {
+      "loadFailed": "Impossible de charger les prestations",
+      "saveFailed": "Impossible d'enregistrer les prestations",
+      "networkLoad": "Erreur réseau lors du chargement des prestations",
+      "networkSave": "Erreur réseau lors de l'enregistrement",
+      "uploadFailed": "Échec du téléchargement"
+    },
     "categories": {
-      "Hair": "Cheveux",
+      "Hair": "Coiffure",
       "Barber": "Barbier",
       "Lash": "Cils",
       "Brows": "Sourcils",
-      "Nails": "Ongles",
+      "Nails": "Onglerie",
       "Manicure": "Manucure",
       "Pedicure": "Pédicure",
       "Makeup": "Maquillage",
@@ -589,765 +654,782 @@
       "Facial": "Soin du visage",
       "Other": "Autre"
     },
-
     "form": {
-      "name": "Nom du service",
-      "namePlaceholder": "Coupe",
+      "name": "Intitulé de la prestation",
+      "namePlaceholder": "ex. Coupe dégradée & Coiffage",
       "category": "Catégorie",
-      "duration": "Durée (minutes)",
-      "price": "Prix",
-      "currency": "Devise"
+      "duration": "Durée (en minutes)",
+      "price": "Tarif",
+      "currency": "Devise",
+      "staff": "Spécialistes habilités"
     },
-
-    "actions": { "add": "Ajouter un service", "delete": "Supprimer", "remove": "Retirer" },
-
-    "edit": { "name": "Nom", "category": "Catégorie", "duration": "Durée" },
-
+    "actions": {
+      "add": "Ajouter la prestation",
+      "delete": "Supprimer",
+      "remove": "Retirer"
+    },
+    "edit": {
+      "name": "Intitulé",
+      "category": "Catégorie",
+      "duration": "Durée"
+    },
     "photos": {
-      "title": "Photos (optionnel)",
-      "workTitle": "Photos (optionnel)",
+      "title": "Galerie de réalisations (facultatif)",
+      "workTitle": "Photos de réalisations (facultatif)",
       "add": "Ajouter une photo",
-      "uploading": "Téléversement…",
-      "hint": "Ajoutez 3–6 vraies photos par service. Ça augmente la confiance rapidement.",
-      "none": "Pas encore de photos.",
-      "altNew": "Photo du service",
-      "altWork": "Photo du travail — {name}"
+      "uploading": "Téléchargement…",
+      "hint": "Ajoutez 3 à 6 vraies réalisations par service pour inspirer confiance.",
+      "none": "Aucune photo pour l'instant.",
+      "altNew": "Photo de la prestation",
+      "altWork": "Réalisation pour {name}"
     },
-
     "deposit": {
-      "require": "Demander un acompte pour réserver",
-      "requireShort": "Demander un acompte",
-      "type": "Type",
-      "value": "Valeur",
-      "shown": "Affiché aux clients",
+      "require": "Exiger un acompte à la réservation",
+      "requireShort": "Exiger un acompte",
+      "type": "Type d'acompte",
+      "value": "Montant ou valeur",
+      "shown": "Précisé au client lors de la réservation",
       "percentOption": "Pourcentage (%)",
       "amountOption": "Montant fixe",
       "percentLabel": "Pourcentage",
       "amountLabel": "Montant",
       "labelPercent": "Acompte : {n}%",
       "labelAmount": "Acompte : {amount}",
-      "none": "Pas d’acompte"
+      "none": "Sans acompte"
     },
-
     "list": {
-      "loading": "Chargement des services…",
-      "empty": "Aucun service, ajoutez le premier."
+      "loading": "Chargement des prestations…",
+      "empty": "Aucune prestation enregistrée. Créez votre première offre ci-dessus."
     }
   },
+
   "explore": {
-  "brandLine": "Slottick • Explorer",
-  "heading": "Réservez des entreprises de confiance",
-  "intro": "Trouvez des services près de vous et réservez instantanément.",
-  "help": "Recherchez des entreprises selon votre besoin (ex. « massage », « tatouage », « manucure ») et filtrez par ville et secteur.",
-  "cta": {
-    "listBusiness": "Ajouter votre entreprise"
-  },
-
-  "filters": {
-    "search": "Recherche",
-    "searchPlaceholder": "ex. massage, tatouage, ongles, Tallinn...",
-    "city": "Ville",
-    "allCities": "Toutes les villes",
-    "industry": "Secteur",
-    "all": "Tous"
-  },
-  "quickFilters": {
-  "label": "Filtres rapides :",
-  "items": {
-    "all": "Tous les Secteur",
-    "beauty": "Beauté & soins",
-    "wellness": "Bien-être & lifestyle",
-    "creative": "Services créatifs",
-    "home": "Maison & local",
-    "education": "Éducation & professionnels"
-  }
-},
-  "results": {
-    "showing": "{n} entreprises affichées",
-    "empty": "Aucune entreprise trouvée. Essayez une autre ville, secteur ou mot-clé."
-  },
-
-  "card": {
-    "industryFallback": "Secteur",
-    "cityFallback": "—",
-    "reviews": "{n} avis",
-    "book": "Réserver",
-    "logoAlt": "Logo de {name}",
-    "noReviews": "Pas encore d’avis",
-    "nextSlot": "Prochain créneau :",
-    "noReviewsShort": "Nouveau",
-  "startingAt": "À partir de",
-  "viewStudio": "Voir le studio",
-  "heroAlt": "Image de couverture de {name}",
-"nextSlotValues": {
-  "today": "Aujourd’hui",
-  "tomorrow": "Demain",
-  "in2days": "Dans 2 jours",
-  "later": "Bientôt",
-  "noReviewsShort": "Nouveau",
-  "startingAt": "À partir de",
-  "viewStudio": "Voir le studio"
-}
-  },
-  "hero": {
-    "titleStart": "Découvrez votre prochain",
-    "titleAccent": "partenaire stratégique",
-    "description":
-      "Entrez en contact avec des stylistes haut de gamme, des praticiens du bien-être et des propriétaires de studios premium. Améliorez l’expérience client grâce à la réservation collaborative.",
-    "searchButton": "Rechercher"
-  },
-
-  "industries": {
-    "BEAUTY_AND_CARE": "Beauté & soins",
-    "WELLNESS_AND_LIFESTYLE": "Bien-être & lifestyle",
-    "CREATIVE_SERVICES": "Services créatifs",
-    "HOME_AND_LOCAL": "Maison & local",
-    "EDUCATION_AND_PROFESSIONALS": "Éducation & professionnels"
-  },
-  "partnership": {
-    "badge": "Ouvert aux partenariats",
-    "title": "Élargissez votre offre avec des espaces partagés",
-    "description":
-      "Rejoignez des entreprises locales qui réservent des salles spécialisées entre elles. Réduisez vos coûts et attirez plus vite de nouveaux clients.",
-    "primaryCta": "Trouver un lieu",
-    "secondaryCta": "En savoir plus",
-    "imageAlt":
-      "Deux propriétaires discutant d’une collaboration dans un hall premium minimaliste"
-  },
-  "insights": {
-    "eyebrow": "Tendances du marché",
-    "title": "Tendance dans votre marché : les réservations bien-être premium",
-    "metric1Label": "Croissance de la demande",
-    "metric1Value": "+24%",
-    "metric2Label": "Valeur moyenne de réservation",
-    "metric2Value": "120 €",
-    "cta": "Voir le rapport complet",
-    "trendingEyebrow": "Réservations tendance",
-  "trendingTitle": "Le plus réservé à {city}",
-  "priceEyebrow": "Meilleur prix",
-  "priceTitle": "Prix de départ le plus bas à {city}",
-  "bookings": "Réservations (30 jours)",
-  "business": "Entreprise",
-  "startingAt": "À partir de",
-  "service": "Service",
-  "viewBusiness": "Voir l’entreprise",
-  "bookNow": "Réserver",
-  "yourArea": "votre zone"
-  }
-},
-"booking": {
-  "lightbox": {
-    "close": "Fermer",
-    "photoAlt": "Photo",
-    "viewPhoto": "Voir la photo"
-  },
-
-  "hero": {
-    "industryFallback": "Service",
-    "noDescription": "Aucune description pour le moment.",
-    "stepPill": "Étape {step} sur {total}",
-    "timezoneLabel": "Fuseau horaire :",
-    "visitWebsite": "Visiter le site",
-    "logoAlt": "Logo de {name}",
-    "mainPhotoAlt": "Photo principale de {name}",
-    "photoAlt": "Photo {n} de {name}"
-  },
-
-  "options": {
-    "title": "Options de réservation",
-    "signedInAs": "Connecté en tant que",
-    "guest": "Vous réservez en tant qu’invité.",
-    "createAccount": "Créer un compte",
-    "login": "Connexion"
-  },
-
-  "deposit": {
-    "amount": "Acompte requis : {amount}",
-    "percent": "Acompte requis : {n}%"
-  },
-
-  "common": {
-    "minutes": "{n} min"
-  },
-
-  "sections": {
-    "service": {
-      "title": "Choisir un service",
-      "loading": "Chargement des services...",
-      "empty": "Aucun service disponible pour le moment.",
-      "selected": "Sélectionné",
-      "noPhotos": "Pas encore de photos.",
-      "photosCount": "{n} photos",
-      "servicePhotoAlt": "Photo de {name}"
+    "brandLine": "Slottick • Explorer",
+    "heading": "Réservez auprès d'établissements de confiance",
+    "intro": "Trouvez les meilleurs professionnels autour de vous et prenez rendez-vous instantanément.",
+    "help": "Cherchez selon vos besoins (ex. « massage », « tatouage », « manucure ») et affinez par ville et secteur d'activité.",
+    "cta": {
+      "listBusiness": "Référencer mon établissement"
     },
-    "date": {
-      "title": "Choisir une date",
-      "needService": "Sélectionnez d’abord un service.",
-      "label": "Date"
+    "filters": {
+      "search": "Recherche",
+      "searchPlaceholder": "ex. massage, barbier, ongles, Paris...",
+      "city": "Ville",
+      "allCities": "Toutes les villes",
+      "industry": "Secteur",
+      "all": "Tous les secteurs"
     },
-    "time": {
-      "title": "Choisir une heure",
-      "needServiceDate": "Sélectionnez d’abord un service et une date.",
-      "empty": "Aucun créneau disponible à cette date."
+    "quickFilters": {
+      "label": "Filtres rapides :",
+      "items": {
+        "all": "Tous les secteurs",
+        "beauty": "Beauté & Soins",
+        "wellness": "Bien-être & Forme",
+        "creative": "Services créatifs",
+        "home": "Maison & Proximité",
+        "education": "Coaching & Formation"
+      }
     },
-    "details": {
-      "title": "Vos informations",
-      "needAll": "Terminez d’abord service + date + heure."
+    "results": {
+      "showing": "{n} établissement(s) trouvé(s)",
+      "empty": "Aucun établissement correspondant. Essayez avec une autre ville ou un mot-clé différent."
+    },
+    "card": {
+      "industryFallback": "Secteur",
+      "cityFallback": "—",
+      "reviews": "{n} avis",
+      "book": "Réserver",
+      "logoAlt": "Logo de {name}",
+      "noReviews": "Aucun avis pour l'instant",
+      "nextSlot": "Prochain créneau :",
+      "noReviewsShort": "Nouveau",
+      "startingAt": "Dès",
+      "viewStudio": "Découvrir l'établissement",
+      "heroAlt": "Image de couverture de {name}",
+      "nextSlotValues": {
+        "today": "Aujourd'hui",
+        "tomorrow": "Demain",
+        "in2days": "Dans 2 jours",
+        "later": "Bientôt disponible",
+        "noReviewsShort": "Nouveau",
+        "startingAt": "Dès",
+        "viewStudio": "Découvrir l'établissement"
+      }
+    },
+    "hero": {
+      "titleStart": "Trouvez votre prochain",
+      "titleAccent": "rendez-vous bien-être",
+      "description": "Prenez rendez-vous avec des coiffeurs réputés, praticiens bien-être et créateurs passionnés près de chez vous.",
+      "searchButton": "Explorer l'annuaire"
+    },
+    "industries": {
+      "BEAUTY_AND_CARE": "Beauté & Soins",
+      "WELLNESS_AND_LIFESTYLE": "Bien-être & Forme",
+      "CREATIVE_SERVICES": "Services créatifs",
+      "HOME_AND_LOCAL": "Services de proximité",
+      "EDUCATION_AND_PROFESSIONALS": "Conseil & Professionnels"
+    },
+    "partnership": {
+      "badge": "Ouvert aux partenariats",
+      "title": "Développez votre offre dans des espaces partagés",
+      "description": "Collaborez avec d'autres professionnels pour louer ou partager des cabines de soins et développer votre clientèle sans surcoût.",
+      "primaryCta": "Trouver un espace",
+      "secondaryCta": "En savoir plus",
+      "imageAlt": "Deux professionnels échangeant dans un salon moderne"
+    },
+    "insights": {
+      "eyebrow": "Tendances du marché",
+      "title": "Tendance locale : hausse des soins bien-être premium",
+      "metric1Label": "Croissance de la demande",
+      "metric1Value": "+24%",
+      "metric2Label": "Panier moyen de réservation",
+      "metric2Value": "120 €",
+      "cta": "Voir l'analyse complète",
+      "trendingEyebrow": "Tendances actuelles",
+      "trendingTitle": "Les plus plébiscités à {city}",
+      "priceEyebrow": "Tarifs avantageux",
+      "priceTitle": "Meilleurs tarifs à {city}",
+      "bookings": "Réservations (30 jours)",
+      "business": "Établissement",
+      "startingAt": "À partir de",
+      "service": "Prestation",
+      "viewBusiness": "Consulter",
+      "bookNow": "Réserver",
+      "yourArea": "votre secteur"
     }
   },
 
-  "form": {
-    "fullName": "Nom complet",
-    "fullNamePlaceholder": "Votre nom",
-    "phone": "Téléphone",
-    "phonePlaceholder": "+372...",
-    "emailLabel": "Email*",
-    "emailPlaceholder": "vous@email.com",
-    "notes": "Notes (optionnel)",
-    "notesPlaceholder": "Détails éventuels...",
-    "confirm": "Confirmer la réservation",
-    "confirming": "Confirmation..."
+  "booking": {
+    "lightbox": {
+      "close": "Fermer",
+      "photoAlt": "Photographie",
+      "viewPhoto": "Agrandir la photo"
+    },
+    "hero": {
+      "industryFallback": "Prestation",
+      "noDescription": "Aucune description fournie pour le moment.",
+      "stepPill": "Étape {step} sur {total}",
+      "timezoneLabel": "Fuseau horaire :",
+      "visitWebsite": "Consulter le site internet",
+      "logoAlt": "Logo de {name}",
+      "mainPhotoAlt": "Photo principale de {name}",
+      "photoAlt": "Photo {n} de {name}"
+    },
+    "options": {
+      "title": "Modalités de réservation",
+      "signedInAs": "Connecté sous",
+      "guest": "Vous réservez en mode invité.",
+      "createAccount": "Créer un compte",
+      "login": "Se connecter"
+    },
+    "deposit": {
+      "amount": "Acompte requis : {amount}",
+      "percent": "Acompte requis : {n}%"
+    },
+    "common": {
+      "minutes": "{n} min"
+    },
+    "sections": {
+      "service": {
+        "title": "1. Choisissez une prestation",
+        "loading": "Chargement des prestations...",
+        "empty": "Aucune prestation disponible actuellement.",
+        "selected": "Sélectionné",
+        "noPhotos": "Aucune photo disponible.",
+        "photosCount": "{n} photos",
+        "servicePhotoAlt": "Photo de {name}"
+      },
+      "staff": {
+        "title": "2. Choisissez un spécialiste",
+        "any": "N'importe quel spécialiste",
+        "anyDesc": "Premier créneau disponible",
+        "selected": "Spécialiste sélectionné"
+      },
+      "date": {
+        "title": "3. Choisissez une date",
+        "needService": "Veuillez d'abord sélectionner une prestation.",
+        "label": "Date"
+      },
+      "time": {
+        "title": "4. Choisissez un horaire",
+        "needServiceDate": "Sélectionnez d'abord votre prestation et une date.",
+        "empty": "Aucun créneau disponible à cette date."
+      },
+      "details": {
+        "title": "5. Vos coordonnées",
+        "needAll": "Veuillez d'abord compléter la prestation, le spécialiste, la date et l'heure."
+      }
+    },
+    "form": {
+      "fullName": "Nom et prénom",
+      "fullNamePlaceholder": "Votre nom complet",
+      "phone": "Téléphone portable",
+      "phonePlaceholder": "+33 6...",
+      "emailLabel": "Adresse e-mail*",
+      "emailPlaceholder": "votre@email.com",
+      "notes": "Remarques éventuelles (facultatif)",
+      "notesPlaceholder": "Précisions ou demandes particulières...",
+      "confirm": "Confirmer la réservation",
+      "confirming": "Validation en cours..."
+    },
+    "location": {
+      "title": "Adresse & Plan",
+      "noAddress": "Adresse non renseignée.",
+      "openMaps": "Ouvrir dans Google Maps",
+      "mapTitle": "Plan pour {name}",
+      "ownerNoAddress": "L'établissement n'a pas encore renseigné d'adresse physique."
+    },
+    "errors": {
+      "selectService": "Veuillez choisir une prestation.",
+      "selectDate": "Veuillez sélectionner une date.",
+      "selectTime": "Veuillez sélectionner un horaire.",
+      "enterName": "Veuillez renseigner votre nom complet.",
+      "enterPhone": "Veuillez renseigner votre numéro de téléphone.",
+      "emailRequired": "L'adresse e-mail est obligatoire.",
+      "emailInvalid": "Veuillez saisir une adresse e-mail valide.",
+      "justBooked": "Ce créneau vient tout juste d'être réservé. Merci d'en sélectionner un autre.",
+      "failed": "La réservation n'a pas pu aboutir",
+      "missingId": "Réservation créée mais identifiant introuvable.",
+      "network": "Erreur de connexion. Veuillez réessayer."
+    }
   },
-
-  "location": {
-    "title": "Localisation",
-    "noAddress": "Adresse non renseignée.",
-    "openMaps": "Ouvrir dans Maps",
-    "mapTitle": "Carte de {name}",
-    "ownerNoAddress": "Le propriétaire n’a pas encore ajouté d’adresse."
-  },
-
-  "errors": {
-    "selectService": "Sélectionnez un service.",
-    "selectDate": "Sélectionnez une date.",
-    "selectTime": "Sélectionnez une heure.",
-    "enterName": "Entrez votre nom complet.",
-    "enterPhone": "Entrez votre numéro de téléphone.",
-    "emailRequired": "L’email est obligatoire.",
-    "emailInvalid": "Entrez un email valide.",
-    "justBooked": "Ce créneau vient d’être réservé. Choisissez un autre horaire.",
-    "failed": "Échec de la réservation",
-    "missingId": "Réservation créée mais identifiant manquant.",
-    "network": "Erreur réseau. Réessayez."
-  }
-},
 
   "bookingSuccess": {
     "pending": {
-      "title": "Demande envoyée",
-      "description": "Votre demande de réservation a été envoyée à l’établissement. Il l’examinera et vous répondra bientôt."
+      "title": "Demande envoyée !",
+      "description": "Votre demande de réservation a été transmise à l'établissement. Elle sera validée dans les plus brefs délais."
     },
     "confirmed": {
-      "title": "Réservé",
-      "description": "Votre rendez-vous est confirmé."
+      "title": "C'est réservé !",
+      "description": "Votre rendez-vous est confirmé avec succès."
     },
     "actions": {
       "addToCalendar": "Ajouter au calendrier",
-      "backToBooking": "Retour à la réservation",
-      "goBack": "Revenir à la réservation",
+      "backToBooking": "Retour à l'accueil",
+      "goBack": "Retour au salon",
       "sendAnotherRequest": "Envoyer une autre demande",
       "bookAnotherTime": "Réserver un autre créneau",
-      "openMarketplace": "Ouvrir la marketplace"
+      "openMarketplace": "Découvrir d'autres services"
     },
     "states": {
-      "loading": "Chargement des détails de la réservation…",
-      "loadError": "Impossible de charger les détails de la réservation (identifiant manquant ou invalide)."
+      "loading": "Récupération des détails de la réservation…",
+      "loadError": "Impossible de charger la réservation (identifiant manquant ou expiré)."
     },
     "sections": {
       "requestDetails": "Détails de la demande",
-      "bookingDetails": "Détails de la réservation"
+      "bookingDetails": "Récapitulatif du rendez-vous"
     },
     "labels": {
       "status": "Statut",
       "business": "Établissement",
-      "service": "Service",
-      "whenYourTime": "Quand (votre heure)",
-      "name": "Nom"
+      "service": "Prestation",
+      "specialist": "Spécialiste",
+      "whenYourTime": "Date & Heure (votre fuseau)",
+      "name": "Nom du client"
     },
     "status": {
-      "pendingApproval": "En attente d’approbation",
+      "pendingApproval": "En attente de confirmation",
       "confirmed": "Confirmé"
     },
     "explore": {
-      "title": "Découvrez plus de services",
-      "description": "Découvrez d’autres établissements près de chez vous.",
-      "empty": "Aucun établissement à proximité pour le moment.",
-      "fallbackCategory": "Service"
+      "title": "Découvrez d'autres professionnels",
+      "description": "Explorez les spécialistes recommandés près de chez vous.",
+      "empty": "Aucun autre établissement trouvé à proximité.",
+      "fallbackCategory": "Prestation"
     }
   },
+
   "bookingChat": {
-    "title": "Discussion de réservation",
+    "title": "Discussion autour du rendez-vous",
     "loading": "Chargement de la conversation…",
     "labels": {
       "business": "Établissement",
-      "service": "Service",
+      "service": "Prestation",
+      "specialist": "Spécialiste",
       "status": "Statut"
     },
     "placeholders": {
-      "message": "Écrivez votre message…"
+      "message": "Écrivez votre message ici…"
     },
     "actions": {
       "send": "Envoyer le message",
-      "sending": "Envoi..."
+      "sending": "Envoi en cours..."
     },
     "errors": {
       "loadFailed": "Impossible de charger la conversation.",
-      "sendFailed": "Impossible d’envoyer le message.",
-      "notFound": "Conversation introuvable."
+      "sendFailed": "Échec de l'envoi du message.",
+      "notFound": "Conversation introuvable ou lien expiré."
     }
   },
+
   "inbox": {
-    "title": "Boîte de réception",
-    "subtitle": "Demandes de réservation et conversations clients",
+    "title": "Messagerie",
+    "subtitle": "Demandes de rendez-vous et échanges clients",
     "loading": "Chargement de la boîte de réception...",
-    "loadingConversation": "Chargement de la conversation...",
+    "loadingConversation": "Chargement de la discussion...",
     "empty": "Aucune conversation pour le moment.",
-    "noMessages": "Aucun message pour le moment.",
-    "selectConversation": "Sélectionnez une conversation pour voir les messages.",
-    "conversationNotFound": "Conversation introuvable.",
-    "placeholder": "Posez une question ou informez le client...",
-    "send": "Envoyer le message",
-    "sending": "Envoi...",
+    "noMessages": "Aucun message échangé.",
+    "selectConversation": "Sélectionnez une discussion pour consulter les messages.",
+    "conversationNotFound": "Discussion introuvable.",
+    "placeholder": "Posez une question ou tenez le client informé...",
+    "send": "Envoyer",
+    "sending": "Envoi…",
     "accept": "Accepter",
-    "accepting": "Acceptation...",
+    "accepting": "Acceptation…",
     "decline": "Refuser",
-    "declining": "Refus...",
-    "replyingTo": "Réponse à {customer} au sujet de {service}",
+    "declining": "Refus…",
+    "replyingTo": "Réponse à {customer} concernant {service}",
     "labels": {
-      "service": "Service",
-      "time": "Heure",
-      "price": "Prix",
-      "email": "Email",
+      "service": "Prestation",
+      "specialist": "Spécialiste",
+      "time": "Date & Heure",
+      "price": "Tarif",
+      "email": "E-mail",
       "phone": "Téléphone",
-      "notes": "Notes"
+      "notes": "Remarques"
     },
     "status": {
       "pending": "En attente",
-      "needs_info": "Infos requises",
+      "needs_info": "Précisions demandées",
       "confirmed": "Confirmé",
       "declined": "Refusé",
       "cancelled": "Annulé",
-      "done": "Terminé"
+      "done": "Honoré"
     },
     "errors": {
       "loadInbox": "Impossible de charger la boîte de réception.",
-      "loadConversation": "Impossible de charger la conversation.",
-      "sendMessage": "Impossible d’envoyer le message.",
-      "acceptBooking": "Impossible d’accepter la réservation.",
-      "declineBooking": "Impossible de refuser la réservation."
+      "loadConversation": "Impossible de charger la discussion.",
+      "sendMessage": "Impossible d'envoyer le message.",
+      "acceptBooking": "Impossible de valider ce rendez-vous.",
+      "declineBooking": "Impossible de refuser ce rendez-vous."
     }
   },
-"tools": {
+
+  "tools": {
     "meta": {
-      "title": "Outils gratuits pour la beauté et les services | Slottick",
-      "description": "Calculatrices et outils gratuits pour les entreprises de beauté et de services. Améliorez vos prix, votre profit, vos acomptes et votre organisation grâce à des outils simples pour coiffeurs, prothésistes ongulaires, barbiers, masseurs et plus.",
-      "ogTitle": "Outils gratuits pour la beauté et les services | Slottick",
-      "ogDescription": "Des outils de tarification, de profit et de réservation conçus pour les professionnels."
+      "title": "Outils gratuits pour professionnels de la beauté & des services | Slottick",
+      "description": "Calculateurs et outils pratiques gratuits. Optimisez vos tarifs, rentabilité, politique d'acompte et plannings : pensé pour les coiffeurs, prothésistes ongulaires, barbiers, masseurs et tatoueurs.",
+      "ogTitle": "Outils gratuits pour professionnels de la beauté & des services | Slottick",
+      "ogDescription": "Simulateurs de rentabilité, de marge et de réservation pour spécialistes du bien-être et de la beauté."
     },
-    "h1": "Outils gratuits pour les entreprises de beauté et de services",
-    "intro": "Utilisez ces outils gratuits pour fixer vos prix correctement, comprendre votre profit réel et prendre de meilleures décisions de réservation. Conçu pour les coiffeurs, prothésistes ongulaires, barbiers, masseurs, tatoueurs et plus.",
+    "h1": "Outils gratuits pour professionnels de la beauté et des services",
+    "intro": "Utilisez ces simulateurs gratuits pour tarifer vos prestations au juste prix, évaluer vos marges réelles et fluidifier votre organisation.",
     "badges": {
-      "mostPopular": "Le plus utilisé",
-      "comingSoon": "Bientôt"
+      "mostPopular": "Le plus plébiscité",
+      "comingSoon": "Bientôt disponible"
     },
     "cta": {
-      "open": "Ouvrir l’outil →",
-      "unavailable": "Indisponible"
+      "open": "Découvrir l'outil →",
+      "unavailable": "Non disponible"
     },
     "cards": {
       "profit": {
-        "title": "Calculateur de profit pour services beauté",
-        "desc": "Calculez le profit par rendez-vous, le gain horaire, le coût des produits par client et le profit mensuel."
+        "title": "Simulateur de rentabilité pour prestations",
+        "desc": "Calculez votre marge nette par rendez-vous, votre taux horaire effectif, le coût des consommables et votre bénéfice mensuel."
       },
       "deposit": {
-        "title": "Calculateur d’acompte et de no-show",
-        "desc": "Estimez le coût mensuel des no-shows et choisissez un acompte juste pour protéger vos revenus."
+        "title": "Calculateur d'acompte et coût des no-shows",
+        "desc": "Estimez le manque à gagner mensuel causé par les rendez-vous non honorés et déterminez un acompte équitable pour protéger vos revenus."
       },
       "followUp": {
-      "title": "Outil d’automatisation des relances et rappels clients",
-      "desc": "Envoyez automatiquement anniversaires, rappels de rendez-vous, suivis et relances."
-    }
+        "title": "Automatisation du suivi client & des rappels",
+        "desc": "Programmez des vœux d'anniversaire, rappels de rendez-vous et messages de réactivation en toute autonomie."
+      }
     },
     "why": {
-      "title": "Pourquoi ces outils existent",
-      "body": "Beaucoup d’entreprises de services sous-facturent sans réaliser l’impact des produits, des frais de plateforme, des taxes et des charges fixes. Ces outils vous donnent vos vrais chiffres pour facturer avec confiance et grandir durablement."
+      "title": "Pourquoi ces outils existent-ils ?",
+      "body": "De nombreux professionnels sous-évaluent leurs tarifs sans mesurer le coût réel des produits utilisés, les frais bancaires, les taxes et les charges fixes. Ces simulateurs révèlent vos chiffres réels pour fixer vos tarifs en toute assurance."
     },
     "who": {
-      "title": "À qui s’adressent ces outils",
+      "title": "À qui s'adressent ces simulateurs ?",
       "items": [
-        "Coiffeurs, tresseurs, barbiers",
-        "Prothésistes ongulaires, techniciennes cils, maquilleurs",
-        "Masseurs, tatoueurs, services bien-être",
-        "Toute entreprise de services sur rendez-vous"
+        "Coiffeurs, barbiers et tresseurs",
+        "Prothésistes ongulaires, techniciennes de cils et maquilleurs",
+        "Masseurs, tatoueurs et praticiens bien-être",
+        "Toute activité fonctionnant sur rendez-vous individuel"
       ]
     },
     "bookingCta": {
-      "title": "Vous voulez aussi un site de réservation ?",
-      "body": "Slottick transforme vos disponibilités en page de réservation partageable pour que les clients réservent selon votre vrai planning.",
+      "title": "Envie d'un site de réservation dédié ?",
+      "body": "Slottick transforme vos créneaux en un lien de réservation prêt à partager, synchronisé avec votre vrai emploi du temps.",
       "button": "Découvrir Slottick"
     }
   },
+
   "profit": {
     "seo": {
-      "h2": "Comment calculer le profit réel pour votre activité beauté",
-      "p1": "Beaucoup de professionnels calculent le profit uniquement à partir du prix du service. Le profit réel est ce qu’il reste après les coûts des produits, les frais de plateforme, les taxes et les dépenses mensuelles. Pour calculer le profit par rendez-vous, soustrayez tous les coûts variables (produits utilisés, frais de paiement et taxes) du prix du service. Puis divisez le résultat par le nombre d’heures travaillées pour comprendre votre gain horaire réel.",
-      "h3a": "Pourquoi le coût des produits par cliente est important",
-      "p2": "Des produits comme l’huile capillaire, le vernis, la colle pour cils, la cire ou les soins sont rarement utilisés entièrement sur une seule cliente. Pourtant, ils réduisent votre gain réel. Si un produit coûte 20 et dure 40 clientes, chaque rendez-vous comporte un coût caché. L’ignorer peut mener à sous-facturer et à réduire vos marges au fil du temps.",
-      "h3b": "Pourquoi le gain horaire est plus important que le prix du service",
-      "p3": "Facturer 100 peut sembler rentable, mais si le service prend trois heures, votre gain horaire réel peut être plus faible que prévu. Les professionnels qui réussissent se concentrent sur le profit par heure, pas seulement sur le prix par service. Suivre votre gain horaire vous aide à ajuster vos tarifs, réduire les coûts inutiles et construire une activité durable.",
-      "p4": "Utilisez ce calculateur régulièrement pour tester vos tarifs, comprendre l’impact des acomptes et de l’utilisation des produits, et augmenter vos revenus avec confiance."
+      "h2": "Comment calculer la rentabilité réelle de votre activité",
+      "p1": "Beaucoup d'indépendants évaluent leur rentabilité en se basant uniquement sur le prix affiché. La véritable marge nette correspond à ce qui reste après déduction des consommables utilisés, des commissions de paiement, des taxes et des frais de structure.",
+      "h3a": "Pourquoi le coût produit par client est déterminant",
+      "p2": "Les consommables (huiles, vernis, colles, cires, crèmes) ne sont pas épuisés en une seule prestation mais ont un coût cumulé réel. Un produit acheté 20 € servant pour 40 clients représente 0,50 € de coût direct par prestation.",
+      "h3b": "Pourquoi le revenu horaire prévaut sur le prix affiché",
+      "p3": "Facturer une pose 100 € semble séduisant, mais si elle requiert 3 heures de travail méticuleux, votre taux horaire effectif peut être inférieur à vos attentes. Les meilleurs professionnels raisonnent en marge par heure travaillée.",
+      "p4": "Utilisez ce calculateur pour simuler de nouveaux barèmes, mesurer l'impact des acomptes et pérenniser votre activité."
     },
     "ui": {
-      "title": "Calculateur de profit",
-      "subtitle": "Profit réel par rendez-vous, par heure et par mois.",
+      "title": "Simulateur de rentabilité",
+      "subtitle": "Bénéfice réel par rendez-vous, par heure et par mois.",
       "currency": "Devise",
       "loading": "Chargement...",
       "saving": "Enregistrement...",
-      "loadDefaults": "Charger les paramètres",
-      "saveDefaults": "Enregistrer les paramètres",
+      "loadDefaults": "Charger les valeurs types",
+      "saveDefaults": "Enregistrer mes paramètres",
       "reset": "Réinitialiser",
       "msg": {
-        "loaded": "Paramètres chargés",
-        "none": "Aucun paramètre enregistré",
-        "loadFail": "Impossible de charger",
+        "loaded": "Valeurs types chargées",
+        "none": "Aucun réglage enregistré pour l'instant",
+        "loadFail": "Impossible de charger les paramètres",
         "saved": "Paramètres enregistrés",
-        "saveFail": "Impossible d’enregistrer",
-        "reset": "Retour aux paramètres enregistrés"
+        "saveFail": "Échec de l'enregistrement",
+        "reset": "Réinitialisation effectuée"
       },
       "fields": {
-        "servicePrice": "Prix du service",
-        "duration": "Durée (minutes)",
-        "platformFee": "Frais de plateforme (%)",
-        "tax": "Taxe (%)",
-        "fixedMonthly": "Coûts fixes mensuels (loyer, charges)",
-        "apptsPerMonth": "Rendez-vous (nombre de clients) / mois",
-        "targetHourly": "Profit cible / heure"
+        "servicePrice": "Prix facturé au client",
+        "duration": "Durée (en minutes)",
+        "platformFee": "Frais de paiement / plateforme (%)",
+        "tax": "Taxes / cotisations (%)",
+        "fixedMonthly": "Charges fixes mensuelles (loyer, abonnements)",
+        "apptsPerMonth": "Nombre de rendez-vous par mois",
+        "targetHourly": "Revenu horaire net visé"
       },
       "products": {
-        "title": "Produits utilisés",
-        "subtitle": "Ajoutez chaque produit et le nombre de clients qu’il dure. Nous calculons le coût par rendez-vous.",
+        "title": "Consommables & produits utilisés",
+        "subtitle": "Renseignez chaque produit et le nombre moyen d'applications permises.",
         "add": "+ Ajouter un produit",
-        "name": "Nom",
-        "price": "Prix",
-        "lastsFor": "Dure pour combien de clients",
-        "portion": "Portion utilisée maintenant",
-        "costPerAppt": "Coût / rendez-vous",
-        "remove": "Supprimer",
-        "total": "Coût total des produits par rendez-vous"
+        "name": "Nom du produit",
+        "price": "Prix d'achat",
+        "lastsFor": "Nombre de prestations par flacon/pot",
+        "portion": "Dose utilisée",
+        "costPerAppt": "Coût / prestation",
+        "remove": "Retirer",
+        "total": "Total consommables par rendez-vous"
       },
       "status": {
-        "good": "Bon taux horaire",
-        "bad": "Sous-facturation (sous l’objectif)",
-        "vs": "/ heure vs objectif"
+        "good": "Taux horaire satisfaisant",
+        "bad": "Tarification insuffisante (sous l'objectif visé)",
+        "vs": "/ heure comparé à votre cible"
       },
       "stats": {
-        "profitPerAppt": "Profit par rendez-vous",
-        "profitPerHour": "Profit par heure",
-        "monthlyProfit": "Profit mensuel (après coûts fixes)",
-        "suggestedPrice": "Prix conseillé pour l’objectif horaire"
+        "profitPerAppt": "Marge nette par rendez-vous",
+        "profitPerHour": "Revenu net par heure",
+        "monthlyProfit": "Bénéfice mensuel (après charges fixes)",
+        "suggestedPrice": "Prix conseillé pour atteindre votre objectif horaire"
       },
       "breakdown": {
-        "fee": "Frais",
-        "tax": "Taxe",
-        "variable": "Coût variable",
-        "netRevenue": "Revenu net"
+        "fee": "Frais bancaires",
+        "tax": "Cotisations / taxes",
+        "variable": "Coûts variables",
+        "netRevenue": "Chiffre d'affaires net"
       }
     }
   },
+
   "clientFollowUpAutomation": {
     "ui": {
-      "badge": "Outil gratuit",
+      "badge": "Outil offert",
       "hero": {
-        "h1": "Automatisez les relances clients pour les faire revenir",
-        "lead": "Programmez anniversaires, rappels de rendez-vous et relances, puis laissez tourner.",
-        "ctaPrimary": "Commencer",
-        "ctaSecondary": "Comment ça marche",
-        "trust": "Sans carte, Fonctionne sans Slottick"
+        "h1": "Automatisez les suivis qui font revenir vos clients",
+        "lead": "Programmez vos vœux d'anniversaire, rappels d'échéance et messages de réactivation, puis laissez l'outil tourner.",
+        "ctaPrimary": "Démarrer l'automatisation",
+        "ctaSecondary": "Comment ça fonctionne",
+        "trust": "Sans carte bancaire, fonctionne même sans compte Slottick"
       },
       "preview": {
         "title": "Ce que vous pouvez automatiser",
         "items": [
-          { "t": "Anniversaires & dates importantes", "d": "Un message chaleureux et personnalisé." },
-          { "t": "Rappels de rendez-vous", "d": "Réduisez les absences avec le bon timing." },
-          { "t": "Relance clients inactifs", "d": "Faites revenir les clients automatiquement." }
+          {
+            "t": "Anniversaires & dates clés",
+            "d": "Envoyez une attention chaleureuse et sincère."
+          },
+          {
+            "t": "Rappels avant rendez-vous",
+            "d": "Limitez les rendez-vous manqués grâce à un timing opportun."
+          },
+          {
+            "t": "Messages de réactivation",
+            "d": "Relancez en douceur les clients qui ne sont pas revenus depuis un moment."
+          }
         ]
       },
       "why": {
-        "title": "Pourquoi ça marche",
-        "lead": "Beaucoup d’entreprises perdent des revenus récurrents faute de relances.",
+        "title": "Pourquoi cette méthode fonctionne ?",
+        "lead": "La plupart des professionnels perdent des revenus récurrents simplement par manque de temps pour relancer.",
         "items": [
-          { "t": "Humain, pas du spam", "d": "Utilise les infos clients pour rester naturel." },
-          { "t": "Le bon moment", "d": "Les déclencheurs envoient le bon message au bon moment." },
-          { "t": "Plus de réservations", "d": "Les relances transforment les clients en réguliers." }
+          {
+            "t": "Personnalisé, non intrusif",
+            "d": "Intègre les prénoms pour des messages authentiques."
+          },
+          {
+            "t": "Au moment parfait",
+            "d": "Les déclencheurs envoient la notification au créneau idéal."
+          },
+          {
+            "t": "Fidélisation démultipliée",
+            "d": "Transforme les clients occasionnels en habitués réguliers."
+          }
         ]
       },
       "how": {
-        "title": "Comment ça marche",
+        "title": "Comment ça se passe ?",
         "steps": [
-          "Ajoutez vos clients (nom, email, anniversaire, dernière visite).",
-          "Choisissez un déclencheur (anniversaire, rappel, X jours depuis la visite).",
-          "Personnalisez un modèle et programmez l’heure d’envoi.",
-          "Les automatisations tournent seules. Suivez ce qui a été envoyé."
+          "Importez vos contacts (nom, e-mail, anniversaire, dernière visite).",
+          "Sélectionnez un déclencheur (anniversaire, rappel J-1, X jours d'inactivité).",
+          "Personnalisez le modèle de message et l'heure d'envoi.",
+          "Les automatisations s'exécutent. Suivez les envois réalisés."
         ]
       },
       "faq": {
-        "title": "FAQ",
+        "title": "Questions fréquentes",
         "items": [
           {
-            "q": "Faut-il Slottick pour l’utiliser ?",
-            "a": "Non. Cet outil fonctionne seul. Slottick est optionnel si vous voulez la réservation en ligne."
+            "q": "Dois-je utiliser Slottick pour m'en servir ?",
+            "a": "Non. Cet outil fonctionne de manière indépendante. Slottick reste disponible si vous recherchez un agenda de réservation complet."
           },
           {
             "q": "Puis-je envoyer des SMS ?",
-            "a": "D’abord l’email. SMS/WhatsApp peuvent être ajoutés plus tard (souvent payants)."
+            "a": "L'e-mail est disponible immédiatement. Le SMS/WhatsApp peut être configuré ultérieurement via des passerelles télécoms adaptées."
           },
           {
-            "q": "Compatible RGPD ?",
-            "a": "Utilisez le consentement, un opt-out, et stockez le minimum."
+            "q": "Est-ce conforme au RGPD ?",
+            "a": "Oui, veillez à utiliser des listes ayant consenti à la communication et intégrez un lien de désinscription."
           }
         ]
       },
       "cta": {
-        "title": "Vous voulez aussi un site de réservation ?",
-        "body": "Slottick transforme votre disponibilité en page de réservation partageable pour que les clients réservent selon votre planning réel.",
-        "button": "Voir Slottick"
+        "title": "Envie d'un site de réservation complet ?",
+        "body": "Slottick transforme votre calendrier en une page de réservation soignée pour vos clients.",
+        "button": "Découvrir Slottick"
+      },
+      "clients": {
+        "title": "Fichier clients",
+        "subtitle": "Ajoutez quelques contacts pour visualiser le rendu des messages. Traité localement dans votre navigateur.",
+        "add": "Ajouter un client",
+        "importCsv": "Importer un fichier CSV",
+        "emptyTitle": "Aucun client pour le moment",
+        "emptyBody": "Ajoutez 1 à 3 clients pour tester les messages personnalisés.",
+        "birthday": "Anniversaire",
+        "lastVisit": "Dernière visite"
+      },
+      "saved": {
+        "title": "Automatisations enregistrées",
+        "subtitle": "Vos règles sont conservées dans ce navigateur (stockage local).",
+        "export": "Copier l'export",
+        "empty": "Aucune règle enregistrée. Créez-en une à droite.",
+        "trigger": "Déclencheur",
+        "audience": "Destinataires",
+        "created": "Créé le",
+        "saveFail": "Impossible de sauvegarder la règle",
+        "selectClient": "Sélectionnez d'abord un contact"
+      },
+      "builder": {
+        "title": "Créateur d'automatisation",
+        "subtitle": "Choisissez un déclencheur, définissez les destinataires et rédigez votre modèle personnalisé.",
+        "reset": "Réinitialiser",
+        "create": "Créer l'automatisation"
+      },
+      "summary": {
+        "trigger": "Déclencheur",
+        "audience": "Public cible",
+        "previewClient": "Exemple de destinataire"
+      },
+      "fields": {
+        "name": "Nom de l'automatisation",
+        "namePh": "ex. Vœux d'anniversaire VIP",
+        "previewClient": "Prévisualiser avec",
+        "noClients": "Ajoutez d'abord un contact"
+      },
+      "trigger": {
+        "title": "Déclencheur",
+        "subtitle": "À quel moment ce message doit-il partir ?",
+        "hoursBefore": "Envoyer avant le rendez-vous",
+        "hours": "heures",
+        "daysSince": "Envoyer si la dernière visite remonte à",
+        "days": "jours",
+        "sendAt": "Date et heure programmées",
+        "sendAtHint": "Basé sur l'heure locale de votre appareil.",
+        "birthdayHint": "Envoyé le jour de l'anniversaire du client (si renseigné).",
+        "customDateLimit": "La programmation personnalisée est possible jusqu'à 1 mois à l'avance."
+      },
+      "triggers": {
+        "birthday": "Anniversaire",
+        "reminder": "Rappel de rendez-vous",
+        "winback": "Réactivation client",
+        "customDate": "Date spécifique",
+        "comingSoon": "Bientôt disponible"
+      },
+      "audience": {
+        "title": "Destinataires",
+        "subtitle": "Qui doit recevoir ce message ?",
+        "all": "Tous les clients",
+        "segment": "Segment ciblé",
+        "segmentPick": "Choisir un filtre",
+        "segmentHint": "Filtres simples pour démarrer.",
+        "allHint": "S'applique à tous vos contacts enregistrés.",
+        "hasBirthday": "Uniquement les clients avec date d'anniversaire",
+        "inactive30": "Inactifs depuis 30 jours et plus",
+        "inactive60": "Inactifs depuis 60 jours et plus"
+      },
+      "template": {
+        "title": "Modèle de message",
+        "subtitle": "Utilisez les variables pour personnaliser chaque envoi.",
+        "subject": "Objet du message",
+        "subjectPh": "ex. Très bel anniversaire 🎉",
+        "body": "Corps de l'e-mail",
+        "bodyPh": "Rédigez votre texte ici…",
+        "hint": "Conseil : restez simple, bienveillant et direct."
+      },
+      "preview": {
+        "title": "Aperçu de l'e-mail",
+        "subject": "Objet",
+        "body": "Message",
+        "summary": "Résumé",
+        "reminderHint": "Sera expédié {n} heures avant l'horaire convenu.",
+        "winbackHint": "Sera expédié après {n} jours sans nouvelle visite.",
+        "customHint": "Sera expédié le {date}."
+      },
+      "privacy": {
+        "title": "Respect de la vie privée",
+        "body": "Ne contactez que des personnes ayant donné leur consentement préalable. Intégrez toujours une option de désabonnement."
+      },
+      "vars": {
+        "firstName": "Prénom du client",
+        "name": "Nom complet du client",
+        "email": "E-mail du client"
+      },
+      "clientFields": {
+        "name": "Nom",
+        "email": "E-mail",
+        "phone": "Téléphone",
+        "birthday": "Anniversaire",
+        "lastVisit": "Dernière visite"
+      },
+      "modal": {
+        "addClientTitle": "Nouveau contact",
+        "addClientSubtitle": "Utilisé pour la personnalisation et les envois ciblés.",
+        "addClientCta": "Ajouter le contact",
+        "csvTitle": "Importer via fichier CSV",
+        "csvSubtitle": "Collez votre tableau de données brutes pour importer rapidement.",
+        "csvFormatTitle": "Format attendu",
+        "csvFormatBody": "Colonnes : name,email,phone,birthday,lastVisit (dates sous format AAAA-MM-JJ).",
+        "csvPh": "Collez votre contenu CSV ici…",
+        "csvCta": "Lancer l'import"
+      },
+      "toast": {
+        "clientMissing": "Veuillez renseigner le nom et l'adresse e-mail.",
+        "clientEmailBad": "Adresse e-mail incorrecte.",
+        "clientDuplicate": "Cette adresse e-mail existe déjà.",
+        "clientAdded": "Contact ajouté ✓",
+        "autoNameMissing": "Donnez un nom à votre automatisation.",
+        "templateMissing": "Renseignez un objet et un contenu.",
+        "autoCreated": "Règle d'envoi créée ✓",
+        "autoDeleted": "Règle supprimée ✓",
+        "templateReset": "Modèle réinitialisé ✓",
+        "exportCopied": "Données copiées ✓",
+        "exportFailed": "Échec de l'exportation.",
+        "csvEmpty": "Le texte CSV est vide.",
+        "csvImported": "{n} contact(s) importé(s) ✓",
+        "csvNone": "Aucune ligne valide identifiée.",
+        "selectClient": "Sélectionnez d'abord un contact",
+        "guestLimit": "Limite de 10 contacts atteinte sur l'outil gratuit. Créez un compte pour débloquer les envois illimités.",
+        "autoScheduled": "Envoi programmé avec succès",
+        "customDateTooFar": "La date d'envoi doit se situer dans le mois à venir.",
+        "appointmentMissing": "Précisez d'abord la date et l'heure du rendez-vous pour ce contact",
+        "appointmentInvalid": "Date ou heure de rendez-vous incorrecte",
+        "triggerUnavailable": "Ce déclencheur n'est pas encore actif"
+      },
+      "templates": {
+        "birthday": {
+          "name": "Vœux d'anniversaire",
+          "subject": "Joyeux anniversaire, {firstName} ! 🎉",
+          "body": "Bonjour {firstName},\n\nNous vous souhaitons une merveilleuse journée d'anniversaire ! 🎉\n\nPour célébrer ce moment, profitez d'une remise de 10 % sur votre prochain passage chez nous.\n\nÀ très vite,\n— {name}"
+        },
+        "reminder": {
+          "name": "Rappel de rendez-vous",
+          "subject": "Rappel : votre rendez-vous approche",
+          "body": "Bonjour {firstName},\n\nPetit rappel pour votre rendez-vous fixé chez nous prochainement.\n\nSi vous devez décaler ou apporter une précision, n'hésitez pas à répondre directement à cet e-mail.\n\nÀ très bientôt,\n— {name}"
+        },
+        "winback": {
+          "name": "Message de réactivation",
+          "subject": "Vous nous manquez !",
+          "body": "Bonjour {firstName},\n\nNous espérons que vous allez bien. Cela fait un moment que nous ne vous avons pas croisé au salon !\n\nSi vous souhaitez planifier votre prochain créneau, vous pouvez répondre à ce message ou utiliser notre lien de réservation.\n\nBien à vous,\n— {name}"
+        },
+        "custom": {
+          "name": "Message personnalisé",
+          "subject": "Des nouvelles de notre salon",
+          "body": "Bonjour {firstName},\n\nUn petit mot pour vous tenir informé de nos nouveautés.\n\nBien cordialement,\n— {name}"
+        },
+        "upgrade": {
+          "title": "Débloquez les envois illimités",
+          "body": "Vous avez atteint le quota offert de 10 contacts. Créez un compte Slottick gratuit pour automatiser sans restriction et conserver vos campagnes.",
+          "cta": "Créer mon compte"
+        }
       }
-    },
-    "clients": {
-    "title": "Clients",
-    "subtitle": "Ajoutez quelques clients pour prévisualiser votre message. Fonctionne localement pour les utilisateurs sans compte Slottick.",
-    "add": "Ajouter un client",
-    "importCsv": "Importer CSV",
-    "emptyTitle": "Aucun client",
-    "emptyBody": "Ajoutez 1–3 clients pour voir vos relances avec de vrais noms.",
-    "birthday": "Anniversaire",
-    "lastVisit": "Dernière visite"
-    
-  },
-  "saved": {
-    "title": "Automatisations enregistrées",
-    "subtitle": "Enregistré dans ce navigateur (local).",
-    "export": "Copier l’export",
-    "empty": "Aucune automatisation. Créez-en une à droite.",
-    "trigger": "Déclencheur",
-    "audience": "Audience",
-    "created": "Créé",
-    "saveFail": "Impossible d’enregistrer l’automatisation",
-    "selectClient": "Sélectionnez d’abord un client"
-  },
-  "builder": {
-    "title": "Créateur d’automatisation",
-    "subtitle": "Choisissez un déclencheur, une audience, puis un modèle avec variables.",
-    "reset": "Réinitialiser",
-    "create": "Créer"
-  },
-  "summary": {
-    "trigger": "Déclencheur",
-    "audience": "Audience",
-    "previewClient": "Client aperçu"
-  },
-  "fields": {
-    "name": "Nom de l’automatisation",
-    "namePh": "ex. Anniversaire (VIP)",
-    "previewClient": "Prévisualiser avec",
-    "noClients": "Ajoutez d’abord un client"
-  },
-  "trigger": {
-    "title": "Déclencheur",
-    "subtitle": "Quand envoyer le message ?",
-    "hoursBefore": "Envoyer avant le rendez-vous",
-    "hours": "heures",
-    "daysSince": "Envoyer si dernière visite il y a",
-    "days": "jours",
-    "sendAt": "Date & heure d’envoi",
-    "sendAtHint": "Utilise l’heure de votre appareil.",
-    "birthdayHint": "Envoi le jour de l’anniversaire (si renseigné).",
-    "customDateLimit": "La planification à date personnalisée fonctionne dans une limite d’un mois. Pour des automatisations à plus long terme, passez à une offre supérieure."
-  },
-  "triggers": {
-    "birthday": "Anniversaire",
-    "reminder": "Rappel de rendez-vous",
-    "winback": "Relance",
-    "customDate": "Date personnalisée",
-    "comingSoon": "Bientôt disponible"
-    
-  },
-  "audience": {
-    "title": "Audience",
-    "subtitle": "Qui reçoit le message ?",
-    "all": "Tous les clients",
-    "segment": "Segment",
-    "segmentPick": "Choisir un segment",
-    "segmentHint": "Segments simples pour l’instant.",
-    "allHint": "Envoi à tous les clients de la liste.",
-    "hasBirthday": "Clients avec anniversaire",
-    "inactive30": "Inactifs (30+ jours)",
-    "inactive60": "Inactifs (60+ jours)"
-  },
-  "template": {
-    "title": "Modèle de message",
-    "subtitle": "Utilisez des variables pour personnaliser.",
-    "subject": "Objet",
-    "subjectPh": "ex. Joyeux anniversaire 🎉",
-    "body": "Message",
-    "bodyPh": "Écrivez votre message…",
-    "hint": "Astuce : court, amical, clair."
-  },
-  "preview": {
-    "title": "Aperçu",
-    "subject": "Objet",
-    "body": "Message",
-    "summary": "Résumé",
-    "reminderHint": "Envoi {n} heures avant le rendez-vous.",
-    "winbackHint": "Envoi après {n} jours sans visite.",
-    "customHint": "Envoi le {date}."
-  },
-  "privacy": {
-    "title": "Note confidentialité",
-    "body": "Ajoutez uniquement des clients ayant donné leur accord. Incluez toujours une option de désinscription."
-  },
-  "vars": {
-    "firstName": "Prénom",
-    "name": "Nom complet",
-    "email": "Email"
-  },
-  "clientFields": {
-    "name": "Nom",
-    "email": "Email",
-    "phone": "Téléphone",
-    "birthday": "Anniversaire",
-    "lastVisit": "Dernière visite"
-  },
-  "modal": {
-    "addClientTitle": "Ajouter un client",
-    "addClientSubtitle": "Pour l’aperçu + ciblage.",
-    "addClientCta": "Ajouter",
-    "csvTitle": "Importer CSV",
-    "csvSubtitle": "Collez le texte CSV pour ajouter rapidement des clients.",
-    "csvFormatTitle": "Format CSV",
-    "csvFormatBody": "Colonnes : name,email,phone,birthday,lastVisit (dates en YYYY-MM-DD).",
-    "csvPh": "Collez le CSV ici…",
-    "csvCta": "Importer"
-  },
-  "toast": {
-    "clientMissing": "Entrez le nom et l’email.",
-    "clientEmailBad": "Email invalide.",
-    "clientDuplicate": "Cet email est déjà ajouté.",
-    "clientAdded": "Client ajouté ✓",
-    "autoNameMissing": "Ajoutez un nom d’automatisation.",
-    "templateMissing": "Ajoutez un objet et un message.",
-    "autoCreated": "Automatisation créée ✓",
-    "autoDeleted": "Automatisation supprimée ✓",
-    "templateReset": "Modèle réinitialisé ✓",
-    "exportCopied": "Export copié ✓",
-    "exportFailed": "Échec de l’export.",
-    "csvEmpty": "CSV vide.",
-    "csvImported": "{n} clients importés ✓",
-    "csvNone": "Aucune ligne valide.",
-    "selectClient": "Sélectionnez d’abord un client",
-    "guestLimit": "Vous avez atteint la limite gratuite de 10 clients. Créez un compte Slottick gratuit pour envoyer des automatisations illimitées et enregistrer vos campagnes.",
-    "autoScheduled": "Automatisation planifiée avec succès",
-    "customDateTooFar": "La date personnalisée doit être dans un délai d’un mois. Passez à une offre supérieure pour des automatisations à plus long terme.",
-    "appointmentMissing": "Ajoutez d’abord une date et une heure de rendez-vous pour ce client",
-  "appointmentInvalid": "Date ou heure de rendez-vous invalide",
-  "triggerUnavailable": "Cette automatisation n’est pas encore disponible"
-  },
-  "templates": {
-    "birthday": {
-      "name": "Message d’anniversaire",
-      "subject": "Joyeux anniversaire, {firstName} ! 🎉",
-      "body": "Salut {firstName},\n\nJoyeux anniversaire ! 🎉\n\nSi vous voulez vous faire plaisir cette semaine : -10%.\n\nÀ bientôt,\n— {name}"
-    },
-    "reminder": {
-      "name": "Rappel",
-      "subject": "Rappel : votre rendez-vous approche",
-      "body": "Salut {firstName},\n\nPetit rappel pour votre rendez-vous.\n\nSi vous devez déplacer, répondez à cet email.\n\nÀ bientôt,\n— {name}"
-    },
-    "winback": {
-      "name": "Relance",
-      "subject": "On ne vous a pas vu depuis un moment",
-      "body": "Salut {firstName},\n\nPetit message — ça fait un moment.\n\nSi vous voulez reprendre rendez-vous, répondez à ce message.\n\n— {name}"
-    },
-    "custom": {
-      "name": "Message personnalisé",
-      "subject": "Petite info",
-      "body": "Salut {firstName},\n\nPetit message pour vous.\n\n— {name}"
-    },
-    "upgrade": {
-  "title": "Débloquez les automatisations illimitées",
-  "body": "Vous avez atteint la limite gratuite de 10 clients. Créez un compte Slottick gratuit pour envoyer des automatisations illimitées et enregistrer vos campagnes.",
-  "cta": "Créer un compte gratuit"
-}
-  }
-  },
-  "subscribe": {
-  "badge": "Améliorez votre entreprise",
-  "title": "Débloquez des outils premium pour développer votre activité avec Slottick",
-  "lead": "Recevez plus de réservations, inspirez plus de confiance et gagnez du temps avec des fonctionnalités premium conçues pour les entreprises de services.",
-
-  "plan": {
-    "label": "Abonnement",
-    "title": "Tarif simple, vraie croissance",
-    "popular": "Le plus populaire",
-    "noVisiblePrice": "Choisissez votre moyen de paiement ci-dessous",
-    "desc": "Choisissez la carte ou le mobile money pour activer les outils premium de votre entreprise.",
-    "note": "Choisissez la carte ou le mobile money. Annulez à tout moment."
-  },
-
-  "card": {
-    "title": "Payer par carte",
-    "desc": "Continuez vers Stripe où le prix de votre abonnement par carte sera affiché.",
-    "button": "Payer par carte"
-  },
-
-  "momo": {
-    "title": "Payer avec le mobile money",
-    "desc": "Utilisez MTN MoMo ou Orange Money. Une demande de paiement sera envoyée sur votre téléphone pour confirmation.",
-    "networkLabel": "Choisir le réseau",
-    "mtn": "MTN MoMo",
-    "orange": "Orange Money",
-    "phoneLabel": "Numéro mobile money",
-    "phonePlaceholder": "ex. 6XXXXXXXX ou +2376XXXXXXXX",
-    "button": "Payer avec le mobile money",
-    "sending": "Envoi de la demande...",
-    "hint": "MTN MoMo et Orange Money sont facturés à 300 FCFA par mois.",
-    "success": "Une demande de paiement a été envoyée à votre téléphone. Veuillez confirmer sur votre appareil.",
-    "status": {
-  "title": "Statut du paiement",
-  "reference": "Référence",
-  "check": "Vérifier le statut du paiement",
-  "checking": "Vérification...",
-  "pending": "En attente de confirmation du paiement",
-  "success": "Paiement confirmé avec succès",
-  "completed": "Paiement terminé",
-  "failed": "Le paiement a échoué ou a expiré"
-},
-    "errors": {
-      "phoneRequired": "Veuillez entrer un numéro de téléphone.",
-      "requestFailed": "Impossible de lancer l’abonnement mobile money.",
-      "statusFailed": "Impossible de vérifier le statut du paiement.",
-      "generic": "Une erreur est survenue."
     }
   },
 
-  "benefits": {
-    "title": "Ce que vous obtenez avec Slottick",
-    "items": [
-      "Page de réservation professionnelle",
-      "Plus de confiance avec une image premium",
-      "Meilleure expérience client",
-      "Plus de conversions des visiteurs",
-      "Présentation plus soignée de votre entreprise",
-      "Automatisation des réservations pour gagner du temps",
-      "Accès aux futurs outils premium",
-      "Conçu pour vous aider à augmenter vos revenus"
-    ]
-  },
-
-  "why": {
-    "label": "Pourquoi s’abonner",
-    "body": "Slottick rend votre entreprise plus professionnelle, aide les clients à faire confiance à votre marque et vous donne des outils pensés pour une croissance durable, pas seulement pour une réservation de base."
+  "subscribe": {
+    "badge": "Accélérez votre activité",
+    "title": "Débloquez les fonctionnalités complètes pour faire grandir votre salon",
+    "lead": "Recevez plus de réservations, valorisez votre image de marque et gagnez du temps au quotidien.",
+    "plan": {
+      "label": "Formule d'abonnement",
+      "title": "Un tarif lisible, une rentabilité immédiate",
+      "popular": "Recommandé",
+      "noVisiblePrice": "Choisissez votre moyen de règlement ci-dessous",
+      "desc": "Réglez par carte bancaire ou Mobile Money pour activer immédiatement tous vos outils professionnels.",
+      "note": "Carte bancaire ou Mobile Money. Résiliable à tout moment sans engagement."
+    },
+    "card": {
+      "title": "Règlement par carte bancaire",
+      "desc": "Paiement sécurisé via Stripe où le tarif d'abonnement s'affichera directement.",
+      "button": "Payer par carte bancaire"
+    },
+    "momo": {
+      "title": "Règlement par Mobile Money",
+      "desc": "Payez par MTN MoMo ou Orange Money. Une notification de validation sera envoyée sur votre téléphone.",
+      "networkLabel": "Opérateur téléphonique",
+      "mtn": "MTN MoMo",
+      "orange": "Orange Money",
+      "phoneLabel": "Numéro de téléphone Mobile Money",
+      "phonePlaceholder": "ex. 6XXXXXXXX ou +2376XXXXXXXX",
+      "button": "Valider avec Mobile Money",
+      "sending": "Envoi de la notification…",
+      "hint": "MTN MoMo et Orange Money sont facturés 300 FCFA par mois.",
+      "success": "Demande de paiement envoyée sur votre téléphone. Veuillez valider sur votre appareil.",
+      "status": {
+        "title": "État de la transaction",
+        "reference": "Référence",
+        "check": "Vérifier le règlement",
+        "checking": "Vérification en cours…",
+        "pending": "En attente de validation sur votre téléphone",
+        "success": "Paiement validé avec succès !",
+        "completed": "Abonnement actif",
+        "failed": "Paiement échoué ou délai dépassé"
+      },
+      "errors": {
+        "phoneRequired": "Veuillez renseigner un numéro de téléphone.",
+        "requestFailed": "Impossible d'initier le paiement Mobile Money.",
+        "statusFailed": "Impossible de vérifier le statut du paiement.",
+        "generic": "Une erreur inattendue est survenue."
+      }
+    },
+    "benefits": {
+      "title": "Ce que comprend votre abonnement :",
+      "items": [
+        "Page de réservation professionnelle sur mesure",
+        "Gestion multi-spécialistes et fauteuils indépendants",
+        "Confiance renforcée et image de marque soignée",
+        "Parcours de réservation fluide et sans friction pour vos clients",
+        "Meilleur taux de conversion de vos visiteurs en rendez-vous",
+        "Présentation claire de vos prestations et avis vérifiés",
+        "Automatisation complète évitant les erreurs de calendrier",
+        "Accès prioritaire à toutes les futures fonctionnalités",
+        "Conçu pour augmenter durablement vos revenus"
+      ]
+    },
+    "why": {
+      "label": "Pourquoi franchir le pas ?",
+      "body": "Slottick professionnalise immédiatement votre relation client, inspire confiance dès le premier regard et vous offre les leviers d'un développement serein."
+    }
   }
-}
-
 }

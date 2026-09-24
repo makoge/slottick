@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 // Convert business-local date boundary to a UTC Date instant
-function utcInstantForBusinessLocal(date: string, time: string, timeZone: string) {
+function utcInstantForBusinessLocal(
+  date: string,
+  time: string,
+  timeZone: string,
+) {
   const [y, mo, d] = date.split("-").map(Number);
   const [hh, mm] = time.split(":").map(Number);
 
@@ -16,7 +20,7 @@ function utcInstantForBusinessLocal(date: string, time: string, timeZone: string
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    hour12: false
+    hour12: false,
   }).formatToParts(approxUTC);
 
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
@@ -27,7 +31,7 @@ function utcInstantForBusinessLocal(date: string, time: string, timeZone: string
     Number(get("day")),
     Number(get("hour")),
     Number(get("minute")),
-    Number(get("second"))
+    Number(get("second")),
   );
 
   const offsetMs = asIfUTC - approxUTC.getTime();
@@ -45,12 +49,13 @@ function addOneDay(date: string) {
   return `${yy}-${mm}-${dd}`;
 }
 
-// Accepts: /api/bookings/availability?businessSlug=xxx&date=YYYY-MM-DD
+// Accepts: /api/bookings/availability?businessSlug=xxx&date=YYYY-MM-DD&staffId=yyy
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   const businessSlug = String(searchParams.get("businessSlug") ?? "").trim();
   const date = String(searchParams.get("date") ?? "").trim(); // YYYY-MM-DD
+  const staffId = String(searchParams.get("staffId") ?? "").trim() || null;
 
   if (!businessSlug || !date) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 });
@@ -64,35 +69,139 @@ export async function GET(req: Request) {
     where: { slug: businessSlug },
     select: {
       id: true,
-      availabilityRule: { select: { timezone: true } }
-    }
+      availabilityRules: {
+        select: {
+          timezone: true,
+          staffId: true,
+          daysJson: true,
+          start: true,
+          end: true,
+          breakStart: true,
+          breakEnd: true,
+          slotStepMin: true,
+        },
+      },
+      staff: {
+        where: { isActive: true },
+        select: { id: true },
+      },
+    },
   });
 
-  if (!business) return NextResponse.json({ bookings: [] });
+  if (!business) return NextResponse.json({ bookings: [], busyRanges: [] });
 
-  const tz = business.availabilityRule?.timezone || "UTC";
+  const rules = business.availabilityRules || [];
+  const matchedRule =
+    rules.find((r) => r.staffId === staffId) ||
+    rules.find((r) => !r.staffId) ||
+    rules[0];
 
-  // ✅ Business-local day window -> UTC instants
-  const start = utcInstantForBusinessLocal(date, "00:00", tz);
-  const end = utcInstantForBusinessLocal(addOneDay(date), "00:00", tz);
+  const tz = matchedRule?.timezone || "UTC";
 
+  // Business-local day window -> UTC instants
+  const startOfDay = utcInstantForBusinessLocal(date, "00:00", tz);
+  const endOfDay = utcInstantForBusinessLocal(addOneDay(date), "00:00", tz);
+
+  // 1. Fetch active bookings (Confirmed + Pending approval hold slots)
   const bookings = await prisma.booking.findMany({
     where: {
       businessId: business.id,
-      status: "CONFIRMED",
-      startsAt: { gte: start, lt: end }
+      status: { in: ["CONFIRMED", "PENDING"] },
+      ...(staffId ? { staffId } : {}),
+      startsAt: { lt: endOfDay },
+      endsAt: { gt: startOfDay },
     },
     select: {
+      id: true,
+      staffId: true,
       startsAt: true,
-      durationMin: true
+      endsAt: true,
+      durationMin: true,
     },
-    orderBy: { startsAt: "asc" }
+    orderBy: { startsAt: "asc" },
   });
 
+  // 2. Fetch staff time-off blocks for the target day
+  const timeOffBlocks = await prisma.staffTimeOff.findMany({
+    where: {
+      businessId: business.id,
+      ...(staffId ? { staffId } : {}),
+      startsAt: { lt: endOfDay },
+      endsAt: { gt: startOfDay },
+    },
+    select: {
+      id: true,
+      staffId: true,
+      startsAt: true,
+      endsAt: true,
+    },
+  });
+
+  // 3. Fetch active concurrency holds that haven't expired
+  const now = new Date();
+  const activeHolds = await prisma.slotHold.findMany({
+    where: {
+      businessId: business.id,
+      expiresAt: { gt: now },
+      ...(staffId ? { staffId } : {}),
+      startsAt: { lt: endOfDay },
+      endsAt: { gt: startOfDay },
+    },
+    select: {
+      id: true,
+      staffId: true,
+      startsAt: true,
+      endsAt: true,
+    },
+  });
+
+  // Combine into unified busy ranges
+  const busyRanges = [
+    ...bookings.map((b) => ({
+      type: "booking" as const,
+      staffId: b.staffId,
+      startsAt: b.startsAt.toISOString(),
+      endsAt: b.endsAt.toISOString(),
+      durationMin: b.durationMin,
+    })),
+    ...timeOffBlocks.map((t) => ({
+      type: "timeOff" as const,
+      staffId: t.staffId,
+      startsAt: t.startsAt.toISOString(),
+      endsAt: t.endsAt.toISOString(),
+      durationMin: Math.round(
+        (t.endsAt.getTime() - t.startsAt.getTime()) / 60000,
+      ),
+    })),
+    ...activeHolds.map((h) => ({
+      type: "hold" as const,
+      staffId: h.staffId,
+      startsAt: h.startsAt.toISOString(),
+      endsAt: h.endsAt.toISOString(),
+      durationMin: Math.round(
+        (h.endsAt.getTime() - h.startsAt.getTime()) / 60000,
+      ),
+    })),
+  ];
+
   return NextResponse.json({
+    timezone: tz,
+    activeStaffCount: business.staff.length,
+    rule: matchedRule
+      ? {
+          start: matchedRule.start,
+          end: matchedRule.end,
+          breakStart: matchedRule.breakStart,
+          breakEnd: matchedRule.breakEnd,
+          slotStepMin: matchedRule.slotStepMin,
+        }
+      : null,
     bookings: bookings.map((b) => ({
       startsAt: b.startsAt.toISOString(),
-      durationMin: b.durationMin
-    }))
+      endsAt: b.endsAt.toISOString(),
+      durationMin: b.durationMin,
+      staffId: b.staffId,
+    })),
+    busyRanges,
   });
 }

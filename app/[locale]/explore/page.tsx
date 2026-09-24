@@ -193,7 +193,7 @@ export default async function Page({
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const businesses = await prisma.business.findMany({
+  const businessesRaw = await prisma.business.findMany({
     take: 500,
     orderBy: { createdAt: "desc" },
     where: {
@@ -266,7 +266,9 @@ export default async function Page({
         },
       },
 
-      availabilityRule: {
+      availabilityRules: {
+        where: { staffId: null },
+        take: 1,
         select: {
           timezone: true,
           daysJson: true,
@@ -274,11 +276,20 @@ export default async function Page({
           end: true,
           breakStart: true,
           breakEnd: true,
-          bufferMin: true,
           slotStepMin: true,
+          bufferMin: true,
         },
       },
     },
+  });
+
+  // Map availabilityRules[0] -> availabilityRule so ExploreClient works seamlessly
+  const businesses = businessesRaw.map((b) => {
+    const { availabilityRules, ...rest } = b;
+    return {
+      ...rest,
+      availabilityRule: availabilityRules[0] ?? null,
+    };
   });
 
   const itemListJsonLd = {

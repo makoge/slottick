@@ -27,7 +27,7 @@ function formatBookingDateParts(startsAt: Date | string, timeZone: string) {
 
 export async function POST(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const business = await getAuthedBusiness();
@@ -37,7 +37,10 @@ export async function POST(
 
     const { id } = await params;
     if (!id) {
-      return NextResponse.json({ error: "Missing booking id" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing booking id" },
+        { status: 400 },
+      );
     }
 
     const url = new URL(req.url);
@@ -52,12 +55,21 @@ export async function POST(
         serviceName: true,
         customerEmail: true,
         customerName: true,
+        staffId: true,
+        staff: {
+          select: {
+            name: true,
+            title: true,
+          },
+        },
         business: {
           select: {
             name: true,
-            availabilityRule: {
+            slug: true,
+            availabilityRules: {
               select: {
                 timezone: true,
+                staffId: true,
               },
             },
           },
@@ -75,15 +87,26 @@ export async function POST(
 
     await prisma.booking.update({
       where: { id },
-      data: { status: "CANCELLED" },
+      data: {
+        status: "CANCELLED",
+        cancelledAt: new Date(),
+        statusUpdatedAt: new Date(),
+      },
     });
 
-    // ✅ Send cancellation email
+    // Send cancellation email
     if (booking.customerEmail) {
       const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+        "https://slottick.com";
 
-      const timeZone = booking.business.availabilityRule?.timezone || "UTC";
+      const rules = booking.business.availabilityRules || [];
+      const matchedRule =
+        rules.find((r) => r.staffId === booking.staffId) ||
+        rules.find((r) => !r.staffId) ||
+        rules[0];
+
+      const timeZone = matchedRule?.timezone || "UTC";
       const { date, time } = formatBookingDateParts(booking.startsAt, timeZone);
 
       try {
@@ -98,6 +121,7 @@ export async function POST(
             <p>
               <strong>Business:</strong> ${booking.business.name}<br/>
               <strong>Service:</strong> ${booking.serviceName}<br/>
+              ${booking.staff?.name ? `<strong>Specialist:</strong> ${booking.staff.name}<br/>` : ""}
               <strong>Date:</strong> ${date}<br/>
               <strong>Time:</strong> ${time}
             </p>
@@ -105,7 +129,7 @@ export async function POST(
             <p>If this was a mistake, you can rebook here:</p>
 
             <p>
-              <a href="${siteUrl}/${locale}/book/${business.slug}">
+              <a href="${siteUrl}/${locale}/book/${booking.business.slug}">
                 Book again
               </a>
             </p>
@@ -121,7 +145,7 @@ export async function POST(
     console.error("POST /api/bookings/[id]/cancel failed:", err);
     return NextResponse.json(
       { error: "Failed to cancel booking." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

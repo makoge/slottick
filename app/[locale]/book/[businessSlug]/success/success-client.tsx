@@ -1,4 +1,3 @@
-// app/[locale]/book/[slug]/success/SuccessClient.tsx (or your corresponding path)
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -9,14 +8,26 @@ import { useLocale } from "@/lib/use-locale";
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
 
+type StaffDTO = {
+  id: string;
+  name: string;
+  title?: string | null;
+  avatarUrl?: string | null;
+};
+
 type BookingDTO = {
   id: string;
   startsAt: string;
+  endsAt?: string | null;
   durationMin: number;
   serviceName: string;
   price: number;
   currency: Currency | string;
   customerName: string;
+  status: string;
+  depositPaid?: boolean;
+  depositAmount?: number | null;
+  staff?: StaffDTO | null;
   business: {
     name: string;
     slug: string;
@@ -24,6 +35,7 @@ type BookingDTO = {
     city?: string | null;
     country?: string | null;
     website?: string | null;
+    logoUrl?: string | null;
   };
 };
 
@@ -40,9 +52,10 @@ function formatLocalDateTime(iso: string, locale: string) {
   const dt = new Date(iso);
 
   const date = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
     year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+    month: "short",
+    day: "numeric",
   }).format(dt);
 
   const time = new Intl.DateTimeFormat(locale, {
@@ -79,9 +92,7 @@ export default function SuccessClient({
   const sp = useSearchParams();
   const id = sp.get("id") ?? "";
 
-  const status = (sp.get("status") ?? "").toUpperCase();
-  const isPending = status === "PENDING";
-  const isConfirmed = status === "CONFIRMED";
+  const statusParam = (sp.get("status") ?? "").toUpperCase();
 
   const [booking, setBooking] = useState<BookingDTO | null>(null);
   const [explore, setExplore] = useState<BusinessCard[]>([]);
@@ -121,9 +132,7 @@ export default function SuccessClient({
       if (city) {
         const r2 = await fetch(
           `/api/businesses?city=${encodeURIComponent(city)}`,
-          {
-            cache: "no-store",
-          },
+          { cache: "no-store" },
         );
         const d2 = await r2.json().catch(() => ({}));
 
@@ -138,7 +147,7 @@ export default function SuccessClient({
               website: x.website ?? null,
             }))
             .filter((x) => x.slug && x.slug !== b.business.slug)
-            .slice(0, 6);
+            .slice(0, 4);
 
           setExplore(cards);
         }
@@ -153,84 +162,47 @@ export default function SuccessClient({
     };
   }, [id]);
 
-  const details = useMemo(() => {
+  const effectiveStatus = (
+    booking?.status ||
+    statusParam ||
+    "CONFIRMED"
+  ).toUpperCase();
+  const isPending = effectiveStatus === "PENDING";
+  const isConfirmed = effectiveStatus === "CONFIRMED";
+
+  const startsDetails = useMemo(() => {
     if (!booking) return null;
     return formatLocalDateTime(booking.startsAt, locale);
   }, [booking, locale]);
 
+  const endsDetails = useMemo(() => {
+    if (!booking?.endsAt) return null;
+    return formatLocalDateTime(booking.endsAt, locale);
+  }, [booking, locale]);
+
   return (
-    <div className="relative flex min-h-[calc(100vh-4rem)] w-full items-center justify-center px-4 py-12 sm:px-6">
-      {/* Ambient background glows */}
-      <div className="pointer-events-none absolute -top-12 h-64 w-64 rounded-full bg-lime-200/40 blur-3xl sm:h-80 sm:w-80" />
-      <div className="pointer-events-none absolute -bottom-12 h-64 w-64 rounded-full bg-slate-400/30 blur-3xl sm:h-80 sm:w-80" />
-
-      {/* Main Glassmorphic Container */}
-      <div className="relative z-10 w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-10">
-        {/* Header Ribbon */}
-        <div className="flex flex-col gap-4 border-b border-slate-300/70 pb-6 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-lime-300/80 bg-lime-100 px-3.5 py-1 text-xs font-bold text-lime-950 shadow-xs">
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-lime-900 text-[10px] text-white">
-                ✓
-              </span>
-              <span className="font-mono uppercase tracking-wider">
-                {isPending ? "Pending Verification" : "Booking Confirmed"}
-              </span>
-            </div>
-
-            <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-              {isPending ? (
-                <>
-                  {tr("bookingSuccess.pending.title")}{" "}
-                  <span className="font-normal text-amber-600">⏳</span>
-                </>
-              ) : (
-                <>
-                  {tr("bookingSuccess.confirmed.title")}{" "}
-                  <span className="font-normal text-lime-700">✓</span>
-                </>
-              )}
-            </h1>
-
-            <p className="mt-1 text-xs text-slate-600 sm:text-sm">
-              {isPending
-                ? tr("bookingSuccess.pending.description")
-                : tr("bookingSuccess.confirmed.description")}
-            </p>
-
-            {!loading && booking && isConfirmed && (
-              <a
-                href={`/api/bookings/${booking.id}/calendar`}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-lime-300/80 bg-lime-100 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-lime-950 shadow-xs transition hover:bg-lime-200 active:scale-95"
-              >
-                <span>📅</span>
-                <span>{tr("bookingSuccess.actions.addToCalendar")}</span>
-              </a>
-            )}
-          </div>
-
-          <Link
-            href={backHref}
-            className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-1.5 font-mono text-xs font-semibold text-slate-600 shadow-2xs backdrop-blur-sm transition-all hover:bg-white hover:text-slate-950"
-          >
-            {tr("bookingSuccess.actions.backToBooking")}
-          </Link>
+    <main className="min-h-screen bg-[#FAF7F2] text-[#241F1A] font-sans selection:bg-[#EAE0D0] selection:text-[#1F1914] px-4 py-12 sm:px-6">
+      {/* Top Ledger Ribbon */}
+      <div className="mx-auto max-w-2xl text-center mb-8">
+        <div className="font-mono text-[11px] uppercase tracking-widest text-[#7D7060]">
+          ✦ OFFICIAL RESERVATION REGISTER ✦
         </div>
+      </div>
 
-        {/* Content Body */}
+      <div className="mx-auto max-w-2xl">
         {loading ? (
-          <div className="mt-6 flex items-center justify-center rounded-2xl border border-slate-300/80 bg-white/60 p-8 font-mono text-xs text-slate-600 backdrop-blur-sm">
-            <span className="animate-pulse">
-              {tr("bookingSuccess.states.loading")}
-            </span>
+          <div className="rounded-2xl border border-[#DFD6C7] bg-[#F4EFE6] p-12 text-center font-mono text-xs text-[#7A6D5E] shadow-sm animate-pulse">
+            {tr("bookingSuccess.states.loading")}
           </div>
-        ) : !booking || !details ? (
-          <div className="mt-6 rounded-2xl border border-amber-300/80 bg-amber-50/90 p-5 font-mono text-xs text-amber-900 shadow-2xs backdrop-blur-sm">
-            <div>{tr("bookingSuccess.states.loadError")}</div>
-            <div className="mt-3">
+        ) : !booking || !startsDetails ? (
+          <div className="rounded-2xl border border-[#DFD6C7] bg-white p-8 text-center shadow-sm">
+            <div className="font-mono text-xs text-rose-800">
+              {tr("bookingSuccess.states.loadError")}
+            </div>
+            <div className="mt-4">
               <Link
-                className="font-bold underline hover:text-amber-950"
                 href={backHref}
+                className="font-mono text-xs font-bold underline hover:text-[#000]"
               >
                 {tr("bookingSuccess.actions.goBack")}
               </Link>
@@ -238,157 +210,238 @@ export default function SuccessClient({
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Appointment Overview Panel */}
-            <div className="mt-6 rounded-2xl border border-slate-300/80 bg-slate-100/70 p-5 backdrop-blur-sm sm:p-6">
-              <div className="border-b border-slate-200/80 pb-3 font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
-                {isPending
-                  ? tr("bookingSuccess.sections.requestDetails")
-                  : tr("bookingSuccess.sections.bookingDetails")}
-              </div>
-
-              <div className="mt-4 grid gap-3.5 text-xs sm:grid-cols-2 sm:gap-4 sm:text-sm">
-                <div>
-                  <span className="font-mono text-xs font-bold uppercase text-slate-500">
-                    {tr("bookingSuccess.labels.status")}
-                  </span>
-                  <div className="mt-0.5">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-wider ${
-                        isPending
-                          ? "border-amber-300/90 bg-amber-100 text-amber-950"
-                          : "border-lime-300/90 bg-lime-100 text-lime-950"
-                      }`}
-                    >
+            {/* VINTAGE TICKET STUB */}
+            <div className="relative overflow-hidden rounded-2xl border border-[#D5C9B8] bg-white shadow-[0_20px_60px_-25px_rgba(40,32,24,0.15)]">
+              {/* Ticket Top Banner */}
+              <div className="border-b border-[#E8DFC0] bg-[#1E1915] px-6 py-6 text-[#FAF6F0] sm:px-8">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[#4F4439] bg-[#2A231E] px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-[#D9CDBB]">
                       <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          isPending ? "bg-amber-600" : "bg-lime-700"
+                        className={`h-2 w-2 rounded-full ${
+                          isPending ? "bg-amber-400" : "bg-[#C29B38]"
                         }`}
                       />
                       {isPending
                         ? tr("bookingSuccess.status.pendingApproval")
                         : tr("bookingSuccess.status.confirmed")}
+                    </div>
+
+                    <h1 className="mt-3 font-serif text-3xl font-medium tracking-tight sm:text-4xl text-[#FAF6F0]">
+                      {isPending
+                        ? tr("bookingSuccess.pending.title")
+                        : tr("bookingSuccess.confirmed.title")}
+                    </h1>
+
+                    <p className="mt-1 text-xs text-[#BFB2A2] sm:text-sm font-light">
+                      {isPending
+                        ? tr("bookingSuccess.pending.description")
+                        : tr("bookingSuccess.confirmed.description")}
+                    </p>
+                  </div>
+
+                  <Link
+                    href={backHref}
+                    className="shrink-0 rounded-lg border border-[#44382E] bg-[#2A221C] px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-[#DCD1BF] hover:bg-[#382E25]"
+                  >
+                    ← {tr("bookingSuccess.actions.backToBooking")}
+                  </Link>
+                </div>
+
+                {isConfirmed && (
+                  <div className="mt-5">
+                    <a
+                      href={`/api/bookings/${booking.id}/calendar`}
+                      className="inline-flex items-center gap-2 rounded-lg border border-[#C29B38]/60 bg-[#C29B38]/10 px-3.5 py-1.5 font-mono text-xs font-semibold text-[#E7C77E] hover:bg-[#C29B38]/20 transition"
+                    >
+                      <span>📅</span>
+                      <span>{tr("bookingSuccess.actions.addToCalendar")}</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Perforation Line Effect */}
+              <div className="relative flex items-center justify-between border-y border-dashed border-[#DFD5C4] bg-[#F7F2E9] px-4 py-2">
+                <div className="font-mono text-[10px] uppercase tracking-widest text-[#7C6E5E]">
+                  APPOINTMENT MANIFEST ENTRY • ID: {booking.id.slice(0, 8)}
+                </div>
+                <div className="font-mono text-[10px] text-[#A39483]">
+                  SECURE RECORD
+                </div>
+              </div>
+
+              {/* Ticket Body Content */}
+              <div className="p-6 sm:p-8 space-y-6 bg-white">
+                <div className="grid gap-6 sm:grid-cols-2">
+                  {/* Business & City */}
+                  <div>
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-[#8A7B6B]">
+                      {tr("bookingSuccess.labels.business")}
                     </span>
+                    <p className="font-serif text-lg font-bold text-[#241F1A] mt-0.5">
+                      {booking.business.name}
+                    </p>
+                    {booking.business.city && (
+                      <p className="font-mono text-xs text-[#746656]">
+                        {booking.business.city}
+                        {booking.business.country
+                          ? `, ${booking.business.country}`
+                          : ""}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Specialist / Chair */}
+                  <div>
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-[#8A7B6B]">
+                      {tr("bookingSuccess.labels.specialist")}
+                    </span>
+                    <div className="mt-0.5 flex items-center gap-2">
+                      {booking.staff?.name ? (
+                        <>
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full border border-[#D5C9B8] bg-[#F4EFE6] font-serif text-xs font-bold text-[#3B3127]">
+                            ✂
+                          </div>
+                          <div>
+                            <span className="font-serif font-bold text-[#241F1A] text-base">
+                              {booking.staff.name}
+                            </span>
+                            {booking.staff.title && (
+                              <span className="ml-1.5 font-mono text-[11px] text-[#7A6C5C]">
+                                ({booking.staff.title})
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <span className="font-mono text-xs text-[#7A6C5C]">
+                          House Specialist (First Available)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Service & Price */}
+                  <div>
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-[#8A7B6B]">
+                      {tr("bookingSuccess.labels.service")}
+                    </span>
+                    <p className="font-serif text-lg font-bold text-[#241F1A] mt-0.5">
+                      {booking.serviceName}
+                    </p>
+                    <p className="font-mono text-xs text-[#8C6D2B] font-bold">
+                      {formatMoney(booking.price, booking.currency as any)}
+                      <span className="ml-2 font-normal text-[#746656]">
+                        ({booking.durationMin}{" "}
+                        {tr("booking.common.minutes", {
+                          n: booking.durationMin,
+                        })}
+                        )
+                      </span>
+                    </p>
+                    {booking.depositPaid && (
+                      <div className="mt-1">
+                        <span className="rounded bg-[#EFE7D8] px-2 py-0.5 font-mono text-[10px] font-bold text-[#785E22]">
+                          Deposit Confirmed
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Time Window */}
+                  <div>
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-[#8A7B6B]">
+                      {tr("bookingSuccess.labels.whenYourTime")}
+                    </span>
+                    <p className="font-mono font-bold text-sm text-[#241F1A] mt-0.5">
+                      {startsDetails.date}
+                    </p>
+                    <p className="font-mono text-xs text-[#6B5D4E]">
+                      {startsDetails.time}
+                      {endsDetails ? ` – ${endsDetails.time}` : ""}
+                      {startsDetails.tz ? ` (${startsDetails.tz})` : ""}
+                    </p>
+                  </div>
+
+                  {/* Patron Name */}
+                  <div className="sm:col-span-2 border-t border-[#EFE8DC] pt-4">
+                    <span className="font-mono text-[11px] uppercase tracking-wider text-[#8A7B6B]">
+                      {tr("bookingSuccess.labels.name")}
+                    </span>
+                    <p className="font-serif text-base font-bold text-[#241F1A] mt-0.5">
+                      {booking.customerName}
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <span className="font-mono text-xs font-bold uppercase text-slate-500">
-                    {tr("bookingSuccess.labels.business")}
-                  </span>
-                  <p className="mt-0.5 font-bold text-slate-900">
-                    {booking.business.name}
-                    {booking.business.city ? (
-                      <span className="font-normal text-slate-600">
-                        {" "}
-                        • {booking.business.city}
-                      </span>
-                    ) : null}
-                  </p>
-                </div>
+                {/* Return Actions */}
+                <div className="pt-4 border-t border-[#EFE8DC] flex flex-wrap items-center justify-between gap-3">
+                  <Link
+                    href={backHref}
+                    className="inline-flex items-center justify-center rounded-xl bg-[#241F1A] px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-[#FAF6F0] shadow-sm hover:bg-[#3D332B] transition active:scale-95"
+                  >
+                    {isPending
+                      ? tr("bookingSuccess.actions.sendAnotherRequest")
+                      : tr("bookingSuccess.actions.bookAnotherTime")}{" "}
+                    →
+                  </Link>
 
-                <div>
-                  <span className="font-mono text-xs font-bold uppercase text-slate-500">
-                    {tr("bookingSuccess.labels.service")}
-                  </span>
-                  <p className="mt-0.5 font-bold text-slate-900">
-                    {booking.serviceName}{" "}
-                    <span className="font-mono font-medium text-slate-600">
-                      •{" "}
-                      {tr("booking.common.minutes", { n: booking.durationMin })}{" "}
-                      • {formatMoney(booking.price, booking.currency as any)}
-                    </span>
-                  </p>
+                  <Link
+                    href={`/${locale}/explore`}
+                    className="font-mono text-xs font-semibold text-[#6E604F] underline hover:text-[#241F1A]"
+                  >
+                    {tr("bookingSuccess.actions.openMarketplace")} ↗
+                  </Link>
                 </div>
-
-                <div>
-                  <span className="font-mono text-xs font-bold uppercase text-slate-500">
-                    {tr("bookingSuccess.labels.whenYourTime")}
-                  </span>
-                  <p className="mt-0.5 font-mono font-bold text-slate-900">
-                    {details.date} • {details.time}{" "}
-                    {details.tz ? (
-                      <span className="font-normal text-slate-600">
-                        ({details.tz})
-                      </span>
-                    ) : (
-                      ""
-                    )}
-                  </p>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <span className="font-mono text-xs font-bold uppercase text-slate-500">
-                    {tr("bookingSuccess.labels.name")}
-                  </span>
-                  <p className="mt-0.5 font-bold text-slate-900">
-                    {booking.customerName}
-                  </p>
-                </div>
-              </div>
-
-              {/* Action */}
-              <div className="mt-6 border-t border-slate-200/80 pt-4">
-                <Link
-                  className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-white shadow-xs transition hover:bg-slate-800 active:scale-95"
-                  href={backHref}
-                >
-                  {isPending
-                    ? tr("bookingSuccess.actions.sendAnotherRequest")
-                    : tr("bookingSuccess.actions.bookAnotherTime")}{" "}
-                  →
-                </Link>
               </div>
             </div>
 
-            {/* Explore Nearby Studios */}
-            <div className="border-t border-slate-200/80 pt-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
-                    {tr("bookingSuccess.explore.title")}
-                  </h2>
-                  <p className="mt-1 text-xs text-slate-600">
-                    {tr("bookingSuccess.explore.description")}
-                  </p>
+            {/* EXPLORE LOCAL ATELIERS */}
+            {explore.length > 0 && (
+              <div className="rounded-2xl border border-[#DFD6C7] bg-[#F7F2E9] p-6 sm:p-8">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between border-b border-[#E6DCce] pb-4 mb-4">
+                  <div>
+                    <h2 className="font-serif text-xl font-medium text-[#241F1A]">
+                      {tr("bookingSuccess.explore.title")}
+                    </h2>
+                    <p className="font-mono text-xs text-[#7A6D5E] mt-0.5">
+                      {tr("bookingSuccess.explore.description")}
+                    </p>
+                  </div>
+
+                  <Link
+                    href={`/${locale}/explore`}
+                    className="font-mono text-xs font-bold text-[#8C6D2B] underline hover:text-[#5E4717]"
+                  >
+                    {tr("bookingSuccess.actions.openMarketplace")} →
+                  </Link>
                 </div>
 
-                <Link
-                  className="font-mono text-xs font-bold text-slate-700 underline underline-offset-2 hover:text-black"
-                  href={`/${locale}/explore`}
-                >
-                  {tr("bookingSuccess.actions.openMarketplace")} →
-                </Link>
-              </div>
-
-              {explore.length === 0 ? (
-                <div className="mt-4 rounded-2xl border border-dashed border-slate-300/80 bg-white/50 p-4 text-center font-mono text-xs text-slate-500">
-                  {tr("bookingSuccess.explore.empty")}
-                </div>
-              ) : (
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2">
                   {explore.map((b) => (
                     <Link
                       key={b.slug}
                       href={`/${locale}/book/${b.slug}`}
-                      className="group rounded-2xl border border-slate-300/80 bg-white/70 p-4 shadow-2xs backdrop-blur-sm transition-all hover:border-lime-300/80 hover:bg-white hover:shadow-xs"
+                      className="group rounded-xl border border-[#E3D8C8] bg-white p-4 shadow-2xs hover:border-[#8C6D2B] hover:shadow-sm transition"
                     >
-                      <div className="font-bold text-slate-900 group-hover:text-black">
+                      <div className="font-serif font-bold text-base text-[#241F1A] group-hover:text-[#8C6D2B] transition">
                         {b.name}
                       </div>
-                      <div className="mt-1 font-mono text-xs text-slate-600">
+                      <div className="mt-1 font-mono text-xs text-[#746554]">
                         {b.category ??
                           tr("bookingSuccess.explore.fallbackCategory")}
                         {b.city ? ` • ${b.city}` : ""}
-                        {b.country ? ` • ${b.country}` : ""}
+                        {b.country ? `, ${b.country}` : ""}
                       </div>
                     </Link>
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

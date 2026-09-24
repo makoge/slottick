@@ -19,21 +19,28 @@ export async function GET() {
 
   const conversations = await prisma.bookingConversation.findMany({
     where: { businessId: authed.id },
-    orderBy: [
-      { lastMessageAt: "desc" },
-      { updatedAt: "desc" }
-    ],
+    orderBy: [{ lastMessageAt: "desc" }, { updatedAt: "desc" }],
     include: {
       booking: {
         select: {
           id: true,
           status: true,
           startsAt: true,
+          endsAt: true,
           customerName: true,
           customerEmail: true,
           customerPhone: true,
-          serviceName: true
-        }
+          serviceName: true,
+          staffId: true,
+          staff: {
+            select: {
+              id: true,
+              name: true,
+              title: true,
+              avatarUrl: true,
+            },
+          },
+        },
       },
       messages: {
         orderBy: { createdAt: "desc" },
@@ -42,20 +49,20 @@ export async function GET() {
           id: true,
           body: true,
           senderType: true,
-          createdAt: true
-        }
+          createdAt: true,
+        },
       },
       _count: {
         select: {
           messages: {
             where: {
               senderType: "CUSTOMER",
-              isRead: false
-            }
-          }
-        }
-      }
-    }
+              isRead: false,
+            },
+          },
+        },
+      },
+    },
   });
 
   return json({
@@ -64,18 +71,27 @@ export async function GET() {
       bookingId: c.bookingId,
       bookingStatus: c.booking.status,
       startsAt: c.booking.startsAt.toISOString(),
+      endsAt: c.booking.endsAt.toISOString(),
       customerName: c.booking.customerName,
       customerEmail: c.booking.customerEmail,
       customerPhone: c.booking.customerPhone,
       serviceName: c.booking.serviceName,
+      staff: c.booking.staff
+        ? {
+            id: c.booking.staff.id,
+            name: c.booking.staff.name,
+            title: c.booking.staff.title,
+            avatarUrl: c.booking.staff.avatarUrl,
+          }
+        : null,
       lastMessageAt: c.lastMessageAt?.toISOString() ?? null,
       lastMessage: c.messages[0]
         ? {
             ...c.messages[0],
-            createdAt: c.messages[0].createdAt.toISOString()
+            createdAt: c.messages[0].createdAt.toISOString(),
           }
         : null,
-      unreadCount: c._count.messages
-    }))
+      unreadCount: c._count.messages,
+    })),
   });
 }

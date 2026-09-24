@@ -8,7 +8,7 @@ import {
   generateTimeSlots,
   canFitServiceAt,
   overlapsBreak,
-  slotRangeForService
+  slotRangeForService,
 } from "@/lib/availability";
 import { Currency, Service, formatMoney } from "@/lib/services";
 import { useMessages } from "@/lib/use-messages";
@@ -18,8 +18,19 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-type DbDayBooking = { startsAt: string; durationMin: number };
+type DbDayBooking = {
+  startsAt: string;
+  durationMin: number;
+  staffId?: string | null;
+};
 type DepositType = "PERCENT" | "AMOUNT";
+
+type StaffMember = {
+  id: string;
+  name: string;
+  title?: string | null;
+  avatarUrl?: string | null;
+};
 
 type DbService = {
   id: string;
@@ -31,6 +42,7 @@ type DbService = {
   depositType?: DepositType;
   depositValue?: number | null;
   images?: string[];
+  staff?: StaffMember[];
 };
 
 type CustomerMe = {
@@ -43,7 +55,9 @@ type CustomerMe = {
 };
 
 function stars(n: number) {
-  return "★".repeat(Math.max(0, Math.min(5, n))) + "☆".repeat(Math.max(0, 5 - n));
+  return (
+    "★".repeat(Math.max(0, Math.min(5, n))) + "☆".repeat(Math.max(0, 5 - n))
+  );
 }
 
 function timeAgo(iso: string) {
@@ -65,7 +79,7 @@ type BusinessPublic = {
   name: string;
   slug: string;
   industry?: string | null;
-
+  heroTag?: string | null;
   description?: string | null;
 
   city?: string | null;
@@ -78,13 +92,13 @@ type BusinessPublic = {
 
   galleryImages: string[];
   reviews: {
-  rating: number;
-  comment: string;
-  createdAt: string;
-  customerName: string;
-}[];
-ratingAvg?: number | null;
-ratingCount?: number | null;
+    rating: number;
+    comment: string;
+    createdAt: string;
+    customerName: string;
+  }[];
+  ratingAvg?: number | null;
+  ratingCount?: number | null;
 };
 
 function toCurrency(x: unknown): Currency {
@@ -98,15 +112,18 @@ function hhmmFromISOInTZ(iso: string, timeZone: string) {
     timeZone,
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false
+    hour12: false,
   }).formatToParts(dt);
   const h = parts.find((p) => p.type === "hour")?.value ?? "00";
   const m = parts.find((p) => p.type === "minute")?.value ?? "00";
   return `${h}:${m}`;
 }
 
-// convert business-local date+time to ISO (UTC) respecting business timezone
-function startsAtISOFromBusinessLocal(date: string, time: string, timeZone: string) {
+function startsAtISOFromBusinessLocal(
+  date: string,
+  time: string,
+  timeZone: string,
+) {
   const [y, mo, d] = date.split("-").map(Number);
   const [hh, mm] = time.split(":").map(Number);
 
@@ -120,10 +137,10 @@ function startsAtISOFromBusinessLocal(date: string, time: string, timeZone: stri
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    hour12: false
+    hour12: false,
   }).formatToParts(approxUTC);
 
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  const get = (tp: string) => parts.find((p) => p.type === tp)?.value ?? "00";
 
   const asIfUTC = Date.UTC(
     Number(get("year")),
@@ -131,7 +148,7 @@ function startsAtISOFromBusinessLocal(date: string, time: string, timeZone: stri
     Number(get("day")),
     Number(get("hour")),
     Number(get("minute")),
-    Number(get("second"))
+    Number(get("second")),
   );
 
   const offsetMs = asIfUTC - approxUTC.getTime();
@@ -151,14 +168,13 @@ function cleanWebsite(url?: string | null) {
 export default function BookingClient({
   locale,
   businessSlug,
-  business
+  business,
 }: {
   locale: string;
   businessSlug: string;
   business: BusinessPublic;
 }) {
   const router = useRouter();
-
   const messages = useMessages(locale);
 
   const tr = (key: string, vars?: Record<string, string | number>) => {
@@ -182,7 +198,10 @@ export default function BookingClient({
   }
 
   const [rule, setRule] = useState<AvailabilityRule>(defaultAvailability);
-  const [services, setServices] = useState<Service[]>([]);
+  const [allStaff, setAllStaff] = useState<StaffMember[]>([]);
+  const [services, setServices] = useState<
+    (Service & { staff?: StaffMember[] })[]
+  >([]);
   const [loadingRule, setLoadingRule] = useState(true);
   const [loadingServices, setLoadingServices] = useState(true);
 
@@ -191,10 +210,13 @@ export default function BookingClient({
 
   const [dayBookings, setDayBookings] = useState<DbDayBooking[]>([]);
 
+  // Selections
   const [serviceId, setServiceId] = useState("");
+  const [selectedStaffId, setSelectedStaffId] = useState<string>("ANY");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
 
+  // Customer Form
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -207,12 +229,13 @@ export default function BookingClient({
 
   useEffect(() => {
     if (!lightboxUrl) return;
-    const onKeyDown = (e: KeyboardEvent) => e.key === "Escape" && setLightboxUrl(null);
+    const onKeyDown = (e: KeyboardEvent) =>
+      e.key === "Escape" && setLightboxUrl(null);
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [lightboxUrl]);
 
-  // customer/me
+  // 1. Fetch current signed-in customer if any
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -220,7 +243,12 @@ export default function BookingClient({
       try {
         const res = await fetch("/api/customer/me", { cache: "no-store" });
         const data = (await res.json().catch(() => ({}))) as CustomerMe;
-        if (!cancelled) setCustomer(data?.customer ?? null);
+        if (!cancelled && data?.customer) {
+          setCustomer(data.customer);
+          setFullName(data.customer.name || "");
+          setCustomerEmail(data.customer.email || "");
+          setPhone(data.customer.phone || "");
+        }
       } catch {
         if (!cancelled) setCustomer(null);
       } finally {
@@ -232,54 +260,59 @@ export default function BookingClient({
     };
   }, []);
 
-  // availability rule
+  // 2. Fetch Availability rule & staff roster (supports staff override)
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoadingRule(true);
       try {
+        const staffParam =
+          selectedStaffId !== "ANY"
+            ? `&staffId=${encodeURIComponent(selectedStaffId)}`
+            : "";
         const res = await fetch(
-             `/api/public/availability?businessSlug=${encodeURIComponent(businessSlug)}`,
-            { cache: "no-store" }
-                );
+          `/api/availability-rule?businessSlug=${encodeURIComponent(businessSlug)}${staffParam}`,
+          { cache: "no-store" },
+        );
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
 
-        if (!res.ok) {
-           console.error("Availability fetch failed", data);
-           setRule(defaultAvailability);
-           return;
-             }
-
         if (data?.rule) {
           setRule({ ...defaultAvailability, ...data.rule });
-            } else {
-             setRule(defaultAvailability);
-               }
-              } catch {
-        if (!cancelled) setRule(defaultAvailability);
-            } finally {
-        if (!cancelled) setLoadingRule(false);
-               }
-             })();
-             return () => {
-              cancelled = true;
-                 };
-          }, [businessSlug]);
+        } else {
+          setRule(defaultAvailability);
+        }
 
-  // services (includes images)
+        if (Array.isArray(data?.staff)) {
+          setAllStaff(data.staff);
+        }
+      } catch {
+        if (!cancelled) setRule(defaultAvailability);
+      } finally {
+        if (!cancelled) setLoadingRule(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [businessSlug, selectedStaffId]);
+
+  // 3. Fetch services with linked staff members
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoadingServices(true);
       try {
-        const res = await fetch(`/api/services?businessSlug=${encodeURIComponent(businessSlug)}`, {
-          cache: "no-store"
-        });
+        const res = await fetch(
+          `/api/services?businessSlug=${encodeURIComponent(businessSlug)}`,
+          {
+            cache: "no-store",
+          },
+        );
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
 
-        const mapped: Service[] = Array.isArray(data.services)
+        const mapped = Array.isArray(data.services)
           ? (data.services as DbService[]).map((s) => ({
               id: String(s.id),
               name: String(s.name ?? ""),
@@ -287,12 +320,17 @@ export default function BookingClient({
               price: Number(s.price ?? 0),
               currency: toCurrency(s.currency),
               depositEnabled: Boolean(s.depositEnabled),
-              depositType: s.depositType === "AMOUNT" ? "AMOUNT" : "PERCENT",
+              depositType: (s.depositType === "AMOUNT"
+                ? "AMOUNT"
+                : "PERCENT") as DepositType,
               depositValue:
                 s.depositEnabled && Number.isFinite(Number(s.depositValue))
                   ? Number(s.depositValue)
                   : undefined,
-              images: Array.isArray(s.images) ? s.images.map(String).filter(Boolean) : []
+              images: Array.isArray(s.images)
+                ? s.images.map(String).filter(Boolean)
+                : [],
+              staff: Array.isArray(s.staff) ? s.staff : [],
             }))
           : [];
 
@@ -309,7 +347,7 @@ export default function BookingClient({
     };
   }, [businessSlug]);
 
-  // booked slots for date
+  // 4. Fetch booked appointments for date (filtered by selected staff member if specified)
   useEffect(() => {
     let cancelled = false;
 
@@ -318,8 +356,14 @@ export default function BookingClient({
       if (!date) return;
 
       try {
-        const qs = new URLSearchParams({ businessSlug, date });
-        const res = await fetch(`/api/bookings/availability?${qs.toString()}`, { cache: "no-store" });
+        const qs = new URLSearchParams({
+          businessSlug,
+          date,
+          ...(selectedStaffId !== "ANY" ? { staffId: selectedStaffId } : {}),
+        });
+        const res = await fetch(`/api/bookings/availability?${qs.toString()}`, {
+          cache: "no-store",
+        });
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
 
@@ -328,9 +372,10 @@ export default function BookingClient({
             data.bookings
               .map((b: any) => ({
                 startsAt: String(b.startsAt ?? ""),
-                durationMin: Number(b.durationMin ?? 0)
+                durationMin: Number(b.durationMin ?? 0),
+                staffId: b.staffId ?? null,
               }))
-              .filter((b: DbDayBooking) => b.startsAt && b.durationMin > 0)
+              .filter((b: DbDayBooking) => b.startsAt && b.durationMin > 0),
           );
         }
       } catch {}
@@ -339,12 +384,21 @@ export default function BookingClient({
     return () => {
       cancelled = true;
     };
-  }, [businessSlug, date]);
+  }, [businessSlug, date, selectedStaffId]);
 
   const selectedService = useMemo(
     () => services.find((s) => s.id === serviceId) ?? null,
-    [services, serviceId]
+    [services, serviceId],
   );
+
+  // Specialists qualified for selected service
+  const qualifiedStaff = useMemo(() => {
+    if (!selectedService) return allStaff;
+    if (selectedService.staff && selectedService.staff.length > 0) {
+      return selectedService.staff;
+    }
+    return allStaff;
+  }, [selectedService, allStaff]);
 
   const allSlots = useMemo(() => {
     if (!date) return [];
@@ -386,14 +440,21 @@ export default function BookingClient({
 
     const emailTrim = customerEmail.trim();
     if (!emailTrim) return setError(tr("booking.errors.emailRequired"));
-    if (!isValidEmail(emailTrim)) return setError(tr("booking.errors.emailInvalid"));
+    if (!isValidEmail(emailTrim))
+      return setError(tr("booking.errors.emailInvalid"));
 
     const tz = rule.timezone || "UTC";
 
-    // conflict re-check
+    // Double-check conflicting slots
     const needed = slotRangeForService(time, rule, selectedService.durationMin);
     for (const b of dayBookings) {
-      const blocked = new Set(slotRangeForService(hhmmFromISOInTZ(b.startsAt, tz), rule, b.durationMin));
+      const blocked = new Set(
+        slotRangeForService(
+          hhmmFromISOInTZ(b.startsAt, tz),
+          rule,
+          b.durationMin,
+        ),
+      );
       if (needed.some((x) => blocked.has(x))) {
         return setError(tr("booking.errors.justBooked"));
       }
@@ -408,16 +469,18 @@ export default function BookingClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           businessSlug,
+          serviceId: selectedService.id,
           serviceName: selectedService.name,
           durationMin: selectedService.durationMin,
           price: selectedService.price,
           currency: selectedService.currency,
+          staffId: selectedStaffId === "ANY" ? null : selectedStaffId,
           startsAt,
           customerName: fullName.trim(),
           customerPhone: phone.trim(),
           customerEmail: emailTrim,
-          notes: notes.trim() || null
-        })
+          notes: notes.trim() || null,
+        }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -430,8 +493,10 @@ export default function BookingClient({
       if (!id) return setError(tr("booking.errors.missingId"));
 
       router.push(
-  `/${locale}/book/${businessSlug}/success?id=${encodeURIComponent(id)}&status=${encodeURIComponent(data.booking.status)}`
-);
+        `/${locale}/book/${businessSlug}/success?id=${encodeURIComponent(id)}&status=${encodeURIComponent(
+          data.booking.status,
+        )}`,
+      );
     } catch {
       setError(tr("booking.errors.network"));
     } finally {
@@ -439,22 +504,21 @@ export default function BookingClient({
     }
   }
 
-  const createAccountHref = `/${locale}/customer/signup?next=${encodeURIComponent(
-  `/${locale}/customer`
-)}`;
-
-const loginHref = `/${locale}/customer/login?next=${encodeURIComponent(
-  `/${locale}/customer`
-)}`;
+  const createAccountHref = `/${locale}/customer/signup?next=${encodeURIComponent(`/${locale}/customer`)}`;
+  const loginHref = `/${locale}/customer/login?next=${encodeURIComponent(`/${locale}/customer`)}`;
 
   const addr = fullAddress(business);
-  const mapsQuery = encodeURIComponent(addr || `${business.city ?? ""} ${business.country ?? ""}`.trim());
+  const mapsQuery = encodeURIComponent(
+    addr || `${business.city ?? ""} ${business.country ?? ""}`.trim(),
+  );
   const mapsEmbed = `https://www.google.com/maps?q=${mapsQuery}&output=embed`;
   const mapsOpen = `https://www.google.com/maps?q=${mapsQuery}`;
 
   const website = cleanWebsite(business.website);
 
-  const gallery = Array.isArray(business.galleryImages) ? business.galleryImages.filter(Boolean) : [];
+  const gallery = Array.isArray(business.galleryImages)
+    ? business.galleryImages.filter(Boolean)
+    : [];
   const heroImages = useMemo(() => {
     const imgs = [...gallery];
     if (imgs.length === 0 && business.logoUrl) imgs.push(business.logoUrl);
@@ -463,597 +527,692 @@ const loginHref = `/${locale}/customer/login?next=${encodeURIComponent(
   }, [gallery, business.logoUrl]);
 
   const description = (business.description ?? "").trim();
+  const selectedStaffObj = qualifiedStaff.find((s) => s.id === selectedStaffId);
 
   return (
-  <main
-    className="min-h-screen text-slate-900 bg-[radial-gradient(1200px_circle_at_15%_-10%,rgba(236,72,153,0.18),transparent_55%),radial-gradient(900px_circle_at_90%_0%,rgba(99,102,241,0.16),transparent_50%),linear-gradient(to_bottom,#0b1220_0%,#0b1220_18%,#475569_45%,#475569_100%)"
-  >
-    
-
-    {/* Lightbox */}
-    {lightboxUrl ? (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6"
-        onClick={() => setLightboxUrl(null)}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="relative max-h-[92vh] max-w-[94vw]" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => setLightboxUrl(null)}
-            className="absolute -top-12 right-0 rounded-xl bg-white/85 px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-white/60 backdrop-blur hover:bg-white"
+    <main className="min-h-screen bg-[#FBF9F5] text-[#241F1A] font-sans selection:bg-[#EAE0D0] selection:text-[#1F1914]">
+      {/* Lightbox */}
+      {lightboxUrl ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-6 backdrop-blur-md"
+          onClick={() => setLightboxUrl(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="relative max-h-[92vh] max-w-[94vw]"
+            onClick={(e) => e.stopPropagation()}
           >
-            {tr("booking.lightbox.close")}
-          </button>
-          <img
-            src={lightboxUrl}
-            alt={tr("booking.lightbox.photoAlt")}
-            className="max-h-[92vh] max-w-[94vw] rounded-3xl bg-white object-contain shadow-2xl ring-1 ring-white/60"
-          />
+            <button
+              type="button"
+              onClick={() => setLightboxUrl(null)}
+              className="absolute -top-12 right-0 font-mono text-xs uppercase tracking-widest text-[#FBF9F5] hover:underline"
+            >
+              [ {tr("booking.lightbox.close")} ]
+            </button>
+            <img
+              src={lightboxUrl}
+              alt={tr("booking.lightbox.photoAlt")}
+              className="max-h-[92vh] max-w-[94vw] rounded-sm border border-[#4A4036] object-contain shadow-2xl"
+            />
+          </div>
         </div>
+      ) : null}
+
+      {/* TOP ATELIER STAMP BAR */}
+      <div className="border-b border-[#E7DFD3] bg-[#F4EFE6] px-4 py-2 text-center font-mono text-[11px] uppercase tracking-widest text-[#6E6255]">
+        <span>
+          ✦ ESTABLISHED APPOINTMENT REGISTER ✦{" "}
+          {business.city ? `${business.city} • ` : ""} {business.country ?? ""}
+        </span>
       </div>
-    ) : null}
 
-   {/* HERO */}
-<section className="relative w-screen left-1/2 -translate-x-1/2 overflow-hidden">
-  {/* FULL BACKGROUND IMAGE */}
-  <img
-    src={heroImages[0]}
-    alt=""
-    aria-hidden="true"
-    className="absolute inset-0 h-full w-full object-cover"
-  />
-
-  {/* OVERLAYS (readability + premium fade) */}
-  <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/20" />
-  <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-slate-600" />
-
-  {/* CONTENT */}
-  <div className="relative w-full px-6 pt-16 pb-32 lg:px-20">
-    <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
-      {/* LEFT */}
-      <div className="lg:col-span-6">
-        {/* GLASS HEADER CARD */}
-        <div className="inline-block rounded-[28px] bg-white/10 p-5 ring-1 ring-white/25 backdrop-blur-xl shadow-[0_30px_80px_-60px_rgba(0,0,0,0.9)]">
-          <div className="flex items-start gap-4">
-            {business.logoUrl ? (
-              <div className="rounded-3xl bg-white/70 p-1 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.6)] ring-1 ring-white/60 backdrop-blur">
-                <img
-                  src={business.logoUrl}
-                  alt={tr("booking.hero.logoAlt", { name: business.name })}
-                  className="h-14 w-14 rounded-[22px] object-cover"
-                />
-              </div>
-            ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/70 text-sm font-semibold text-slate-500 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.6)] ring-1 ring-white/60 backdrop-blur">
-                {business.name?.charAt(0)?.toUpperCase() || "S"}
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow sm:text-4xl capitalize">
-                {business.name}
-              </h1>
-
-              <p className="mt-2 text-sm text-white/80 sm:text-base">
+      {/* VINTAGE HERO SECTION */}
+      <section className="relative border-b border-[#E2D8C9] bg-[#1E1915] text-[#FBF9F5]">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-10">
+          <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
+            {/* Left: Vintage Typographic Identity */}
+            <div className="space-y-6 lg:col-span-7">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#4F4439] bg-[#2A231E]/80 px-3.5 py-1 text-xs font-mono uppercase tracking-wider text-[#D9CDBB]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#C29B38]" />
                 {business.industry
                   ? String(business.industry).replace(/_/g, " ")
                   : tr("booking.hero.industryFallback")}
-                {addr ? ` • ${addr}` : ""}
-              </p>
+              </div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
-                {!loadingRule ? (
-                  <span className="rounded-full bg-white/75 px-3 py-1 text-sm text-slate-900 shadow-sm ring-1 ring-white/60 backdrop-blur">
+              <div>
+                <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-[#FAF6F0] leading-[1.08]">
+                  {business.name}
+                </h1>
+                {business.heroTag && (
+                  <p className="mt-2 font-serif italic text-lg sm:text-xl text-[#C9BAA7]">
+                    "{business.heroTag}"
+                  </p>
+                )}
+              </div>
+
+              {description ? (
+                <p className="max-w-xl text-sm leading-relaxed text-[#BFB2A2] sm:text-base font-light">
+                  {description}
+                </p>
+              ) : null}
+
+              {/* Atelier Badges */}
+              <div className="flex flex-wrap items-center gap-3 pt-2 font-mono text-xs text-[#E1D7C8]">
+                {addr && (
+                  <div className="flex items-center gap-1.5 rounded-md border border-[#3E342B] bg-[#29221C] px-3 py-1.5">
+                    <span>📍</span>
+                    <span>{addr}</span>
+                  </div>
+                )}
+                {!loadingRule && rule.timezone && (
+                  <div className="rounded-md border border-[#3E342B] bg-[#29221C] px-3 py-1.5">
                     {tr("booking.hero.timezoneLabel")}{" "}
-                    <span className="font-semibold">{rule.timezone}</span>
-                  </span>
-                ) : null}
-
-                {website ? (
+                    <strong className="text-[#C29B38]">{rule.timezone}</strong>
+                  </div>
+                )}
+                {website && (
                   <a
                     href={website}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-full bg-white/75 px-3 py-1 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-white/60 backdrop-blur hover:bg-white"
+                    className="rounded-md border border-[#C29B38]/60 bg-[#C29B38]/10 px-3 py-1.5 text-[#E7C77E] hover:bg-[#C29B38]/20 transition"
                   >
-                    {tr("booking.hero.visitWebsite")}
+                    ↗ {tr("booking.hero.visitWebsite")}
                   </a>
-                ) : null}
+                )}
+              </div>
+            </div>
+
+            {/* Right: Vintage Gallery Trio with Fine Inset Borders */}
+            <div className="lg:col-span-5">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2 overflow-hidden rounded-sm border-2 border-[#382E25] bg-[#241D17] shadow-xl">
+                  <button
+                    type="button"
+                    onClick={() => setLightboxUrl(heroImages[0])}
+                    className="block aspect-[4/5] w-full overflow-hidden group"
+                  >
+                    <img
+                      src={heroImages[0]}
+                      alt={business.name}
+                      className="h-full w-full object-cover grayscale-[20%] sepia-[15%] transition duration-500 group-hover:scale-105 group-hover:grayscale-0"
+                    />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setLightboxUrl(heroImages[1])}
+                    className="aspect-square w-full overflow-hidden rounded-sm border-2 border-[#382E25] bg-[#241D17] group"
+                  >
+                    <img
+                      src={heroImages[1]}
+                      alt="Gallery"
+                      className="h-full w-full object-cover sepia-[15%] transition duration-500 group-hover:scale-105"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLightboxUrl(heroImages[2])}
+                    className="aspect-square w-full overflow-hidden rounded-sm border-2 border-[#382E25] bg-[#241D17] group"
+                  >
+                    <img
+                      src={heroImages[2]}
+                      alt="Gallery"
+                      className="h-full w-full object-cover sepia-[15%] transition duration-500 group-hover:scale-105"
+                    />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </section>
 
-        <div className="mt-7 space-y-5">
-          {description ? (
-            <p className="max-w-2xl whitespace-pre-wrap text-white/85 drop-shadow">
-              {description}
-            </p>
-          ) : (
-            <p className="max-w-2xl text-white/70">
-              {tr("booking.hero.noDescription")}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* RIGHT */}
-      <div className="lg:col-span-6">
-        <div className="grid grid-cols-3 gap-4">
-          <div className="col-span-2 overflow-hidden rounded-[28px] bg-white/10 ring-1 ring-white/25 backdrop-blur-md shadow-[0_30px_80px_-50px_rgba(0,0,0,0.8)]">
-            <button
-              type="button"
-              onClick={() => setLightboxUrl(heroImages[0])}
-              className="block h-full w-full"
-            >
-              <img
-                src={heroImages[0]}
-                alt={tr("booking.hero.photoAlt", { name: business.name, n: 1 })}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
-            </button>
-          </div>
-
-          <div className="grid gap-4">
-            <button
-              type="button"
-              onClick={() => setLightboxUrl(heroImages[1])}
-              className="overflow-hidden rounded-[28px] bg-white/20 shadow-[0_30px_80px_-50px_rgba(0,0,0,0.8)] ring-1 ring-white/30 backdrop-blur transition hover:-translate-y-0.5"
-            >
-              <img
-                src={heroImages[1]}
-                alt={tr("booking.hero.photoAlt", { name: business.name, n: 2 })}
-                className="h-40 w-full object-cover sm:h-44 lg:h-[200px]"
-                loading="lazy"
-              />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setLightboxUrl(heroImages[2])}
-              className="overflow-hidden rounded-[28px] bg-white/20 shadow-[0_30px_80px_-50px_rgba(0,0,0,0.8)] ring-1 ring-white/30 backdrop-blur transition hover:-translate-y-0.5"
-            >
-              <img
-                src={heroImages[2]}
-                alt={tr("booking.hero.photoAlt", { name: business.name, n: 3 })}
-                className="h-40 w-full object-cover sm:h-44 lg:h-[200px]"
-                loading="lazy"
-              />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-    {/* BODY */}
-    <section className="relative w-screen left-1/2 -translate-x-1/2 -mt-1 bg-slate-600">
-      <div className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-10">
-        {/* Customer box */}
-        {!loadingCustomer ? (
-  <div className="rounded-[28px] bg-slate-900 p-6 shadow-[0_25px_70px_-30px_rgba(15,23,42,0.7)] ring-1 ring-slate-800 sm:p-7">
-    <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <div className="text-sm font-semibold tracking-wide text-white">
-          {tr("booking.options.title")}
-        </div>
-
-        <div className="mt-2 text-sm text-slate-300">
-          {customer ? (
-            <>
-              {tr("booking.options.signedInAs")}{" "}
-              <span className="font-semibold text-white">
-                {customer.email}
-              </span>
-            </>
-          ) : (
-            "Book faster by creating an account or login if you already have one."
-          )}
-        </div>
-      </div>
-
-      {!customer ? (
-        <div className="flex flex-wrap gap-3 sm:justify-end">
-          {/* PRIMARY BUTTON */}
-          <a
-            href={createAccountHref}
-            className="
-              rounded-2xl bg-white px-5 py-2.5 text-sm font-semibold
-              text-slate-900 shadow-md
-              hover:bg-slate-100 active:translate-y-[1px]
-            "
-          >
-            {tr("booking.options.createAccount")}
-          </a>
-
-          {/* SECONDARY BUTTON */}
-          <a
-            href={loginHref}
-            className="
-              rounded-2xl border border-white/40 px-5 py-2.5
-              text-sm font-semibold text-white
-              hover:bg-white/10 active:translate-y-[1px]
-            "
-          >
-            {tr("booking.options.login")}
-          </a>
-        </div>
-      ) : null}
-    </div>
-  </div>
-) : null}
-
-        {error ? (
-          <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100">
-            {error}
-          </div>
-        ) : null}
-
-        {/* PREMIUM BOOKING PANEL */}
-        <div className="mt-8 rounded-4xl  shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-100 backdrop-blur bg-[radial-gradient(circle_at_85%_30%,rgba(163,230,53,0.14),transparent_32%),radial-gradient(circle_at_72%_58%,rgba(163,230,53,0.10),transparent_26%),linear-gradient(135deg,#071633_0%,#08142d_48%,#0d1e3f_100%)]">
-          {/* Sticky stepper header */}
-          <div className="sticky top-0 z-20 rounded-t-[32px] bg-white/80 backdrop-blur-xl ring-1 ring-white/60">
-            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-7">
-              <div className="text-sm font-semibold tracking-wide text-slate-900">
-                {tr("booking.sections.service.title")} • {tr("booking.sections.date.title")} •{" "}
-                {tr("booking.sections.time.title")} • {tr("booking.sections.details.title")}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
-                  {loading ? tr("common.loadingDots") : tr("booking.hero.stepPill", { step, total: 4 })}
+      {/* MAIN RESERVATION PARCHMENT */}
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-10">
+        {/* Customer Patron Status Bar */}
+        {!loadingCustomer && (
+          <div className="mb-8 flex flex-col justify-between gap-4 rounded-xl border border-[#DFD6C7] bg-[#F3ECE1] p-4 text-xs sm:flex-row sm:items-center">
+            <div className="font-mono text-[#584D41]">
+              {customer ? (
+                <span>
+                  PATRON SIGNED IN:{" "}
+                  <strong className="text-[#241F1A] underline">
+                    {customer.email}
+                  </strong>
                 </span>
-                {serviceId ? (
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                    {tr("booking.sections.service.selected")}
-                  </span>
-                ) : null}
-              </div>
+              ) : (
+                <span>
+                  BOOKING AS GUEST • CREATE A PATRON PASS TO SAVE YOUR HISTORY
+                </span>
+              )}
             </div>
-            <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+            {!customer && (
+              <div className="flex items-center gap-2">
+                <a
+                  href={loginHref}
+                  className="rounded-lg border border-[#CEC1AF] bg-white px-3 py-1.5 font-mono font-bold text-[#3B3229] hover:bg-[#FAF7F2]"
+                >
+                  {tr("booking.options.login")}
+                </a>
+                <a
+                  href={createAccountHref}
+                  className="rounded-lg bg-[#2E2620] px-3 py-1.5 font-mono font-bold text-[#FAF6F0] hover:bg-[#1E1915]"
+                >
+                  {tr("booking.options.createAccount")}
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-8 rounded-lg border border-red-300 bg-red-50/90 p-4 font-mono text-xs font-semibold text-red-800">
+            ✕ {error}
+          </div>
+        )}
+
+        {/* STEP-BY-STEP BOOKING CARD */}
+        <div className="rounded-2xl border border-[#DCD3C4] bg-white shadow-[0_20px_50px_-25px_rgba(40,32,24,0.12)]">
+          {/* Header Ledger Stamp */}
+          <div className="border-b border-[#EBE4D8] bg-[#F6F1E9] px-6 py-4 rounded-t-2xl flex flex-wrap items-center justify-between gap-3">
+            <div className="font-serif italic text-base text-[#3C3228]">
+              Appointment Ledger • Step {step} of 4
+            </div>
+            <div className="flex items-center gap-2 font-mono text-xs">
+              <span
+                className={`px-2.5 py-0.5 rounded-full ${step >= 1 ? "bg-[#29221C] text-[#FAF6F0]" : "bg-[#E3D9CC] text-[#716557]"}`}
+              >
+                1. Service
+              </span>
+              <span>→</span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full ${step >= 2 ? "bg-[#29221C] text-[#FAF6F0]" : "bg-[#E3D9CC] text-[#716557]"}`}
+              >
+                2. Craftsman
+              </span>
+              <span>→</span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full ${step >= 3 ? "bg-[#29221C] text-[#FAF6F0]" : "bg-[#E3D9CC] text-[#716557]"}`}
+              >
+                3. Date & Time
+              </span>
+              <span>→</span>
+              <span
+                className={`px-2.5 py-0.5 rounded-full ${step === 4 ? "bg-[#29221C] text-[#FAF6F0]" : "bg-[#E3D9CC] text-[#716557]"}`}
+              >
+                4. Confirm
+              </span>
+            </div>
           </div>
 
-          <div className="grid gap-8 p-5 sm:p-7">
-            {/* 1) Service */}
-            <section className="rounded-[28px] bg-white/70 p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.18)] ring-1 ring-white/60 backdrop-blur sm:p-6">
-              <h2 className="text-lg font-semibold">{tr("booking.sections.service.title")}</h2>
+          <div className="p-6 sm:p-10 space-y-12">
+            {/* STEP 1: SERVICE MENU */}
+            <div>
+              <div className="flex items-baseline justify-between border-b border-[#ECE4D8] pb-3 mb-6">
+                <div>
+                  <h2 className="font-serif text-2xl text-[#221C17]">
+                    I. Select Menu Offering
+                  </h2>
+                  <p className="font-mono text-xs text-[#7A6E5F] mt-1">
+                    Select from our signature treatments and services
+                  </p>
+                </div>
+                {selectedService && (
+                  <span className="font-mono text-xs uppercase text-[#8C6D2B] bg-[#F7F1E4] px-2.5 py-1 rounded border border-[#DECFA9]">
+                    ✓ Selected
+                  </span>
+                )}
+              </div>
 
               {loadingServices ? (
-                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.service.loading")}</p>
-              ) : services.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.service.empty")}</p>
+                <div className="py-12 text-center font-mono text-xs text-[#8A7D6F] animate-pulse">
+                  {tr("booking.sections.service.loading")}
+                </div>
               ) : (
-                <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {services.map((s) => {
                     const active = s.id === serviceId;
                     const d = depositLabel(s);
-                    const imgs = Array.isArray(s.images) ? s.images.filter(Boolean) : [];
-                    const thumb = imgs[0];
+                    const thumb = s.images?.[0];
 
                     return (
-                      <button
+                      <div
                         key={s.id}
-                        type="button"
                         onClick={() => {
                           setServiceId(s.id);
+                          setSelectedStaffId("ANY");
                           setDate("");
                           setTime("");
                           setError(null);
                         }}
-                        className={[
-                          "group overflow-hidden rounded-[24px] bg-white/80 text-left ring-1 backdrop-blur transition-all duration-200",
+                        className={`group cursor-pointer rounded-xl border p-4 transition duration-200 ${
                           active
-                            ? "ring-slate-900 shadow-[0_22px_60px_-40px_rgba(15,23,42,0.35)]"
-                            : "ring-slate-200 hover:-translate-y-0.5 hover:shadow-[0_22px_60px_-40px_rgba(15,23,42,0.25)]"
-                        ].join(" ")}
+                            ? "border-[#2E251E] bg-[#F9F6F0] shadow-md ring-1 ring-[#2E251E]"
+                            : "border-[#E7DECة] bg-[#FCFBF8] hover:border-[#C4B7A5] hover:bg-white"
+                        }`}
                       >
-                        {thumb ? (
-                          <div className="relative h-36 w-full bg-slate-100">
+                        {thumb && (
+                          <div className="mb-3 aspect-[16/10] overflow-hidden rounded-lg bg-[#ECE4D8]">
                             <img
                               src={thumb}
-                              alt={tr("booking.sections.service.servicePhotoAlt", { name: s.name })}
-                              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                              loading="lazy"
+                              alt={s.name}
+                              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0" />
-                            <div className="absolute right-2 top-2 rounded-full bg-white/85 px-2 py-1 text-xs font-semibold shadow-sm ring-1 ring-white/60 backdrop-blur">
-                              {tr("booking.sections.service.photosCount", { n: imgs.length })}
-                            </div>
                           </div>
-                        ) : null}
+                        )}
 
-                        <div className="p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="font-semibold">{s.name}</div>
-                              <div className="mt-1 text-sm text-slate-600">
-                                {tr("booking.common.minutes", { n: s.durationMin })} •{" "}
-                                {formatMoney(s.price, s.currency)}
-                              </div>
-
-                              {d ? (
-                                <div className="mt-3 inline-flex w-fit rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
-                                  {d}
-                                </div>
-                              ) : null}
-                            </div>
-
-                            {active ? (
-                              <span className="shrink-0 rounded-full bg-gradient-to-r from-fuchsia-500 to-indigo-500 px-2 py-1 text-xs font-semibold text-white shadow-sm">
-                                {tr("booking.sections.service.selected")}
-                              </span>
-                            ) : null}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="font-serif text-lg font-medium text-[#251E19]">
+                            {s.name}
                           </div>
+                          <div className="font-mono text-sm font-bold text-[#8C6D2B]">
+                            {formatMoney(s.price, s.currency)}
+                          </div>
+                        </div>
 
-                          {imgs.length > 0 ? (
-                            <div className="mt-3 flex flex-wrap items-center gap-2">
-                              {imgs.slice(0, 4).map((u) => (
-                                <button
-                                  key={u}
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setLightboxUrl(u);
-                                  }}
-                                  className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm hover:shadow"
-                                  title={tr("booking.lightbox.viewPhoto")}
-                                >
-                                  <img src={u} alt="" className="h-10 w-10 object-cover" loading="lazy" />
-                                </button>
-                              ))}
-                              {imgs.length > 4 ? (
-                                <span className="text-xs font-semibold text-slate-600">
-                                  +{imgs.length - 4}
-                                </span>
-                              ) : null}
+                        <div className="mt-2 flex items-center justify-between text-xs font-mono text-[#736657]">
+                          <span>
+                            ⏱ {s.durationMin}{" "}
+                            {tr("booking.common.minutes", { n: s.durationMin })}
+                          </span>
+                          {d && (
+                            <span className="rounded bg-[#EFE7D8] px-1.5 py-0.5 text-[10px] text-[#785E22]">
+                              {d}
+                            </span>
+                          )}
+                        </div>
+
+                        {s.staff && s.staff.length > 0 && (
+                          <div className="mt-3 flex items-center gap-1.5 pt-2 border-t border-[#EAE2D5] font-mono text-[11px] text-[#857766]">
+                            <span>With:</span>
+                            <span className="font-medium text-[#42372D]">
+                              {s.staff
+                                .map((sm) => sm.name)
+                                .slice(0, 2)
+                                .join(", ")}
+                              {s.staff.length > 2
+                                ? ` +${s.staff.length - 2}`
+                                : ""}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* STEP 2: CRAFTSMAN / SPECIALIST SELECTION */}
+            {selectedService && (
+              <div className="border-t border-[#EDE5DA] pt-8">
+                <div className="border-b border-[#ECE4D8] pb-3 mb-6">
+                  <h2 className="font-serif text-2xl text-[#221C17]">
+                    II. Dedicated Craftsman / Specialist
+                  </h2>
+                  <p className="font-mono text-xs text-[#7A6E5F] mt-1">
+                    Choose your preferred provider or select the first available
+                    appointment
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                  {/* Any Specialist Card */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedStaffId("ANY");
+                      setTime("");
+                    }}
+                    className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition ${
+                      selectedStaffId === "ANY"
+                        ? "border-[#2E251E] bg-[#2E251E] text-[#FAF6F0] shadow-sm"
+                        : "border-[#DFD6C7] bg-[#FCFBF8] text-[#332A22] hover:bg-white"
+                    }`}
+                  >
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-current font-serif text-sm">
+                      ⚡
+                    </div>
+                    <div>
+                      <div className="font-serif text-sm font-medium">
+                        First Available
+                      </div>
+                      <div className="font-mono text-[10px] opacity-75">
+                        Any available master
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Qualified Staff Members */}
+                  {qualifiedStaff.map((staff) => {
+                    const active = selectedStaffId === staff.id;
+                    return (
+                      <button
+                        key={staff.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedStaffId(staff.id);
+                          setTime("");
+                        }}
+                        className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition ${
+                          active
+                            ? "border-[#2E251E] bg-[#2E251E] text-[#FAF6F0] shadow-sm"
+                            : "border-[#DFD6C7] bg-[#FCFBF8] text-[#332A22] hover:bg-white"
+                        }`}
+                      >
+                        {staff.avatarUrl ? (
+                          <img
+                            src={staff.avatarUrl}
+                            alt={staff.name}
+                            className="h-10 w-10 shrink-0 rounded-full object-cover border border-current"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-current font-mono text-xs font-bold">
+                            {staff.name.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <div className="truncate font-serif text-sm font-medium">
+                            {staff.name}
+                          </div>
+                          {staff.title && (
+                            <div className="truncate font-mono text-[10px] opacity-75">
+                              {staff.title}
                             </div>
-                          ) : (
-                            <div className="mt-3 text-xs text-slate-500">{tr("booking.sections.service.noPhotos")}</div>
                           )}
                         </div>
                       </button>
                     );
                   })}
                 </div>
-              )}
-            </section>
+              </div>
+            )}
 
-            {/* 2) Date */}
-            <section className="rounded-[28px] bg-white/70 p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.18)] ring-1 ring-white/60 backdrop-blur sm:p-6">
-              <h2 className="text-lg font-semibold">{tr("booking.sections.date.title")}</h2>
-              {!serviceId ? (
-                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.date.needService")}</p>
-              ) : (
-                <div className="mt-4">
-                  <label className="grid gap-1 text-sm">
-                    {tr("booking.sections.date.label")}
+            {/* STEP 3: DATE & TIME LEDGER */}
+            {selectedService && (
+              <div className="border-t border-[#EDE5DA] pt-8">
+                <div className="border-b border-[#ECE4D8] pb-3 mb-6">
+                  <h2 className="font-serif text-2xl text-[#221C17]">
+                    III. Date & Time Register
+                  </h2>
+                  <p className="font-mono text-xs text-[#7A6E5F] mt-1">
+                    Calendar slots synchronized directly to real atelier hours
+                  </p>
+                </div>
+
+                <div className="grid gap-8 lg:grid-cols-12">
+                  {/* Date Input */}
+                  <div className="lg:col-span-4">
+                    <label className="block font-mono text-xs uppercase tracking-wider text-[#615446] mb-2">
+                      Calendar Date
+                    </label>
                     <input
                       type="date"
                       value={date}
+                      min={new Date().toISOString().split("T")[0]}
                       onChange={(e) => {
                         setDate(e.target.value);
                         setTime("");
                         setError(null);
                       }}
-                      className="w-full max-w-xs rounded-2xl bg-white/90 px-3 py-2 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                      required
+                      className="w-full rounded-xl border border-[#D5CABB] bg-[#FAF8F5] px-4 py-3 font-mono text-sm text-[#261F1A] focus:border-[#261F1A] focus:bg-white focus:outline-none"
                     />
-                  </label>
+                    <p className="mt-2 font-mono text-[11px] text-[#8A7C6E]">
+                      Operating timezone: {rule.timezone}
+                    </p>
+                  </div>
+
+                  {/* Time Slots */}
+                  <div className="lg:col-span-8">
+                    <label className="block font-mono text-xs uppercase tracking-wider text-[#615446] mb-2">
+                      Available Openings
+                    </label>
+
+                    {!date ? (
+                      <div className="rounded-xl border border-dashed border-[#DFD5C6] bg-[#FAF8F4] p-6 text-center font-mono text-xs text-[#8A7C6E]">
+                        Select a calendar date to view bookable hours.
+                      </div>
+                    ) : availableSlots.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-[#DFD5C6] bg-[#FAF8F4] p-6 text-center font-mono text-xs text-[#8A7C6E]">
+                        {tr("booking.sections.time.empty")}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-5">
+                        {availableSlots.map((slot) => {
+                          const active = slot === time;
+                          return (
+                            <button
+                              key={slot}
+                              type="button"
+                              onClick={() => {
+                                setTime(slot);
+                                setError(null);
+                              }}
+                              className={`rounded-lg border py-2.5 text-center font-mono text-xs font-semibold transition ${
+                                active
+                                  ? "border-[#261F1A] bg-[#261F1A] text-[#FAF6F0] shadow-sm"
+                                  : "border-[#DDD3C3] bg-[#FCFBF8] text-[#332A22] hover:border-[#736353] hover:bg-white"
+                              }`}
+                            >
+                              {slot}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
-            </section>
+              </div>
+            )}
 
-            {/* 3) Time */}
-            <section className="rounded-[28px] bg-white/70 p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.18)] ring-1 ring-white/60 backdrop-blur sm:p-6">
-              <h2 className="text-lg font-semibold">{tr("booking.sections.time.title")}</h2>
-
-              {!serviceId || !date ? (
-                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.time.needServiceDate")}</p>
-              ) : availableSlots.length === 0 ? (
-                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.time.empty")}</p>
-              ) : (
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                  {availableSlots.map((tm) => {
-                    const active = tm === time;
-                    return (
-                      <button
-                        key={tm}
-                        type="button"
-                        onClick={() => {
-                          setTime(tm);
-                          setError(null);
-                        }}
-                        className={[
-                          "rounded-2xl px-4 py-3 text-center text-sm font-semibold transition shadow-sm ring-1",
-                          active
-                            ? "bg-slate-900 text-white ring-slate-900"
-                            : "bg-white/90 text-slate-900 ring-slate-200 hover:-translate-y-0.5 hover:shadow-md"
-                        ].join(" ")}
-                      >
-                        {tm}
-                      </button>
-                    );
-                  })}
+            {/* STEP 4: PATRON MANIFEST & CONFIRMATION */}
+            {selectedService && date && time && (
+              <div className="border-t border-[#EDE5DA] pt-8">
+                <div className="border-b border-[#ECE4D8] pb-3 mb-6">
+                  <h2 className="font-serif text-2xl text-[#221C17]">
+                    IV. Patron Information
+                  </h2>
+                  <p className="font-mono text-xs text-[#7A6E5F] mt-1">
+                    Please specify the contact details for appointment updates
+                    and confirmations
+                  </p>
                 </div>
-              )}
-            </section>
 
-            {/* 4) Details */}
-            <section className="rounded-[28px] bg-white/70 p-5 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.18)] ring-1 ring-white/60 backdrop-blur sm:p-6">
-              <h2 className="text-lg font-semibold">{tr("booking.sections.details.title")}</h2>
-
-              {!selectedService || !date || !time ? (
-                <p className="mt-3 text-sm text-slate-600">{tr("booking.sections.details.needAll")}</p>
-              ) : (
-                <div className="mt-4 grid gap-4">
-                  <div className="rounded-[22px] bg-white/85 p-4 text-sm shadow-sm ring-1 ring-slate-100">
-                    <div className="font-semibold">{selectedService.name}</div>
-                    <div className="mt-1 text-slate-600">
-                      {date} • {time} • {tr("booking.common.minutes", { n: selectedService.durationMin })} •{" "}
-                      {formatMoney(selectedService.price, selectedService.currency)}
+                {/* Ticket Stub Summary */}
+                <div className="mb-8 rounded-xl border border-[#DCD0BE] bg-[#F7F2E9] p-5 shadow-inner">
+                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E3D9C9] pb-4">
+                    <div>
+                      <div className="font-serif text-lg font-bold text-[#2A221B]">
+                        {selectedService.name}
+                      </div>
+                      <div className="font-mono text-xs text-[#6F6151] mt-0.5">
+                        {date} • {time} ({rule.timezone}) •{" "}
+                        {selectedService.durationMin} Minutes
+                      </div>
+                    </div>
+                    <div className="text-right font-mono">
+                      <div className="text-xs uppercase text-[#7D6E5D]">
+                        Honorarium
+                      </div>
+                      <div className="text-xl font-bold text-[#8C6D2B]">
+                        {formatMoney(
+                          selectedService.price,
+                          selectedService.currency,
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="grid gap-1 text-sm">
-                      {tr("booking.form.fullName")}
-                      <input
-                        className="rounded-2xl bg-white/90 px-3 py-2 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder={tr("booking.form.fullNamePlaceholder")}
-                      />
-                    </label>
+                  {selectedStaffObj && (
+                    <div className="mt-3 font-mono text-xs text-[#6E6152]">
+                      Assigned Specialist:{" "}
+                      <strong className="text-[#261E18]">
+                        {selectedStaffObj.name}
+                      </strong>
+                    </div>
+                  )}
+                </div>
 
-                    <label className="grid gap-1 text-sm">
-                      {tr("booking.form.phone")}
-                      <input
-                        className="rounded-2xl bg-white/90 px-3 py-2 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder={tr("booking.form.phonePlaceholder")}
-                      />
-                    </label>
-                  </div>
-
-                  <label className="grid gap-1 text-sm">
-                    {tr("booking.form.emailLabel")}
+                {/* Form Fields */}
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="font-mono text-xs uppercase tracking-wider text-[#635547]">
+                      {tr("booking.form.fullName")} *
+                    </span>
                     <input
-                      type="email"
                       required
-                      className="rounded-2xl bg-white/90 px-3 py-2 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder={tr("booking.form.fullNamePlaceholder")}
+                      className="mt-1.5 h-12 w-full rounded-xl border border-[#D5CABB] bg-[#FAF8F5] px-4 font-sans text-sm text-[#261F1A] focus:border-[#261F1A] focus:bg-white focus:outline-none"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="font-mono text-xs uppercase tracking-wider text-[#635547]">
+                      {tr("booking.form.phone")} *
+                    </span>
+                    <input
+                      required
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder={tr("booking.form.phonePlaceholder")}
+                      className="mt-1.5 h-12 w-full rounded-xl border border-[#D5CABB] bg-[#FAF8F5] px-4 font-mono text-sm text-[#261F1A] focus:border-[#261F1A] focus:bg-white focus:outline-none"
+                    />
+                  </label>
+
+                  <label className="block sm:col-span-2">
+                    <span className="font-mono text-xs uppercase tracking-wider text-[#635547]">
+                      {tr("booking.form.emailLabel")} *
+                    </span>
+                    <input
+                      required
+                      type="email"
                       value={customerEmail}
                       onChange={(e) => setCustomerEmail(e.target.value)}
                       placeholder={tr("booking.form.emailPlaceholder")}
+                      className="mt-1.5 h-12 w-full rounded-xl border border-[#D5CABB] bg-[#FAF8F5] px-4 font-mono text-sm text-[#261F1A] focus:border-[#261F1A] focus:bg-white focus:outline-none"
                     />
                   </label>
 
-                  <label className="grid gap-1 text-sm">
-                    {tr("booking.form.notes")}
+                  <label className="block sm:col-span-2">
+                    <span className="font-mono text-xs uppercase tracking-wider text-[#635547]">
+                      {tr("booking.form.notes")}
+                    </span>
                     <textarea
-                      className="min-h-[110px] rounded-2xl bg-white/90 px-3 py-2 shadow-sm ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder={tr("booking.form.notesPlaceholder")}
+                      rows={3}
+                      className="mt-1.5 w-full rounded-xl border border-[#D5CABB] bg-[#FAF8F5] p-3 font-sans text-sm text-[#261F1A] focus:border-[#261F1A] focus:bg-white focus:outline-none"
                     />
                   </label>
+                </div>
 
+                <div className="mt-8">
                   <button
                     type="button"
                     disabled={submitting}
                     onClick={confirmBooking}
-                    className="
-                      rounded-2xl px-5 py-3 text-sm font-semibold text-white
-                      bg-gradient-to-r from-fuchsia-500 to-indigo-500
-                      shadow-[0_18px_40px_-18px_rgba(99,102,241,0.7)]
-                      hover:brightness-110 active:translate-y-[1px]
-                      disabled:opacity-60
-                    "
+                    className="w-full rounded-xl bg-[#221B16] py-4 font-mono text-xs font-bold uppercase tracking-widest text-[#FAF6F0] shadow-lg transition hover:bg-[#3B3028] active:translate-y-0.5 disabled:opacity-50"
                   >
-                    {submitting ? tr("booking.form.confirming") : tr("booking.form.confirm")}
+                    {submitting
+                      ? tr("booking.form.confirming")
+                      : `✦ ${tr("booking.form.confirm")} ✦`}
                   </button>
                 </div>
-              )}
-            </section>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* MAP + REVIEWS */}
-<div className="mt-8 grid gap-6 lg:grid-cols-2">
-  
-  {/* MAP */}
-  <div className="rounded-[32px] bg-white/80 p-5 shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-100 backdrop-blur sm:p-7">
-    <div className="flex items-start justify-between gap-3">
-      <div>
-        <h2 className="text-lg font-semibold">
-          {tr("booking.location.title")}
-        </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          {addr || tr("booking.location.noAddress")}
-        </p>
-      </div>
-
-      {addr ? (
-        <a
-          href={mapsOpen}
-          target="_blank"
-          rel="noreferrer"
-          className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
-        >
-          {tr("booking.location.openMaps")}
-        </a>
-      ) : null}
-    </div>
-
-    {addr ? (
-      <div className="mt-4 overflow-hidden rounded-[28px] bg-white shadow-sm ring-1 ring-slate-100">
-        <iframe
-          title={tr("booking.location.mapTitle", { name: business.name })}
-          src={mapsEmbed}
-          className="h-80 w-full"
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-        />
-      </div>
-    ) : (
-      <div className="mt-4 rounded-[22px] bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-slate-100">
-        {tr("booking.location.ownerNoAddress")}
-      </div>
-    )}
-  </div>
-
-  {/* REVIEWS */}
-<div className="rounded-[32px] bg-white/80 p-6 shadow-[0_30px_90px_-60px_rgba(15,23,42,0.35)] ring-1 ring-slate-100 backdrop-blur">
-  <div className="flex items-center justify-between">
-    <h2 className="text-lg font-semibold">Customer Reviews</h2>
-    <span className="text-sm text-slate-500">
-      {(business.ratingCount ?? 0) > 0
-        ? `⭐ ${Number(business.ratingAvg ?? 0).toFixed(1)} (${business.ratingCount})`
-        : "No reviews yet"}
-    </span>
-  </div>
-
-  <div className="mt-6 space-y-5">
-    {business.reviews?.length ? (
-      <>
-        {business.reviews.map((r, i) => (
-          <div key={`${r.customerName}-${r.createdAt}-${i}`} className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
-            <div className="flex items-center justify-between gap-3">
+        {/* MAP & ARCHIVAL REVIEWS SECTION */}
+        <div className="mt-12 grid gap-8 lg:grid-cols-2">
+          {/* Location / Atelier Address */}
+          <div className="rounded-2xl border border-[#DDD4C5] bg-[#F7F2E9] p-6 sm:p-8">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="font-semibold text-sm">{r.customerName}</div>
-                <div className="mt-1 text-sm text-amber-500">{stars(r.rating)}</div>
+                <h3 className="font-serif text-xl text-[#261F1A]">
+                  {tr("booking.location.title")}
+                </h3>
+                <p className="font-mono text-xs text-[#6F604F] mt-1">
+                  {addr || tr("booking.location.noAddress")}
+                </p>
               </div>
-              <div className="text-xs text-slate-500">{timeAgo(r.createdAt)}</div>
+              {addr && (
+                <a
+                  href={mapsOpen}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg border border-[#CEC1AF] bg-white px-3 py-1.5 font-mono text-xs text-[#332A22] hover:bg-[#FAF8F5]"
+                >
+                  {tr("booking.location.openMaps")} ↗
+                </a>
+              )}
             </div>
 
-            <div className="mt-2 text-sm text-slate-700">
-              {r.comment?.trim() || "Great service."}
+            {addr && (
+              <div className="mt-5 overflow-hidden rounded-xl border border-[#DCD0BF]">
+                <iframe
+                  title={tr("booking.location.mapTitle", {
+                    name: business.name,
+                  })}
+                  src={mapsEmbed}
+                  className="h-72 w-full grayscale-[25%] contrast-125"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Patron Reviews */}
+          <div className="rounded-2xl border border-[#DDD4C5] bg-[#F7F2E9] p-6 sm:p-8">
+            <div className="flex items-center justify-between border-b border-[#E7DDCE] pb-4">
+              <h3 className="font-serif text-xl text-[#261F1A]">
+                Patron Testimonials
+              </h3>
+              <span className="font-mono text-xs text-[#826628]">
+                {(business.ratingCount ?? 0) > 0
+                  ? `★ ${Number(business.ratingAvg ?? 0).toFixed(1)} (${business.ratingCount} Records)`
+                  : "New Atelier"}
+              </span>
+            </div>
+
+            <div className="mt-5 space-y-4 max-h-80 overflow-y-auto pr-1">
+              {business.reviews?.length ? (
+                business.reviews.map((r, i) => (
+                  <div
+                    key={`${r.customerName}-${i}`}
+                    className="rounded-xl border border-[#E4D9CA] bg-white p-4"
+                  >
+                    <div className="flex items-center justify-between font-mono text-xs">
+                      <span className="font-bold text-[#2A231D]">
+                        {r.customerName}
+                      </span>
+                      <span className="text-[#8C6D2B]">{stars(r.rating)}</span>
+                    </div>
+                    <p className="mt-2 font-serif text-sm italic text-[#4A3F33]">
+                      "{r.comment?.trim() || "Exemplary treatment."}"
+                    </p>
+                    <div className="mt-2 text-right font-mono text-[10px] text-[#9A8D7E]">
+                      {timeAgo(r.createdAt)}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl border border-dashed border-[#DDD2C2] p-8 text-center font-mono text-xs text-[#8A7C6E]">
+                  No archived client reviews yet.
+                </div>
+              )}
             </div>
           </div>
-        ))}
-
-        {(business.ratingCount ?? 0) > 6 ? (
-          <button className="mt-2 w-full rounded-2xl border border-slate-200 py-2 text-sm font-semibold hover:bg-slate-50">
-            View all reviews
-          </button>
-        ) : null}
-      </>
-    ) : (
-      <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600 ring-1 ring-slate-100">
-        No reviews yet.
-      </div>
-    )}
-  </div>
-</div>
-
-</div>
-      </div>
-    </section>
-  </main>
-);
+        </div>
+      </section>
+    </main>
+  );
 }

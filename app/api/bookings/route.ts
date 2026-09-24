@@ -71,8 +71,6 @@ function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-
-
 /**
  * GET /api/bookings?scope=owner
  * Used by dashboard BookingsPanel + stats
@@ -94,7 +92,7 @@ export async function GET(req: Request) {
         error: "Your free trial has ended. Please subscribe to continue.",
         code: "TRIAL_EXPIRED",
       },
-      402
+      402,
     );
   }
 
@@ -104,6 +102,7 @@ export async function GET(req: Request) {
     select: {
       id: true,
       startsAt: true,
+      endsAt: true,
       durationMin: true,
       serviceName: true,
       price: true,
@@ -113,12 +112,24 @@ export async function GET(req: Request) {
       customerCountry: true,
       notes: true,
       status: true,
+      staffId: true,
+      staff: {
+        select: {
+          id: true,
+          name: true,
+          title: true,
+        },
+      },
+      depositPaid: true,
+      depositAmount: true,
+      paymentStatus: true,
     },
   });
 
   const bookings = rows.map((b) => ({
     ...b,
     startsAt: asISO(b.startsAt),
+    endsAt: asISO(b.endsAt),
   }));
 
   return json({ bookings });
@@ -130,25 +141,32 @@ export async function GET(req: Request) {
  */
 export async function POST(req: Request) {
   if (!hasValidOrigin(req)) {
-  return json({ error: "Forbidden" }, 403);
-}
+    return json({ error: "Forbidden" }, 403);
+  }
+
   try {
-    const body = await req.json().catch(() => ({} as any));
+    const body = await req.json().catch(() => ({}) as any);
 
     const businessSlug = asString(body.businessSlug || body.slug).trim();
     const serviceName = asString(body.serviceName || body.service).trim();
 
     const durationMin = Number(body.durationMin ?? body.duration ?? 0);
     const price = Number(body.price ?? 0);
-    const currency = asString(body.currency ?? "EUR").trim().toUpperCase();
+    const currency = asString(body.currency ?? "EUR")
+      .trim()
+      .toUpperCase();
 
-    const startsAt = asString(body.startsAt || body.start).trim();
+    const startsAtStr = asString(body.startsAt || body.start).trim();
 
-    const customerName = asString(body.customerName || body.fullName || body.name).trim();
+    const customerName = asString(
+      body.customerName || body.fullName || body.name,
+    ).trim();
     const customerPhone = asString(body.customerPhone || body.phone).trim();
     const customerEmail = asString(body.customerEmail || body.email).trim();
 
-    const notes = body.notes == null ? null : asString(body.notes).trim() || null;
+    const staffId = body.staffId ? asString(body.staffId).trim() : null;
+    const notes =
+      body.notes == null ? null : asString(body.notes).trim() || null;
 
     const missing: string[] = [];
     if (!businessSlug) missing.push("businessSlug");
@@ -156,22 +174,29 @@ export async function POST(req: Request) {
     if (!durationMin || durationMin <= 0) missing.push("durationMin");
     if (!Number.isFinite(price)) missing.push("price");
     if (!currency) missing.push("currency");
-    if (!startsAt) missing.push("startsAt");
+    if (!startsAtStr) missing.push("startsAt");
     if (!customerName) missing.push("customerName");
     if (!customerPhone) missing.push("customerPhone");
     if (!customerEmail) missing.push("customerEmail");
 
     if (missing.length) {
       return json(
-        { error: "Missing fields", missing, receivedKeys: Object.keys(body ?? {}) },
-        400
+        {
+          error: "Missing fields",
+          missing,
+          receivedKeys: Object.keys(body ?? {}),
+        },
+        400,
       );
     }
 
-    if (!isIsoDate(startsAt)) {
+    if (!isIsoDate(startsAtStr)) {
       return json({ error: "startsAt must be an ISO datetime string." }, 400);
     }
-    
+
+    const startsAt = new Date(startsAtStr);
+    const endsAt = new Date(startsAt.getTime() + durationMin * 60 * 1000);
+
     const business = await prisma.business.findUnique({
       where: { slug: businessSlug },
       select: {
@@ -183,9 +208,10 @@ export async function POST(req: Request) {
         trialEndsAt: true,
         currentPeriodEnd: true,
         bookingApprovalRequired: true,
-        availabilityRule: {
+        availabilityRules: {
           select: {
             timezone: true,
+            staffId: true,
           },
         },
       },
@@ -201,10 +227,46 @@ export async function POST(req: Request) {
           error: "This business is not accepting bookings right now.",
           code: "SUBSCRIPTION_INACTIVE",
         },
-        402
+        402,
       );
     }
-    const bookingStatus = business.bookingApprovalRequired ? "PENDING" : "CONFIRMED";
+
+    // Verify staff belongs to this business if provided
+    let resolvedStaffId: string | null = null;
+    if (staffId) {
+      const validStaff = await prisma.staff.findFirst({
+        where: { id: staffId, businessId: business.id, isActive: true },
+        select: { id: true },
+      });
+      if (validStaff) {
+        resolvedStaffId = validStaff.id;
+      }
+    }
+
+    // Check for conflicting overlapping bookings if staff is selected
+    if (resolvedStaffId) {
+      const conflict = await prisma.booking.findFirst({
+        where: {
+          businessId: business.id,
+          staffId: resolvedStaffId,
+          status: { notIn: ["CANCELLED", "DECLINED"] },
+          startsAt: { lt: endsAt },
+          endsAt: { gt: startsAt },
+        },
+        select: { id: true },
+      });
+
+      if (conflict) {
+        return json(
+          { error: "That slot is already booked for this specialist." },
+          409,
+        );
+      }
+    }
+
+    const bookingStatus = business.bookingApprovalRequired
+      ? "PENDING"
+      : "CONFIRMED";
     const serviceId = body.serviceId ? asString(body.serviceId).trim() : null;
 
     let resolvedServiceId: string | null = null;
@@ -229,18 +291,20 @@ export async function POST(req: Request) {
         resolvedCategory = s.category;
       }
     }
-     
-    
+
+    // Create the booking with required endsAt and relational items
     const booking = await prisma.booking.create({
       data: {
         businessId: business.id,
         serviceId: resolvedServiceId,
+        staffId: resolvedStaffId,
         serviceCategory: resolvedCategory,
         serviceName,
         durationMin,
         price,
         currency,
-        startsAt: new Date(startsAt),
+        startsAt,
+        endsAt,
         customerName,
         customerPhone,
         customerEmail,
@@ -248,174 +312,211 @@ export async function POST(req: Request) {
         status: bookingStatus,
         statusUpdatedAt: new Date(),
         respondedAt: bookingStatus === "CONFIRMED" ? new Date() : null,
-       },
-       select: { id: true, status: true },
-     });
-     
-     console.log("🔥 BOOKING CREATED:", booking.id, booking.status);
+        paymentStatus: "UNPAID",
+        depositPaid: false,
+        ...(resolvedServiceId
+          ? {
+              items: {
+                create: {
+                  serviceId: resolvedServiceId,
+                  serviceName,
+                  durationMin,
+                  price,
+                },
+              },
+            }
+          : {}),
+      },
+      select: { id: true, status: true, startsAt: true, endsAt: true },
+    });
 
-     const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://slottick.com";
+    console.log("🔥 BOOKING CREATED:", booking.id, booking.status);
+
+    // Sync Client CRM Profile in the background
+    try {
+      await prisma.businessCustomerProfile.upsert({
+        where: {
+          businessId_phone: {
+            businessId: business.id,
+            phone: customerPhone,
+          },
+        },
+        create: {
+          businessId: business.id,
+          name: customerName,
+          phone: customerPhone,
+          email: customerEmail || null,
+          totalVisits: 1,
+        },
+        update: {
+          name: customerName,
+          email: customerEmail || undefined,
+          totalVisits: { increment: 1 },
+        },
+      });
+    } catch (crmErr) {
+      console.warn("Client CRM sync skipped/failed:", crmErr);
+    }
+
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+      "https://slottick.com";
     const locale = asString(body.locale).trim() || "en";
 
-let conversationId: string | null = null;
-let clientChatLink: string | null = null;
-let ownerRequestLink: string | null = null;
+    let conversationId: string | null = null;
+    let clientChatLink: string | null = null;
+    let ownerRequestLink: string | null = null;
 
+    // Pick staff rule timezone or default business rule timezone
+    const matchedRule =
+      business.availabilityRules.find((r) => r.staffId === resolvedStaffId) ||
+      business.availabilityRules.find((r) => !r.staffId) ||
+      business.availabilityRules[0];
 
-const businessTz = business.availabilityRule?.timezone || "UTC";
-const { date, time } = formatBookingDateParts(startsAt, businessTz);
-const priceText = formatMoneySimple(price, currency);
+    const businessTz = matchedRule?.timezone || "UTC";
+    const { date, time } = formatBookingDateParts(startsAtStr, businessTz);
+    const priceText = formatMoneySimple(price, currency);
 
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const clientTokenHash = hashToken(rawToken);
 
-  const rawToken = crypto.randomBytes(32).toString("hex");
-  const clientTokenHash = hashToken(rawToken);
+    const conversation = await prisma.bookingConversation.create({
+      data: {
+        bookingId: booking.id,
+        businessId: business.id,
+        clientTokenHash,
+        lastMessageAt: new Date(),
+        messages: {
+          create: {
+            senderType: "SYSTEM",
+            body:
+              booking.status === "PENDING"
+                ? `New request: ${customerName} wants ${serviceName} on ${date} at ${time}.`
+                : `Confirmed: ${customerName} booked ${serviceName} on ${date} at ${time}.`,
+          },
+        },
+      },
+      select: { id: true },
+    });
 
-  const conversation = await prisma.bookingConversation.create({
-    data: {
-      bookingId: booking.id,
-      businessId: business.id,
-      clientToken: rawToken,
-      clientTokenHash,
-      lastMessageAt: new Date(),
-      messages: {
-        create: {
-          senderType: "SYSTEM",
-          body:
-  booking.status === "PENDING"
-    ? `New request: ${customerName} wants ${serviceName} on ${date} at ${time}.`
-    : `Confirmed: ${customerName} booked ${serviceName} on ${date} at ${time}.`
-        }
-      }
-    },
-    select: { id: true }
-  });
+    conversationId = conversation.id;
+    clientChatLink = `${siteUrl}/${locale}/booking-chat/${rawToken}`;
+    ownerRequestLink = `${siteUrl}/${locale}/dashboard/inbox/${conversationId}`;
 
-  conversationId = conversation.id;
+    await prisma.notification.create({
+      data: {
+        businessId: business.id,
+        bookingId: booking.id,
+        type: "BOOKING_REQUEST",
+        title: "New booking request",
+        body: `${customerName} requested ${serviceName}`,
+      },
+    });
 
-  clientChatLink = `${siteUrl}/${locale}/booking-chat/${rawToken}`;
-  ownerRequestLink = `${siteUrl}/${locale}/dashboard/inbox/${conversationId}`;
-
-  await prisma.notification.create({
-    data: {
-      businessId: business.id,
-      bookingId: booking.id,
-      type: "BOOKING_REQUEST",
-      title: "New booking request",
-      body: `${customerName} requested ${serviceName}`
-    }
-  });
-
-  await sendPushToBusiness(business.id, {
-  title: booking.status === "PENDING" ? "New booking request" : "New booking",
-  body:
-    booking.status === "PENDING"
-      ? `${customerName} requested ${serviceName}`
-      : `${customerName} booked ${serviceName}`,
-  url: `/${locale}/dashboard/inbox/${conversationId}`,
-  tag: `booking-${booking.id}`
-});
-
-
-    
+    await sendPushToBusiness(business.id, {
+      title:
+        booking.status === "PENDING" ? "New booking request" : "New booking",
+      body:
+        booking.status === "PENDING"
+          ? `${customerName} requested ${serviceName}`
+          : `${customerName} booked ${serviceName}`,
+      url: `/${locale}/dashboard/inbox/${conversationId}`,
+      tag: `booking-${booking.id}`,
+    });
 
     const manageLink = `${siteUrl}/${locale}/book/${business.slug}/success?id=${encodeURIComponent(
-      booking.id
+      booking.id,
     )}`;
 
-    
-
     try {
-  if (booking.status === "CONFIRMED") {
-    await sendBookingConfirmationEmail({
-      to: customerEmail,
-      businessName: business.name,
-      serviceName,
-      date,
-      time,
-      durationMin,
-      priceText,
-      manageLink,
-      locale,
-    });
-  } else {
-   await sendClientFollowUpEmail({
-      to: customerEmail,
-      subject: `Booking request received: ${serviceName}`,
-      html: `
-        <p>Your booking request has been received.</p>
+      if (booking.status === "CONFIRMED") {
+        await sendBookingConfirmationEmail({
+          to: customerEmail,
+          businessName: business.name,
+          serviceName,
+          date,
+          time,
+          durationMin,
+          priceText,
+          manageLink,
+          locale,
+        });
+      } else {
+        await sendClientFollowUpEmail({
+          to: customerEmail,
+          subject: `Booking request received: ${serviceName}`,
+          html: `
+            <p>Your booking request has been received.</p>
+            <p>
+              <strong>Business:</strong> ${business.name}<br/>
+              <strong>Service:</strong> ${serviceName}<br/>
+              <strong>Date:</strong> ${date}<br/>
+              <strong>Time:</strong> ${time}
+            </p>
+            <p>The business will review your request and respond soon.</p>
+            ${
+              clientChatLink
+                ? `
+                  <p>
+                    <a
+                      href="${clientChatLink}"
+                      style="display:inline-block;padding:12px 18px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600"
+                    >
+                      Open booking chat
+                    </a>
+                  </p>
+                `
+                : ""
+            }
+          `,
+        });
+      }
 
-        <p>
-          <strong>Business:</strong> ${business.name}<br/>
-          <strong>Service:</strong> ${serviceName}<br/>
-          <strong>Date:</strong> ${date}<br/>
-          <strong>Time:</strong> ${time}
-        </p>
+      if (business.ownerEmail) {
+        const ownerLink = ownerRequestLink || `${siteUrl}/${locale}/dashboard`;
 
-        <p>The business will review your request and respond soon.</p>
-
-        ${
-          clientChatLink
-            ? `
-              <p>
-                <a
-                  href="${clientChatLink}"
-                  style="display:inline-block;padding:12px 18px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600"
-                >
-                  Open booking chat
-                </a>
-              </p>
-            `
-            : ""
-        }
-      `,
-    });
-  }
-
-  if (business.ownerEmail) {
-    const ownerLink = ownerRequestLink || `${siteUrl}/${locale}/dashboard`;
-
-    await sendClientFollowUpEmail({
-      to: business.ownerEmail,
-      subject:
-        booking.status === "PENDING"
-          ? `New booking request: ${serviceName}`
-          : `New booking: ${serviceName}`,
-      html: `
-        <p>You have a new ${booking.status === "PENDING" ? "booking request" : "booking"}.</p>
-
-        <p>
-          <strong>Customer:</strong> ${customerName}<br/>
-          <strong>Email:</strong> ${customerEmail}<br/>
-          <strong>Phone:</strong> ${customerPhone}<br/>
-          <strong>Service:</strong> ${serviceName}<br/>
-          <strong>Date:</strong> ${date}<br/>
-          <strong>Time:</strong> ${time}<br/>
-          <strong>Duration:</strong> ${durationMin} min<br/>
-          <strong>Price:</strong> ${priceText}
-          ${notes ? `<br/><strong>Notes:</strong> ${notes}` : ""}
-        </p>
-
-        <p>
-          <a
-            href="${ownerLink}"
-            style="display:inline-block;padding:12px 18px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600"
-          >
-            ${ownerRequestLink ? "Open booking request" : "Open dashboard"}
-          </a>
-        </p>
-      `,
-      replyTo: customerEmail,
-    });
-  }
-} catch (emailErr) {
-  console.error("Booking email send failed:", emailErr);
-}
+        await sendClientFollowUpEmail({
+          to: business.ownerEmail,
+          subject:
+            booking.status === "PENDING"
+              ? `New booking request: ${serviceName}`
+              : `New booking: ${serviceName}`,
+          html: `
+            <p>You have a new ${booking.status === "PENDING" ? "booking request" : "booking"}.</p>
+            <p>
+              <strong>Customer:</strong> ${customerName}<br/>
+              <strong>Email:</strong> ${customerEmail}<br/>
+              <strong>Phone:</strong> ${customerPhone}<br/>
+              <strong>Service:</strong> ${serviceName}<br/>
+              <strong>Date:</strong> ${date}<br/>
+              <strong>Time:</strong> ${time}<br/>
+              <strong>Duration:</strong> ${durationMin} min<br/>
+              <strong>Price:</strong> ${priceText}
+              ${notes ? `<br/><strong>Notes:</strong> ${notes}` : ""}
+            </p>
+            <p>
+              <a
+                href="${ownerLink}"
+                style="display:inline-block;padding:12px 18px;background:#0f172a;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600"
+              >
+                ${ownerRequestLink ? "Open booking request" : "Open dashboard"}
+              </a>
+            </p>
+          `,
+          replyTo: customerEmail,
+        });
+      }
+    } catch (emailErr) {
+      console.error("Booking email send failed:", emailErr);
+    }
 
     return json({ booking }, 200);
   } catch (err: any) {
     if (err?.code === "P2002") {
-      return json({ error: "That slot is already booked." }, 409);
+      return json(
+        { error: "That slot is already booked for this specialist." },
+        409,
+      );
     }
 
     console.error("POST /api/bookings failed:", err);

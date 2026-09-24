@@ -7,12 +7,12 @@ import { formatMoney } from "@/lib/services";
 import AvailabilityEditor from "./availability";
 import ServicesEditor from "./services";
 import BookingsPanel from "./bookings";
-import SchedulePanel from "./schedule";
 import DashboardHeader from "./dashboard-header";
 import Inbox from "./inbox";
 import PushToggle from "./push-toggle";
 import ShareLinkCard from "./share-link-card";
 import StatsSection from "./stats-section";
+import StaffEditor from "./staff"; // Team / Specialists Manager
 
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
@@ -34,9 +34,11 @@ type Props = {
     postalCode?: string | null;
 
     logoUrl?: string | null;
+    heroTag?: string | null;
 
     description?: string | null;
 
+    bookingApprovalRequired?: boolean;
     subscriptionStatus?: string | null;
     trialEndsAt?: string | null;
     currentPeriodEnd?: string | null;
@@ -54,7 +56,8 @@ type DbBooking = {
   customerPhone: string;
   customerCountry?: string | null;
   notes?: string | null;
-  status: "CONFIRMED" | "CANCELLED";
+  status: "CONFIRMED" | "PENDING" | "CANCELLED" | "DONE" | "DECLINED";
+  staffId?: string | null;
 };
 
 type GalleryImage = {
@@ -171,9 +174,7 @@ function BookingGalleryManager({ locale }: { locale: string }) {
     try {
       const res = await fetch(
         `/api/uploads/gallery?id=${encodeURIComponent(id)}`,
-        {
-          method: "DELETE",
-        },
+        { method: "DELETE" },
       );
       const data = await res.json().catch(() => ({}));
       if (!res.ok)
@@ -438,7 +439,7 @@ function BookingDescriptionEditor({
 
     setSaving(true);
     try {
-      const res = await fetch("/api/owner/me", {
+      const res = await fetch("/api/business", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: trimmed || null }),
@@ -544,6 +545,10 @@ export default function DashboardClient({ locale, business }: Props) {
   const [country, setCountry] = useState(business.country ?? "");
   const [street, setStreet] = useState(business.street ?? "");
   const [postalCode, setPostalCode] = useState(business.postalCode ?? "");
+  const [heroTag, setHeroTag] = useState(business.heroTag ?? "");
+  const [bookingApprovalRequired, setBookingApprovalRequired] = useState(
+    Boolean(business.bookingApprovalRequired),
+  );
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>(
@@ -616,7 +621,9 @@ export default function DashboardClient({ locale, business }: Props) {
   const stats = useMemo(() => {
     const now = new Date();
     const nowMs = now.getTime();
-    const active = bookings.filter((b) => b.status !== "CANCELLED");
+    const active = bookings.filter(
+      (b) => b.status !== "CANCELLED" && b.status !== "DECLINED",
+    );
     const totalBookings = active.length;
 
     const customerKeys = new Set<string>();
@@ -627,9 +634,11 @@ export default function DashboardClient({ locale, business }: Props) {
     }
     const uniqueCustomers = customerKeys.size;
 
+    // Confirmed or Done appointments in the past count toward revenue
     const revenueSource = active.filter(
       (b) =>
-        b.status === "CONFIRMED" && new Date(b.startsAt).getTime() <= nowMs,
+        (b.status === "CONFIRMED" || b.status === "DONE") &&
+        new Date(b.startsAt).getTime() <= nowMs,
     );
 
     const weekStart = startOfWeekMonday(now).getTime();
@@ -712,6 +721,8 @@ export default function DashboardClient({ locale, business }: Props) {
     setCountry(biz.country ?? "");
     setStreet(biz.street ?? "");
     setPostalCode(biz.postalCode ?? "");
+    setHeroTag(biz.heroTag ?? "");
+    setBookingApprovalRequired(Boolean(biz.bookingApprovalRequired));
 
     setLogoFile(null);
     setLogoPreview(biz.logoUrl ?? "");
@@ -789,12 +800,14 @@ export default function DashboardClient({ locale, business }: Props) {
         country: cc,
         street: street.trim() || null,
         postalCode: postalCode.trim() || null,
+        heroTag: heroTag.trim() || null,
+        bookingApprovalRequired,
       };
 
       if (uploadedLogoUrl) payload.logoUrl = uploadedLogoUrl;
       if (removeLogo) payload.logoUrl = null;
 
-      const res = await fetch("/api/owner/me", {
+      const res = await fetch("/api/business", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -822,6 +835,11 @@ export default function DashboardClient({ locale, business }: Props) {
         country: data?.business?.country ?? cc,
         street: data?.business?.street ?? (street.trim() || null),
         postalCode: data?.business?.postalCode ?? (postalCode.trim() || null),
+        heroTag: data?.business?.heroTag ?? (heroTag.trim() || null),
+        bookingApprovalRequired:
+          typeof data?.business?.bookingApprovalRequired !== "undefined"
+            ? data.business.bookingApprovalRequired
+            : bookingApprovalRequired,
         logoUrl:
           typeof data?.business?.logoUrl !== "undefined"
             ? data.business.logoUrl
@@ -987,6 +1005,36 @@ export default function DashboardClient({ locale, business }: Props) {
                   onChange={(e) => setPostalCode(e.target.value)}
                 />
               </label>
+
+              <label className="space-y-1.5">
+                <span className="font-mono text-xs font-bold uppercase text-slate-700">
+                  Hero Tagline
+                </span>
+                <input
+                  className="h-11 w-full rounded-2xl border border-slate-300/80 bg-white/90 px-4 text-sm font-medium text-slate-900 focus:border-slate-800 focus:bg-white focus:outline-none"
+                  value={heroTag}
+                  onChange={(e) => setHeroTag(e.target.value)}
+                  placeholder="e.g. Master Barbers & Skin Specialists"
+                />
+              </label>
+
+              {/* Booking Approval Setting Switch */}
+              <div className="flex items-center justify-between rounded-2xl border border-slate-300/80 bg-slate-100/70 p-4">
+                <div>
+                  <div className="font-mono text-xs font-bold uppercase text-slate-800">
+                    Require Booking Approval
+                  </div>
+                  <div className="mt-0.5 text-xs text-slate-500">
+                    New appointments start as Pending requests
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={bookingApprovalRequired}
+                  onChange={(e) => setBookingApprovalRequired(e.target.checked)}
+                  className="h-5 w-5 rounded accent-slate-900 cursor-pointer"
+                />
+              </div>
             </div>
 
             {/* Logo Customization */}
@@ -1090,23 +1138,24 @@ export default function DashboardClient({ locale, business }: Props) {
           </div>
         </div>
 
-        {/* GALLERY MANAGER */}
-        <BookingGalleryManager locale={locale} />
-
-        {/* DESCRIPTION / BIO EDITOR */}
-        <BookingDescriptionEditor
-          locale={locale}
-          initial={bookingDesc}
-          onSaved={(next) => {
-            setBookingDesc(next);
-            setBiz((prev) => ({ ...prev, description: next || null }));
-            router.refresh();
-          }}
-        />
+        {/* TEAM & SPECIALISTS MANAGER */}
+        <section className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
+          <div className="border-b border-slate-300/70 pb-4">
+            <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+              Staff & Specialists
+            </h2>
+            <p className="mt-1 text-sm font-bold text-slate-900">
+              Manage your barbers, stylists, chairs, and individual schedules.
+            </p>
+          </div>
+          <div className="mt-6">
+            <StaffEditor locale={locale} />
+          </div>
+        </section>
 
         {/* TWO-COLUMN INBOX & OPERATIONS SPLIT */}
         <div className="grid gap-8 lg:grid-cols-12">
-          {/* Left Column: Inbox & Confirmed Bookings */}
+          {/* Left Column: Inbox & Bookings */}
           <div className="space-y-8 lg:col-span-7">
             <div className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
               <div className="border-b border-slate-300/70 pb-4">
@@ -1168,6 +1217,20 @@ export default function DashboardClient({ locale, business }: Props) {
             </div>
           </div>
         </div>
+
+        {/* GALLERY MANAGER */}
+        <BookingGalleryManager locale={locale} />
+
+        {/* DESCRIPTION / BIO EDITOR */}
+        <BookingDescriptionEditor
+          locale={locale}
+          initial={bookingDesc}
+          onSaved={(next) => {
+            setBookingDesc(next);
+            setBiz((prev) => ({ ...prev, description: next || null }));
+            router.refresh();
+          }}
+        />
       </div>
     </div>
   );

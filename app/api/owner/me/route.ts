@@ -44,42 +44,67 @@ function trialExpiredResponse() {
   return json(
     {
       error: "Your free trial has ended. Please subscribe to continue.",
-      code: "TRIAL_EXPIRED"
+      code: "TRIAL_EXPIRED",
     },
-    402
+    402,
   );
 }
 
 export async function GET() {
-  const business = await getAuthedBusiness();
-  if (!business) return json({ error: "Unauthorized" }, 401);
+  const authed = await getAuthedBusiness();
+  if (!authed) return json({ error: "Unauthorized" }, 401);
 
-  if (!businessHasAccess(business)) {
+  if (!businessHasAccess(authed)) {
     return trialExpiredResponse();
   }
 
+  const business = await prisma.business.findUnique({
+    where: { id: authed.id },
+    select: {
+      createdAt: true,
+      name: true,
+      slug: true,
+      website: true,
+      ownerEmail: true,
+      industry: true,
+      city: true,
+      country: true,
+      street: true,
+      postalCode: true,
+      logoUrl: true,
+      heroTag: true,
+      description: true,
+      bookingApprovalRequired: true,
+      subscriptionStatus: true,
+      trialEndsAt: true,
+      currentPeriodEnd: true,
+      _count: {
+        select: {
+          staff: true,
+          services: true,
+        },
+      },
+    },
+  });
+
+  if (!business) return json({ error: "Business not found." }, 404);
+
   return json({
     business: {
+      ...business,
       createdAt: business.createdAt.toISOString(),
-      name: business.name,
-      slug: business.slug,
-      website: business.website,
-      ownerEmail: business.ownerEmail,
-      industry: business.industry,
-      city: business.city,
-      country: business.country,
-      street: business.street,
-      postalCode: business.postalCode,
-      logoUrl: business.logoUrl,
-      description: business.description ?? null
-    }
+      trialEndsAt: business.trialEndsAt?.toISOString() ?? null,
+      currentPeriodEnd: business.currentPeriodEnd?.toISOString() ?? null,
+      description: business.description ?? null,
+    },
   });
 }
 
 export async function PATCH(req: Request) {
   if (!hasValidOrigin(req)) {
-  return json({ error: "Forbidden" }, 403);
-}
+    return json({ error: "Forbidden" }, 403);
+  }
+
   const authed = await getAuthedBusiness();
   if (!authed) return json({ error: "Unauthorized" }, 401);
 
@@ -104,7 +129,9 @@ export async function PATCH(req: Request) {
   }
 
   if (body.country !== undefined) {
-    const country = String(body.country ?? "").trim().toUpperCase();
+    const country = String(body.country ?? "")
+      .trim()
+      .toUpperCase();
     if (!country || country.length < 2) {
       return json({ error: "Country code is required (e.g. EE)." }, 400);
     }
@@ -117,22 +144,35 @@ export async function PATCH(req: Request) {
   }
 
   if (body.postalCode !== undefined) {
-    const postalRaw = body.postalCode == null ? null : String(body.postalCode).trim();
+    const postalRaw =
+      body.postalCode == null ? null : String(body.postalCode).trim();
     data.postalCode = postalRaw ? postalRaw : null;
   }
 
   if (body.website !== undefined) {
-    const website = normalizeWebsite(body.website == null ? null : String(body.website));
-    if (!isValidHttpUrlOrNull(website)) return json({ error: "Website URL is invalid." }, 400);
+    const website = normalizeWebsite(
+      body.website == null ? null : String(body.website),
+    );
+    if (!isValidHttpUrlOrNull(website))
+      return json({ error: "Website URL is invalid." }, 400);
     data.website = website;
   }
 
   if (body.logoUrl !== undefined) {
     const logoUrl =
       body.logoUrl == null ? null : String(body.logoUrl).trim() || null;
-
-    if (!isValidLogoUrlOrNull(logoUrl)) return json({ error: "Logo URL is invalid." }, 400);
+    if (!isValidLogoUrlOrNull(logoUrl))
+      return json({ error: "Logo URL is invalid." }, 400);
     data.logoUrl = logoUrl;
+  }
+
+  if (body.heroTag !== undefined) {
+    const tag = body.heroTag == null ? null : String(body.heroTag).trim();
+    data.heroTag = tag || null;
+  }
+
+  if (body.bookingApprovalRequired !== undefined) {
+    data.bookingApprovalRequired = Boolean(body.bookingApprovalRequired);
   }
 
   if (body.description !== undefined) {
@@ -165,24 +205,28 @@ export async function PATCH(req: Request) {
       street: true,
       postalCode: true,
       logoUrl: true,
-      description: true
-    }
+      heroTag: true,
+      description: true,
+      bookingApprovalRequired: true,
+      subscriptionStatus: true,
+      trialEndsAt: true,
+      currentPeriodEnd: true,
+      _count: {
+        select: {
+          staff: true,
+          services: true,
+        },
+      },
+    },
   });
 
   return json({
     business: {
+      ...updated,
       createdAt: updated.createdAt.toISOString(),
-      name: updated.name,
-      slug: updated.slug,
-      website: updated.website,
-      ownerEmail: updated.ownerEmail,
-      industry: updated.industry,
-      city: updated.city,
-      country: updated.country,
-      street: updated.street,
-      postalCode: updated.postalCode,
-      logoUrl: updated.logoUrl,
-      description: updated.description ?? null
-    }
+      trialEndsAt: updated.trialEndsAt?.toISOString() ?? null,
+      currentPeriodEnd: updated.currentPeriodEnd?.toISOString() ?? null,
+      description: updated.description ?? null,
+    },
   });
 }

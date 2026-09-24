@@ -36,52 +36,92 @@ function toICSLocalInTZ(date: Date, timeZone: string) {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    hour12: false
+    hour12: false,
   }).formatToParts(date);
 
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
 
   return `${get("year")}${get("month")}${get("day")}T${get("hour")}${get(
-    "minute"
+    "minute",
   )}${get("second")}`;
 }
 
 export async function GET(
   _req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
 
   const booking = await prisma.booking.findUnique({
     where: { id },
     include: {
+      staff: {
+        select: {
+          id: true,
+          name: true,
+          title: true,
+        },
+      },
       business: {
-        include: { availabilityRule: true }
-      }
-    }
+        include: {
+          availabilityRules: {
+            select: {
+              timezone: true,
+              staffId: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!booking) {
-    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    return NextResponse.json(
+      { ok: false, error: "Not found" },
+      { status: 404 },
+    );
   }
 
-  const businessTZ = booking.business?.availabilityRule?.timezone || "UTC";
+  // Resolve timezone: staff override -> business default -> UTC
+  const rules = booking.business?.availabilityRules || [];
+  const matchedRule =
+    rules.find((r) => r.staffId === booking.staffId) ||
+    rules.find((r) => !r.staffId) ||
+    rules[0];
+
+  const businessTZ = matchedRule?.timezone || "UTC";
 
   const start = new Date(booking.startsAt);
-  const end = new Date(start.getTime() + booking.durationMin * 60 * 1000);
+  const end = booking.endsAt
+    ? new Date(booking.endsAt)
+    : new Date(start.getTime() + booking.durationMin * 60 * 1000);
 
   const uid = `booking-${booking.id}@slottick`;
   const dtstamp = toICSUTC(new Date());
 
-  const title = `${booking.serviceName ?? "Appointment"} — ${
+  const staffLabel = booking.staff?.name ? ` with ${booking.staff.name}` : "";
+  const title = `${booking.serviceName ?? "Appointment"}${staffLabel} — ${
     booking.business?.name ?? "Slottick"
   }`;
 
-  const location = [booking.business?.city, booking.business?.country]
+  const location = [
+    booking.business?.street,
+    booking.business?.city,
+    booking.business?.country,
+  ]
     .filter(Boolean)
     .join(", ");
 
-  const description = `Booking with ${booking.business?.name ?? "business"}`;
+  const description = [
+    `Appointment: ${booking.serviceName ?? "Service"}`,
+    booking.staff?.name
+      ? `Specialist: ${booking.staff.name}${booking.staff.title ? ` (${booking.staff.title})` : ""}`
+      : "",
+    `Business: ${booking.business?.name ?? "Slottick"}`,
+    booking.notes ? `Client Notes: ${booking.notes}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const DTSTART =
     businessTZ === "UTC"
@@ -113,7 +153,7 @@ export async function GET(
     "DESCRIPTION:Reminder",
     "END:VALARM",
     "END:VEVENT",
-    "END:VCALENDAR"
+    "END:VCALENDAR",
   ]
     .filter(Boolean)
     .join("\r\n");
@@ -122,7 +162,7 @@ export async function GET(
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
       "Content-Disposition": `attachment; filename="booking-${booking.id}.ics"`,
-      "Cache-Control": "private, max-age=0, must-revalidate"
-    }
+      "Cache-Control": "private, max-age=0, must-revalidate",
+    },
   });
 }
