@@ -2,17 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  robots: { index: false, follow: false }
-};
-
+import Link from "next/link";
 
 export default function ResetPasswordClient({
   locale,
   token,
-  email
+  email,
 }: {
   locale: string;
   token: string;
@@ -38,7 +33,7 @@ export default function ResetPasswordClient({
       const res = await fetch("/api/auth/reset/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: addr.trim().toLowerCase() })
+        body: JSON.stringify({ email: addr.trim().toLowerCase() }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -58,14 +53,15 @@ export default function ResetPasswordClient({
 
     setMsg(null);
     if (!token) return setMsg("Missing token.");
-    if (newPassword.length < 6) return setMsg("Password must be at least 6 characters.");
+    if (newPassword.length < 6)
+      return setMsg("Password must be at least 6 characters.");
 
     setLoading(true);
     try {
       const res = await fetch("/api/auth/reset/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword })
+        body: JSON.stringify({ token, newPassword }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -81,84 +77,106 @@ export default function ResetPasswordClient({
   }
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <div className="mx-auto max-w-md px-6 py-14">
-        <section className="rounded-3xl border border-slate-200 p-8 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-slate-600">Slotta</p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight">
-                Reset password
-              </h1>
-              <p className="mt-2 text-slate-600">
-                {hasToken
-                  ? "Set a new password for your account."
-                  : "Request a reset link to your email (placeholder: console)."}
-              </p>
+    <div className="relative flex min-h-[calc(100vh-4rem)] w-full items-center justify-center px-4 py-12 sm:px-6">
+      {/* Ambient background glow accents */}
+      <div className="pointer-events-none absolute -top-12 h-64 w-64 rounded-full bg-lime-200/40 blur-3xl sm:h-80 sm:w-80" />
+      <div className="pointer-events-none absolute -bottom-12 h-64 w-64 rounded-full bg-slate-400/30 blur-3xl sm:h-80 sm:w-80" />
+
+      {/* Main Glassmorphic Auth Card */}
+      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-9">
+        {/* Header Ribbon */}
+        <div className="flex items-start justify-between gap-4 border-b border-slate-300/70 pb-6">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-lime-300/80 bg-lime-100 font-mono text-xs font-bold text-lime-950 shadow-xs">
+                ✓
+              </span>
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+                Slottick Security
+              </span>
             </div>
 
-            <a className="text-sm underline text-slate-600" href={`/${locale}/login`}>
-              Back
-            </a>
+            <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              Reset password
+            </h1>
+            <p className="mt-1 text-xs text-slate-600 sm:text-sm">
+              {hasToken
+                ? "Set a new password for your account."
+                : "Request a reset link to your verified email."}
+            </p>
           </div>
 
-          {msg ? (
-            <div className="mt-6 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              {msg}
+          <Link
+            href={`/${locale}/login`}
+            className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-1.5 font-mono text-xs font-semibold text-slate-600 shadow-2xs backdrop-blur-sm transition-all hover:bg-white hover:text-slate-950"
+          >
+            Back
+          </Link>
+        </div>
+
+        {/* Feedback / Alert Message */}
+        {msg ? (
+          <div className="mt-5 rounded-2xl border border-slate-300/80 bg-slate-100/90 px-4 py-3 font-mono text-xs font-medium text-slate-800 shadow-2xs backdrop-blur-sm">
+            {msg}
+          </div>
+        ) : null}
+
+        {/* Request Form (No Token) */}
+        {!hasToken ? (
+          <form onSubmit={requestReset} className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <label className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700">
+                Email Address
+              </label>
+              <input
+                type="email"
+                className="w-full rounded-2xl border border-slate-300/80 bg-white/90 px-4 py-3 font-mono text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none"
+                value={addr}
+                onChange={(e) => setAddr(e.target.value)}
+                placeholder="you@domain.com"
+                required
+              />
             </div>
-          ) : null}
 
-          {!hasToken ? (
-            <form onSubmit={requestReset} className="mt-8 grid gap-4">
-              <label className="grid gap-1 text-sm">
-                Email
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  type="email"
-                  value={addr}
-                  onChange={(e) => setAddr(e.target.value)}
-                  placeholder="you@domain.com"
-                  required
-                />
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 flex w-full items-center justify-center rounded-2xl border border-lime-300/80 bg-lime-100 px-6 py-3.5 font-mono text-xs font-bold uppercase tracking-wider text-lime-950 shadow-xs transition-all hover:bg-lime-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Sending..." : "Send Reset Link →"}
+            </button>
+
+            <p className="border-t border-slate-300/60 pt-3 text-center font-mono text-[11px] text-slate-500">
+              For now, the link prints in your server terminal.
+            </p>
+          </form>
+        ) : (
+          /* Confirm Reset Form (With Token) */
+          <form onSubmit={confirmReset} className="mt-6 space-y-4">
+            <div className="space-y-1.5">
+              <label className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700">
+                New Password
               </label>
+              <input
+                type="password"
+                className="w-full rounded-2xl border border-slate-300/80 bg-white/90 px-4 py-3 font-mono text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••••••"
+                required
+              />
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-              >
-                {loading ? "Sending..." : "Send reset link"}
-              </button>
-
-              <p className="text-xs text-slate-500">
-                For now, the link prints in your terminal. Next step: real email.
-              </p>
-            </form>
-          ) : (
-            <form onSubmit={confirmReset} className="mt-8 grid gap-4">
-              <label className="grid gap-1 text-sm">
-                New password
-                <input
-                  className="rounded-xl border border-slate-200 px-3 py-2"
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-              </label>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-              >
-                {loading ? "Updating..." : "Update password"}
-              </button>
-            </form>
-          )}
-        </section>
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 flex w-full items-center justify-center rounded-2xl border border-lime-300/80 bg-lime-100 px-6 py-3.5 font-mono text-xs font-bold uppercase tracking-wider text-lime-950 shadow-xs transition-all hover:bg-lime-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Updating..." : "Update Password →"}
+            </button>
+          </form>
+        )}
       </div>
-    </main>
+    </div>
   );
 }

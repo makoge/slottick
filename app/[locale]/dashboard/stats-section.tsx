@@ -5,9 +5,9 @@ import { t } from "@/lib/i18n";
 
 type StatCardProps = {
   title: string;
+  badgeText?: string;
   value?: string;
   sub?: string;
-  tone?: "blue" | "green" | "purple";
   children?: React.ReactNode;
 };
 
@@ -23,100 +23,106 @@ type Props = {
   };
 };
 
-const tones = {
-  blue: "bg-blue-50 border-blue-200",
-  green: "bg-emerald-50 border-emerald-200",
-  purple: "bg-purple-50 border-purple-200"
-};
-
-function StatCard({
-  title,
-  value,
-  sub,
-  tone = "blue",
-  children
-}: StatCardProps) {
+function StatCard({ title, badgeText, value, sub, children }: StatCardProps) {
   return (
-    <div className={`rounded-2xl border p-5 shadow-sm ${tones[tone]}`}>
-      <div className="text-sm font-medium text-slate-600">{title}</div>
-      {value && (
-        <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-          {value}
+    <div className="relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl transition-all hover:border-slate-400/60 hover:bg-white/85">
+      <div>
+        <div className="flex items-center justify-between gap-2 border-b border-slate-300/70 pb-3">
+          <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+            {title}
+          </span>
+          {badgeText && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-lime-300/80 bg-lime-100 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-lime-950">
+              <span className="h-1.5 w-1.5 rounded-full bg-lime-700" />
+              {badgeText}
+            </span>
+          )}
+        </div>
+
+        {value && (
+          <div className="mt-4 font-mono text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            {value}
+          </div>
+        )}
+
+        {children && <div className="mt-4 space-y-2.5">{children}</div>}
+      </div>
+
+      {sub && (
+        <div className="mt-4 border-t border-slate-200/80 pt-3 font-mono text-[11px] text-slate-500">
+          {sub}
         </div>
       )}
-      {sub && <div className="mt-1 text-sm text-slate-500">{sub}</div>}
-      {children && <div className="mt-3">{children}</div>}
     </div>
   );
 }
 
-export default function StatsSection({
-  messages,
-  statsLoading,
-  stats
-}: Props) {
+export default function StatsSection({ messages, statsLoading, stats }: Props) {
   return (
-    <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {/* TOTAL BOOKINGS */}
       <StatCard
         title={t(messages, "dashboard.stats.totalBookings.title")}
+        badgeText="Lifetime"
         value={statsLoading ? "—" : String(stats.totalBookings)}
         sub={
           statsLoading
             ? t(messages, "common.loading")
             : t(messages, "dashboard.stats.totalBookings.sub")
         }
-        tone="blue"
       />
 
+      {/* REVENUE BREAKDOWN */}
       <StatCard
         title={t(messages, "dashboard.stats.revenue.title")}
+        badgeText="Gross Vol"
         sub={
           statsLoading
             ? t(messages, "common.loading")
             : t(messages, "dashboard.stats.revenue.sub")
         }
-        tone="green"
       >
-        <div className="grid gap-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+        <div className="space-y-2 rounded-2xl border border-slate-300/80 bg-slate-100/70 p-3.5 backdrop-blur-xs">
+          <div className="flex items-center justify-between gap-2">
+            <span className="rounded-md border border-lime-300/80 bg-lime-100 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-lime-950">
               {t(messages, "dashboard.stats.revenue.weekly")}
             </span>
-            <span className="font-semibold text-slate-900">
+            <span className="font-mono text-sm font-bold text-slate-900">
               {statsLoading ? "—" : stats.weeklyRevenue}
             </span>
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+          <div className="flex items-center justify-between gap-2 border-t border-slate-200/70 pt-2">
+            <span className="rounded-md border border-lime-300/80 bg-lime-100 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-lime-950">
               {t(messages, "dashboard.stats.revenue.monthly")}
             </span>
-            <span className="font-semibold text-slate-900">
+            <span className="font-mono text-sm font-bold text-slate-900">
               {statsLoading ? "—" : stats.monthlyRevenue}
             </span>
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+          <div className="flex items-center justify-between gap-2 border-t border-slate-200/70 pt-2">
+            <span className="rounded-md border border-lime-300/80 bg-lime-100 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-lime-950">
               {t(messages, "dashboard.stats.revenue.yearly")}
             </span>
-            <span className="font-semibold text-slate-900">
+            <span className="font-mono text-sm font-bold text-slate-900">
               {statsLoading ? "—" : stats.yearlyRevenue}
             </span>
           </div>
         </div>
       </StatCard>
 
+      {/* UNIQUE CLIENTS */}
       <StatCard
         title={t(messages, "dashboard.stats.customers.title")}
+        badgeText="Verified"
         value={statsLoading ? "—" : String(stats.uniqueCustomers)}
         sub={
           statsLoading
             ? t(messages, "common.loading")
             : t(messages, "dashboard.stats.customers.sub")
         }
-        tone="purple"
       />
-    </div>
+    </section>
   );
 }

@@ -14,10 +14,8 @@ import PushToggle from "./push-toggle";
 import ShareLinkCard from "./share-link-card";
 import StatsSection from "./stats-section";
 
-
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
-
 
 type Props = {
   locale: string;
@@ -37,7 +35,6 @@ type Props = {
 
     logoUrl?: string | null;
 
-    // ✅ new field (stored on Business)
     description?: string | null;
 
     subscriptionStatus?: string | null;
@@ -60,37 +57,12 @@ type DbBooking = {
   status: "CONFIRMED" | "CANCELLED";
 };
 
-type StatCardProps = {
-  title: string;
-  value?: string;
-  sub?: string;
-  tone?: "blue" | "green" | "purple";
-  children?: React.ReactNode;
-};
-
 type GalleryImage = {
   id: string;
   url: string;
   sort: number;
   createdAt?: string;
 };
-
-const tones = {
-  blue: "bg-blue-50 border-blue-200",
-  green: "bg-emerald-50 border-emerald-200",
-  purple: "bg-purple-50 border-purple-200"
-};
-
-function StatCard({ title, value, sub, tone = "blue", children }: StatCardProps) {
-  return (
-    <div className={`rounded-2xl border p-5 shadow-sm ${tones[tone]}`}>
-      <div className="text-sm font-medium text-slate-600">{title}</div>
-      {value && <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{value}</div>}
-      {sub && <div className="mt-1 text-sm text-slate-500">{sub}</div>}
-      {children && <div className="mt-3">{children}</div>}
-    </div>
-  );
-}
 
 function startOfWeekMonday(d: Date) {
   const day = d.getDay();
@@ -141,7 +113,10 @@ function BookingGalleryManager({ locale }: { locale: string }) {
     try {
       const res = await fetch("/api/uploads/gallery", { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.gallery.errors.loadFailed"));
+      if (!res.ok)
+        throw new Error(
+          data?.error || t(messages, "dashboard.gallery.errors.loadFailed"),
+        );
       setImages(Array.isArray(data.images) ? data.images : []);
     } catch (e: any) {
       setErr(e?.message || t(messages, "dashboard.gallery.errors.loadFailed"));
@@ -166,11 +141,14 @@ function BookingGalleryManager({ locale }: { locale: string }) {
 
         const res = await fetch("/api/uploads/gallery", {
           method: "POST",
-          body: form
+          body: form,
         });
 
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.gallery.errors.uploadFailed"));
+        if (!res.ok)
+          throw new Error(
+            data?.error || t(messages, "dashboard.gallery.errors.uploadFailed"),
+          );
 
         const img = data?.image;
         if (img?.id && img?.url) {
@@ -178,7 +156,9 @@ function BookingGalleryManager({ locale }: { locale: string }) {
         }
       }
     } catch (e: any) {
-      setErr(e?.message || t(messages, "dashboard.gallery.errors.uploadFailed"));
+      setErr(
+        e?.message || t(messages, "dashboard.gallery.errors.uploadFailed"),
+      );
     } finally {
       setUploading(false);
     }
@@ -189,14 +169,22 @@ function BookingGalleryManager({ locale }: { locale: string }) {
     const prev = images;
     setImages((x) => x.filter((i) => i.id !== id));
     try {
-      const res = await fetch(`/api/uploads/gallery?id=${encodeURIComponent(id)}`, {
-        method: "DELETE"
-      });
+      const res = await fetch(
+        `/api/uploads/gallery?id=${encodeURIComponent(id)}`,
+        {
+          method: "DELETE",
+        },
+      );
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.gallery.errors.deleteFailed"));
+      if (!res.ok)
+        throw new Error(
+          data?.error || t(messages, "dashboard.gallery.errors.deleteFailed"),
+        );
       setImages(Array.isArray(data.images) ? data.images : []);
     } catch (e: any) {
-      setErr(e?.message || t(messages, "dashboard.gallery.errors.deleteFailed"));
+      setErr(
+        e?.message || t(messages, "dashboard.gallery.errors.deleteFailed"),
+      );
       setImages(prev);
     }
   }
@@ -215,14 +203,19 @@ function BookingGalleryManager({ locale }: { locale: string }) {
       const res = await fetch("/api/uploads/gallery", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order: next.map((x) => x.id) })
+        body: JSON.stringify({ order: next.map((x) => x.id) }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.gallery.errors.reorderFailed"));
+      if (!res.ok)
+        throw new Error(
+          data?.error || t(messages, "dashboard.gallery.errors.reorderFailed"),
+        );
       setImages(Array.isArray(data.images) ? data.images : next);
     } catch (e: any) {
-      setErr(e?.message || t(messages, "dashboard.gallery.errors.reorderFailed"));
-      load(); // authoritative reload
+      setErr(
+        e?.message || t(messages, "dashboard.gallery.errors.reorderFailed"),
+      );
+      load();
     }
   }
 
@@ -231,16 +224,27 @@ function BookingGalleryManager({ locale }: { locale: string }) {
   const side2 = images[2]?.url || "";
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-[#071633] p-6 shadow-sm">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <section className="mt-8 rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
+      <div className="flex flex-col gap-4 border-b border-slate-300/70 pb-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-white">{t(messages, "dashboard.gallery.title")}</h2>
-          <p className="mt-1 text-sm text-slate-300">{t(messages, "dashboard.gallery.lead")}</p>
+          <div className="flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-md border border-lime-300/80 bg-lime-100 font-mono text-[10px] font-bold text-lime-950">
+              ✓
+            </span>
+            <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+              {t(messages, "dashboard.gallery.title")}
+            </h2>
+          </div>
+          <p className="mt-1 text-sm font-bold text-slate-900">
+            {t(messages, "dashboard.gallery.lead")}
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="inline-flex cursor-pointer items-center rounded-xl bg-lime-100 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-500">
-            {uploading ? t(messages, "dashboard.gallery.states.uploading") : t(messages, "dashboard.gallery.actions.upload")}
+          <label className="inline-flex cursor-pointer items-center rounded-2xl border border-lime-300/80 bg-lime-100 px-4 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-lime-950 shadow-xs transition hover:bg-lime-200 active:scale-95">
+            {uploading
+              ? t(messages, "dashboard.gallery.states.uploading")
+              : t(messages, "dashboard.gallery.actions.upload")}
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
@@ -253,7 +257,7 @@ function BookingGalleryManager({ locale }: { locale: string }) {
 
           <button
             type="button"
-            className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50"
+            className="rounded-2xl border border-slate-300/80 bg-white/80 px-4 py-2.5 font-mono text-xs font-semibold text-slate-700 shadow-2xs backdrop-blur-sm transition hover:bg-white active:scale-95 disabled:opacity-50"
             onClick={load}
             disabled={loading || uploading}
           >
@@ -262,18 +266,24 @@ function BookingGalleryManager({ locale }: { locale: string }) {
         </div>
       </div>
 
-      {err ? (
-        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{err}</div>
-      ) : null}
+      {err && (
+        <div className="mt-4 rounded-2xl border border-rose-300/80 bg-rose-50/90 p-3.5 font-mono text-xs font-bold text-rose-800 shadow-2xs">
+          ✕ {err}
+        </div>
+      )}
 
-      {/* Preview */}
-      <div className="mt-5 grid gap-4 lg:grid-cols-12 bg-[#071633]">
+      {/* Visual Banners Grid */}
+      <div className="mt-6 grid gap-4 lg:grid-cols-12">
         <div className="lg:col-span-8">
-          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-300/80 bg-slate-100 shadow-inner">
             {hero ? (
-              <img src={hero} alt={t(messages, "dashboard.gallery.preview.heroAlt")} className="h-full w-full object-cover" />
+              <img
+                src={hero}
+                alt={t(messages, "dashboard.gallery.preview.heroAlt")}
+                className="h-full w-full object-cover"
+              />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
+              <div className="flex h-full w-full items-center justify-center font-mono text-xs text-slate-400">
                 {t(messages, "dashboard.gallery.preview.heroEmpty")}
               </div>
             )}
@@ -281,21 +291,29 @@ function BookingGalleryManager({ locale }: { locale: string }) {
         </div>
 
         <div className="grid gap-4 lg:col-span-4">
-          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-300/80 bg-slate-100 shadow-inner">
             {side1 ? (
-              <img src={side1} alt={t(messages, "dashboard.gallery.preview.side1Alt")} className="h-full w-full object-cover" />
+              <img
+                src={side1}
+                alt={t(messages, "dashboard.gallery.preview.side1Alt")}
+                className="h-full w-full object-cover"
+              />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
+              <div className="flex h-full w-full items-center justify-center font-mono text-xs text-slate-400">
                 {t(messages, "dashboard.gallery.preview.side1Empty")}
               </div>
             )}
           </div>
 
-          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+          <div className="aspect-[16/9] overflow-hidden rounded-2xl border border-slate-300/80 bg-slate-100 shadow-inner">
             {side2 ? (
-              <img src={side2} alt={t(messages, "dashboard.gallery.preview.side2Alt")} className="h-full w-full object-cover" />
+              <img
+                src={side2}
+                alt={t(messages, "dashboard.gallery.preview.side2Alt")}
+                className="h-full w-full object-cover"
+              />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
+              <div className="flex h-full w-full items-center justify-center font-mono text-xs text-slate-400">
                 {t(messages, "dashboard.gallery.preview.side2Empty")}
               </div>
             )}
@@ -303,45 +321,56 @@ function BookingGalleryManager({ locale }: { locale: string }) {
         </div>
       </div>
 
-      {/* List */}
-      <div className="mt-6">
-        <div className="text-sm font-medium text-slate-700">{t(messages, "dashboard.gallery.list.title")}</div>
+      {/* Image Roster & Sorting Controls */}
+      <div className="mt-8 border-t border-slate-300/70 pt-6">
+        <div className="font-mono text-xs font-bold uppercase tracking-wider text-slate-600">
+          {t(messages, "dashboard.gallery.list.title")}
+        </div>
 
         {loading ? (
-          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          <div className="mt-3 rounded-2xl border border-slate-300/80 bg-white/60 p-5 text-center font-mono text-xs text-slate-500 animate-pulse">
             {t(messages, "dashboard.gallery.states.loading")}
           </div>
         ) : images.length === 0 ? (
-          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          <div className="mt-3 rounded-2xl border border-dashed border-slate-300/80 bg-slate-100/50 p-6 text-center font-mono text-xs text-slate-500">
             {t(messages, "dashboard.gallery.list.empty")}
           </div>
         ) : (
-          <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {images.map((img, idx) => (
-              <li key={img.id} className="rounded-2xl border border-slate-200 bg-white p-3">
-                <div className="aspect-[16/10] overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+              <li
+                key={img.id}
+                className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white/80 p-3 shadow-2xs backdrop-blur-sm"
+              >
+                <div className="aspect-[16/10] overflow-hidden rounded-xl border border-slate-200/80 bg-slate-100">
                   <img
                     src={img.url}
-                    alt={t(messages, "dashboard.gallery.list.imageAlt").replace("{n}", String(idx + 1))}
+                    alt={t(messages, "dashboard.gallery.list.imageAlt").replace(
+                      "{n}",
+                      String(idx + 1),
+                    )}
                     className="h-full w-full object-cover"
                   />
                 </div>
 
                 <div className="mt-3 flex items-center justify-between gap-2">
-                  <div className="text-xs text-slate-500">
+                  <div className="font-mono text-[11px] font-bold text-slate-600">
                     {idx === 0
                       ? t(messages, "dashboard.gallery.list.hero")
                       : idx === 1
                         ? t(messages, "dashboard.gallery.list.side1")
                         : idx === 2
                           ? t(messages, "dashboard.gallery.list.side2")
-                          : t(messages, "dashboard.gallery.list.imageN").replace("{n}", String(idx + 1))}
+                          : t(
+                              messages,
+                              "dashboard.gallery.list.imageN",
+                            ).replace("{n}", String(idx + 1))}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
+                      className="rounded-lg border border-slate-300/80 bg-white px-2 py-1 font-mono text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-30"
                       disabled={idx === 0 || uploading}
                       onClick={() => move(img.id, -1)}
                     >
@@ -349,7 +378,7 @@ function BookingGalleryManager({ locale }: { locale: string }) {
                     </button>
                     <button
                       type="button"
-                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
+                      className="rounded-lg border border-slate-300/80 bg-white px-2 py-1 font-mono text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-30"
                       disabled={idx === images.length - 1 || uploading}
                       onClick={() => move(img.id, 1)}
                     >
@@ -357,7 +386,7 @@ function BookingGalleryManager({ locale }: { locale: string }) {
                     </button>
                     <button
                       type="button"
-                      className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                      className="rounded-lg border border-rose-300/80 bg-rose-50 px-2 py-1 font-mono text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-30"
                       disabled={uploading}
                       onClick={() => remove(img.id)}
                     >
@@ -374,12 +403,12 @@ function BookingGalleryManager({ locale }: { locale: string }) {
   );
 }
 
-/* -------------------------- Description Editor (NEW) ------------------------- */
+/* -------------------------- Description Editor ------------------------- */
 
 function BookingDescriptionEditor({
   locale,
   initial,
-  onSaved
+  onSaved,
 }: {
   locale: string;
   initial: string;
@@ -392,7 +421,10 @@ function BookingDescriptionEditor({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
-  const words = useMemo(() => value.trim().split(/\s+/).filter(Boolean).length, [value]);
+  const words = useMemo(
+    () => value.trim().split(/\s+/).filter(Boolean).length,
+    [value],
+  );
   useEffect(() => setValue(initial), [initial]);
 
   async function save() {
@@ -409,64 +441,80 @@ function BookingDescriptionEditor({
       const res = await fetch("/api/owner/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: trimmed || null })
+        body: JSON.stringify({ description: trimmed || null }),
       });
 
       const data = await res.json().catch(() => ({}));
 
-   if (res.status === 402 || data?.code === "TRIAL_EXPIRED") {
+      if (res.status === 402 || data?.code === "TRIAL_EXPIRED") {
         router.push(`/${locale}/subscribe`);
-       return;
-     }
+        return;
+      }
 
-      
-      if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.description.errors.saveFailed"));
+      if (!res.ok)
+        throw new Error(
+          data?.error || t(messages, "dashboard.description.errors.saveFailed"),
+        );
 
       const next = String(data?.business?.description ?? trimmed ?? "");
       onSaved(next);
     } catch (e: any) {
-      setErr(e?.message || t(messages, "dashboard.description.errors.saveFailed"));
+      setErr(
+        e?.message || t(messages, "dashboard.description.errors.saveFailed"),
+      );
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <section className="mt-8 rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
+      <div className="flex flex-col gap-4 border-b border-slate-300/70 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold">{t(messages, "dashboard.description.title")}</h2>
-          <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.description.lead")}</p>
+          <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+            {t(messages, "dashboard.description.title")}
+          </h2>
+          <p className="mt-1 text-sm font-bold text-slate-900">
+            {t(messages, "dashboard.description.lead")}
+          </p>
         </div>
 
         <button
           type="button"
           onClick={save}
           disabled={saving || words > 600}
-          className="w-fit rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+          className="rounded-2xl border border-lime-300/80 bg-lime-100 px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-lime-950 shadow-xs transition hover:bg-lime-200 active:scale-95 disabled:opacity-50"
         >
-          {saving ? t(messages, "dashboard.description.states.saving") : t(messages, "dashboard.description.actions.save")}
+          {saving
+            ? t(messages, "dashboard.description.states.saving")
+            : t(messages, "dashboard.description.actions.save")}
         </button>
       </div>
 
-      {err ? (
-        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">{err}</div>
-      ) : null}
+      {err && (
+        <div className="mt-4 rounded-2xl border border-rose-300/80 bg-rose-50/90 p-3.5 font-mono text-xs font-bold text-rose-800 shadow-2xs">
+          ✕ {err}
+        </div>
+      )}
 
-      <div className="mt-4 grid gap-2">
+      <div className="mt-5 grid gap-2">
         <textarea
-          className="min-h-[140px] w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-slate-300"
+          className="min-h-[140px] w-full resize-y rounded-2xl border border-slate-300/80 bg-white/90 p-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none"
           placeholder={t(messages, "dashboard.description.placeholder")}
           value={value}
           onChange={(e) => setValue(e.target.value)}
         />
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <span className={words > 600 ? "font-semibold text-rose-700" : ""}>
+        <div className="flex items-center justify-between font-mono text-xs text-slate-500">
+          <span className={words > 600 ? "font-bold text-rose-700" : ""}>
             {t(messages, "dashboard.description.words")
               .replace("{n}", String(words))
               .replace("{max}", "600")}
           </span>
-          <button type="button" className="underline" onClick={() => setValue("")}>
+          <button
+            type="button"
+            className="underline hover:text-slate-900"
+            onClick={() => setValue("")}
+          >
             {t(messages, "dashboard.description.actions.clear")}
           </button>
         </div>
@@ -481,13 +529,11 @@ export default function DashboardClient({ locale, business }: Props) {
   const router = useRouter();
   const messages = useMessages(locale);
 
-  // local copy
   const [biz, setBiz] = useState<Props["business"]>(business);
+  const [bookingDesc, setBookingDesc] = useState(
+    String(business.description ?? ""),
+  );
 
-  // ✅ local description state (separate, controlled)
-  const [bookingDesc, setBookingDesc] = useState(String(business.description ?? ""));
-
-  // profile editor
   const [editing, setEditing] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string>("");
@@ -499,31 +545,31 @@ export default function DashboardClient({ locale, business }: Props) {
   const [street, setStreet] = useState(business.street ?? "");
   const [postalCode, setPostalCode] = useState(business.postalCode ?? "");
 
-  // logo state
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string>(business.logoUrl ?? "");
+  const [logoPreview, setLogoPreview] = useState<string>(
+    business.logoUrl ?? "",
+  );
   const [logoUploading, setLogoUploading] = useState(false);
-
-  // explicit remove logo toggle
   const [removeLogo, setRemoveLogo] = useState(false);
 
-  // bookings/stats
   const [copied, setCopied] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
   const [bookings, setBookings] = useState<DbBooking[]>([]);
 
-  const bookingPath = useMemo(() => `/${locale}/book/${biz.slug}`, [biz.slug, locale]);
+  const bookingPath = useMemo(
+    () => `/${locale}/book/${biz.slug}`,
+    [biz.slug, locale],
+  );
   const bookingUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
     return `${window.location.origin}${bookingPath}`;
   }, [bookingPath]);
 
   const trialDaysLeft = useMemo(() => {
-  if (biz.subscriptionStatus !== "TRIALING" || !biz.trialEndsAt) return null;
-
-  const msLeft = new Date(biz.trialEndsAt).getTime() - Date.now();
-  return Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)));
-}, [biz.subscriptionStatus, biz.trialEndsAt]);
+    if (biz.subscriptionStatus !== "TRIALING" || !biz.trialEndsAt) return null;
+    const msLeft = new Date(biz.trialEndsAt).getTime() - Date.now();
+    return Math.max(0, Math.ceil(msLeft / (1000 * 60 * 60 * 24)));
+  }, [biz.subscriptionStatus, biz.trialEndsAt]);
 
   async function copyLink() {
     if (!bookingUrl) return;
@@ -544,12 +590,15 @@ export default function DashboardClient({ locale, business }: Props) {
   async function refreshStats(signal?: AbortSignal) {
     setStatsLoading(true);
     try {
-      const res = await fetch("/api/bookings?scope=owner", { cache: "no-store", signal });
+      const res = await fetch("/api/bookings?scope=owner", {
+        cache: "no-store",
+        signal,
+      });
       const data = await res.json().catch(() => ({}));
       if (res.status === 402 || data?.code === "TRIAL_EXPIRED") {
-      router.push(`/${locale}/subscribe`);
-      return;
-    }
+        router.push(`/${locale}/subscribe`);
+        return;
+      }
 
       setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
     } finally {
@@ -572,13 +621,15 @@ export default function DashboardClient({ locale, business }: Props) {
 
     const customerKeys = new Set<string>();
     for (const b of active) {
-      const key = (b.customerPhone || "").trim() || b.customerName.trim().toLowerCase();
+      const key =
+        (b.customerPhone || "").trim() || b.customerName.trim().toLowerCase();
       if (key) customerKeys.add(key);
     }
     const uniqueCustomers = customerKeys.size;
 
     const revenueSource = active.filter(
-      (b) => b.status === "CONFIRMED" && new Date(b.startsAt).getTime() <= nowMs
+      (b) =>
+        b.status === "CONFIRMED" && new Date(b.startsAt).getTime() <= nowMs,
     );
 
     const weekStart = startOfWeekMonday(now).getTime();
@@ -586,32 +637,54 @@ export default function DashboardClient({ locale, business }: Props) {
     const yearStart = startOfYear(now).getTime();
 
     function sumForRange(minMs: number) {
-      const rows = revenueSource.filter((b) => new Date(b.startsAt).getTime() >= minMs);
-      const currencies = new Set(rows.map((b) => String(b.currency || "").toUpperCase()));
+      const rows = revenueSource.filter(
+        (b) => new Date(b.startsAt).getTime() >= minMs,
+      );
+      const currencies = new Set(
+        rows.map((b) => String(b.currency || "").toUpperCase()),
+      );
       const single = currencies.size === 1 ? [...currencies][0] : null;
       const sum = rows.reduce((acc, b) => acc + Number(b.price || 0), 0);
 
-      if (rows.length === 0) return { label: "0", currency: "EUR", mixed: false };
-      if (!single) return { label: t(messages, "dashboard.stats.mixed"), currency: "EUR", mixed: true };
+      if (rows.length === 0)
+        return { label: "0", currency: "EUR", mixed: false };
+      if (!single)
+        return {
+          label: t(messages, "dashboard.stats.mixed"),
+          currency: "EUR",
+          mixed: true,
+        };
 
-      return { label: formatMoney(sum, single as any), currency: single, mixed: false };
+      return {
+        label: formatMoney(sum, single as any),
+        currency: single,
+        mixed: false,
+      };
     }
 
     const weekly = sumForRange(weekStart);
     const monthly = sumForRange(monthStart);
     const yearly = sumForRange(yearStart);
 
-    const customerMap = new Map<string, { name: string; country: string; lastAt: number }>();
+    const customerMap = new Map<
+      string,
+      { name: string; country: string; lastAt: number }
+    >();
     for (const b of active) {
-      const key = (b.customerPhone || "").trim() || b.customerName.trim().toLowerCase();
+      const key =
+        (b.customerPhone || "").trim() || b.customerName.trim().toLowerCase();
       if (!key) continue;
 
       const lastAt = new Date(b.startsAt).getTime();
-      const nm = b.customerName?.trim() || t(messages, "dashboard.stats.unknown");
-      const ct = (b.customerCountry ?? "").trim() || t(messages, "dashboard.stats.unknown");
+      const nm =
+        b.customerName?.trim() || t(messages, "dashboard.stats.unknown");
+      const ct =
+        (b.customerCountry ?? "").trim() ||
+        t(messages, "dashboard.stats.unknown");
 
       const existing = customerMap.get(key);
-      if (!existing || lastAt > existing.lastAt) customerMap.set(key, { name: nm, country: ct, lastAt });
+      if (!existing || lastAt > existing.lastAt)
+        customerMap.set(key, { name: nm, country: ct, lastAt });
     }
 
     const recentCustomers = Array.from(customerMap.values())
@@ -625,7 +698,7 @@ export default function DashboardClient({ locale, business }: Props) {
       weeklyRevenue: weekly.label,
       monthlyRevenue: monthly.label,
       yearlyRevenue: yearly.label,
-      recentCustomers
+      recentCustomers,
     };
   }, [bookings, messages]);
 
@@ -661,11 +734,19 @@ export default function DashboardClient({ locale, business }: Props) {
       const form = new FormData();
       form.append("file", logoFile);
 
-      const res = await fetch("/api/uploads/logo", { method: "POST", body: form });
+      const res = await fetch("/api/uploads/logo", {
+        method: "POST",
+        body: form,
+      });
       const data = await res.json().catch(() => ({}));
 
-      if (!res.ok) throw new Error(data?.error || t(messages, "dashboard.profile.errors.logoUploadFailed"));
-      if (!data?.url || typeof data.url !== "string") throw new Error(t(messages, "dashboard.profile.errors.logoMissingUrl"));
+      if (!res.ok)
+        throw new Error(
+          data?.error ||
+            t(messages, "dashboard.profile.errors.logoUploadFailed"),
+        );
+      if (!data?.url || typeof data.url !== "string")
+        throw new Error(t(messages, "dashboard.profile.errors.logoMissingUrl"));
 
       return data.url;
     } finally {
@@ -673,7 +754,6 @@ export default function DashboardClient({ locale, business }: Props) {
     }
   }
 
-  // ✅ profile save does NOT touch description
   async function saveProfile() {
     setProfileError("");
 
@@ -681,10 +761,22 @@ export default function DashboardClient({ locale, business }: Props) {
     const c = city.trim();
     const cc = country.trim().toUpperCase();
 
-    if (!n) return setProfileError(t(messages, "dashboard.profile.errors.nameRequired"));
-    if (!c) return setProfileError(t(messages, "dashboard.profile.errors.cityRequired"));
-    if (!cc || cc.length < 2) return setProfileError(t(messages, "dashboard.profile.errors.countryRequired"));
-    if (!isValidUrlOrEmpty(website)) return setProfileError(t(messages, "dashboard.profile.errors.websiteInvalid"));
+    if (!n)
+      return setProfileError(
+        t(messages, "dashboard.profile.errors.nameRequired"),
+      );
+    if (!c)
+      return setProfileError(
+        t(messages, "dashboard.profile.errors.cityRequired"),
+      );
+    if (!cc || cc.length < 2)
+      return setProfileError(
+        t(messages, "dashboard.profile.errors.countryRequired"),
+      );
+    if (!isValidUrlOrEmpty(website))
+      return setProfileError(
+        t(messages, "dashboard.profile.errors.websiteInvalid"),
+      );
 
     setSavingProfile(true);
     try {
@@ -696,7 +788,7 @@ export default function DashboardClient({ locale, business }: Props) {
         city: c,
         country: cc,
         street: street.trim() || null,
-        postalCode: postalCode.trim() || null
+        postalCode: postalCode.trim() || null,
       };
 
       if (uploadedLogoUrl) payload.logoUrl = uploadedLogoUrl;
@@ -705,19 +797,20 @@ export default function DashboardClient({ locale, business }: Props) {
       const res = await fetch("/api/owner/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json().catch(() => ({}));
 
-     if (res.status === 402 || data?.code === "TRIAL_EXPIRED") {
-     router.push(`/${locale}/subscribe`);
-     return;
+      if (res.status === 402 || data?.code === "TRIAL_EXPIRED") {
+        router.push(`/${locale}/subscribe`);
+        return;
       }
 
-      
       if (!res.ok) {
-        setProfileError(data?.error || t(messages, "dashboard.profile.errors.updateFailed"));
+        setProfileError(
+          data?.error || t(messages, "dashboard.profile.errors.updateFailed"),
+        );
         return;
       }
 
@@ -734,101 +827,178 @@ export default function DashboardClient({ locale, business }: Props) {
             ? data.business.logoUrl
             : removeLogo
               ? null
-              : uploadedLogoUrl ?? prev.logoUrl
-        // ✅ DO NOT update description here
+              : (uploadedLogoUrl ?? prev.logoUrl),
       }));
 
       setEditing(false);
       router.refresh();
     } catch (e: any) {
-      setProfileError(e?.message || t(messages, "dashboard.profile.errors.network"));
+      setProfileError(
+        e?.message || t(messages, "dashboard.profile.errors.network"),
+      );
     } finally {
       setSavingProfile(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="mx-auto w-full max-w-screen-2xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="w-full pb-20">
+      <div className="mx-auto w-full max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+        {/* DASHBOARD HEADER */}
         <DashboardHeader
-  biz={biz}
-  messages={messages}
-  bookingPath={bookingPath}
-  statsLoading={statsLoading}
-  onEdit={startEdit}
-  onRefresh={() => refreshStats()}
-  onLogout={logout}
-/>
-{biz.subscriptionStatus === "TRIALING" && trialDaysLeft !== null && (
-  <section className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-    <h2 className="text-sm font-semibold text-amber-900">
-      Free trial
-    </h2>
-    <p className="mt-1 text-sm text-amber-800">
-      You have {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} left in your free trial.
-    </p>
-  </section>
-)}
-        {/* Profile editor */}
-        {editing && (
-          <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="flex items-start justify-between gap-4">
+          biz={biz}
+          messages={messages}
+          bookingPath={bookingPath}
+          statsLoading={statsLoading}
+          onEdit={startEdit}
+          onRefresh={() => refreshStats()}
+          onLogout={logout}
+        />
+
+        {/* TRIAL NOTIFICATION CALLOUT */}
+        {biz.subscriptionStatus === "TRIALING" && trialDaysLeft !== null && (
+          <section className="flex items-center justify-between rounded-3xl border border-lime-300/80 bg-lime-100 p-5 shadow-xs backdrop-blur-xl">
+            <div className="flex items-center gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-lime-950 font-mono text-sm font-bold text-white">
+                ⏱
+              </span>
               <div>
-                <h2 className="text-base font-semibold">{t(messages, "dashboard.profile.title")}</h2>
-                <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.profile.lead")}</p>
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-lime-950">
+                  Active Free Trial
+                </h2>
+                <p className="mt-0.5 text-xs text-lime-900 sm:text-sm">
+                  You have{" "}
+                  <strong className="font-mono font-bold text-lime-950">
+                    {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"}
+                  </strong>{" "}
+                  remaining in your trial period.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => router.push(`/${locale}/subscribe`)}
+              className="rounded-2xl border border-slate-900 bg-slate-900 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-white shadow-xs transition hover:bg-slate-800 active:scale-95"
+            >
+              Upgrade Tier
+            </button>
+          </section>
+        )}
+
+        {/* PROFILE EDITOR MODAL / PANEL */}
+        {editing && (
+          <section className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-300/70 pb-4">
+              <div>
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+                  {t(messages, "dashboard.profile.title")}
+                </h2>
+                <p className="mt-1 text-sm font-bold text-slate-900">
+                  {t(messages, "dashboard.profile.lead")}
+                </p>
               </div>
 
-              <button type="button" onClick={cancelEdit} className="text-sm font-semibold text-slate-600 underline">
+              <button
+                type="button"
+                onClick={cancelEdit}
+                className="font-mono text-xs font-bold text-slate-600 underline hover:text-slate-950"
+              >
                 {t(messages, "dashboard.profile.actions.cancel")}
               </button>
             </div>
 
-            {profileError ? (
-              <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-                {profileError}
+            {profileError && (
+              <div className="mt-4 rounded-2xl border border-rose-300/80 bg-rose-50/90 p-3.5 font-mono text-xs font-bold text-rose-800 shadow-2xs">
+                ✕ {profileError}
               </div>
-            ) : null}
+            )}
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm">
-                {t(messages, "dashboard.profile.fields.name")}
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={name} onChange={(e) => setName(e.target.value)} />
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <label className="space-y-1.5">
+                <span className="font-mono text-xs font-bold uppercase text-slate-700">
+                  {t(messages, "dashboard.profile.fields.name")}
+                </span>
+                <input
+                  className="h-11 w-full rounded-2xl border border-slate-300/80 bg-white/90 px-4 text-sm font-medium text-slate-900 focus:border-slate-800 focus:bg-white focus:outline-none"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
               </label>
 
-              <label className="grid gap-1 text-sm">
-                {t(messages, "dashboard.profile.fields.website")}
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder={t(messages, "dashboard.profile.placeholders.website")} />
+              <label className="space-y-1.5">
+                <span className="font-mono text-xs font-bold uppercase text-slate-700">
+                  {t(messages, "dashboard.profile.fields.website")}
+                </span>
+                <input
+                  className="h-11 w-full rounded-2xl border border-slate-300/80 bg-white/90 px-4 font-mono text-sm text-slate-900 focus:border-slate-800 focus:bg-white focus:outline-none"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder={t(
+                    messages,
+                    "dashboard.profile.placeholders.website",
+                  )}
+                />
               </label>
 
-              <label className="grid gap-1 text-sm">
-                {t(messages, "dashboard.profile.fields.city")}
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={city} onChange={(e) => setCity(e.target.value)} />
+              <label className="space-y-1.5">
+                <span className="font-mono text-xs font-bold uppercase text-slate-700">
+                  {t(messages, "dashboard.profile.fields.city")}
+                </span>
+                <input
+                  className="h-11 w-full rounded-2xl border border-slate-300/80 bg-white/90 px-4 text-sm font-medium text-slate-900 focus:border-slate-800 focus:bg-white focus:outline-none"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                />
               </label>
 
-              <label className="grid gap-1 text-sm">
-                {t(messages, "dashboard.profile.fields.country")}
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} placeholder={t(messages, "dashboard.profile.placeholders.country")} />
+              <label className="space-y-1.5">
+                <span className="font-mono text-xs font-bold uppercase text-slate-700">
+                  {t(messages, "dashboard.profile.fields.country")}
+                </span>
+                <input
+                  className="h-11 w-full rounded-2xl border border-slate-300/80 bg-white/90 px-4 font-mono text-sm text-slate-900 focus:border-slate-800 focus:bg-white focus:outline-none"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value.toUpperCase())}
+                  placeholder={t(
+                    messages,
+                    "dashboard.profile.placeholders.country",
+                  )}
+                />
               </label>
 
-              <label className="grid gap-1 text-sm">
-                {t(messages, "dashboard.profile.fields.street")}
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={street} onChange={(e) => setStreet(e.target.value)} />
+              <label className="space-y-1.5">
+                <span className="font-mono text-xs font-bold uppercase text-slate-700">
+                  {t(messages, "dashboard.profile.fields.street")}
+                </span>
+                <input
+                  className="h-11 w-full rounded-2xl border border-slate-300/80 bg-white/90 px-4 text-sm font-medium text-slate-900 focus:border-slate-800 focus:bg-white focus:outline-none"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                />
               </label>
 
-              <label className="grid gap-1 text-sm">
-                {t(messages, "dashboard.profile.fields.postalCode")}
-                <input className="rounded-xl border border-slate-200 px-3 py-2" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
+              <label className="space-y-1.5">
+                <span className="font-mono text-xs font-bold uppercase text-slate-700">
+                  {t(messages, "dashboard.profile.fields.postalCode")}
+                </span>
+                <input
+                  className="h-11 w-full rounded-2xl border border-slate-300/80 bg-white/90 px-4 font-mono text-sm text-slate-900 focus:border-slate-800 focus:bg-white focus:outline-none"
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value)}
+                />
               </label>
             </div>
 
-            {/* Logo upload */}
-            <div className="mt-5 grid gap-2">
-              <label className="grid gap-1 text-sm">
-                {t(messages, "dashboard.profile.fields.logo")}
+            {/* Logo Customization */}
+            <div className="mt-6 rounded-2xl border border-slate-300/80 bg-slate-100/70 p-4">
+              <label className="block">
+                <span className="font-mono text-xs font-bold uppercase text-slate-700">
+                  {t(messages, "dashboard.profile.fields.logo")}
+                </span>
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                  className="rounded-xl border border-slate-200 px-3 py-2"
+                  className="mt-2 block w-full text-xs text-slate-500 file:mr-4 file:rounded-xl file:border file:border-lime-300/80 file:bg-lime-100 file:px-4 file:py-2 file:font-mono file:text-xs file:font-bold file:text-lime-950 file:shadow-2xs hover:file:bg-lime-200"
                   onChange={(e) => {
                     const f = e.target.files?.[0] ?? null;
                     setLogoFile(f);
@@ -844,11 +1014,15 @@ export default function DashboardClient({ locale, business }: Props) {
               </label>
 
               {logoPreview ? (
-                <div className="flex items-center gap-3">
-                  <img src={logoPreview} alt={t(messages, "dashboard.profile.logoPreviewAlt")} className="h-14 w-14 rounded-2xl border border-slate-200 object-cover" />
+                <div className="mt-4 flex items-center gap-3">
+                  <img
+                    src={logoPreview}
+                    alt={t(messages, "dashboard.profile.logoPreviewAlt")}
+                    className="h-14 w-14 rounded-2xl border border-slate-300/80 object-cover shadow-2xs"
+                  />
                   <button
                     type="button"
-                    className="text-sm underline text-slate-600"
+                    className="font-mono text-xs font-semibold text-rose-600 underline hover:text-rose-800"
                     onClick={() => {
                       setLogoFile(null);
                       setLogoPreview("");
@@ -859,7 +1033,9 @@ export default function DashboardClient({ locale, business }: Props) {
                   </button>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">{t(messages, "dashboard.profile.logoHint")}</p>
+                <p className="mt-1 font-mono text-[11px] text-slate-500">
+                  {t(messages, "dashboard.profile.logoHint")}
+                </p>
               )}
             </div>
 
@@ -868,7 +1044,7 @@ export default function DashboardClient({ locale, business }: Props) {
                 type="button"
                 disabled={savingProfile || logoUploading}
                 onClick={saveProfile}
-                className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-2xl border border-lime-300/80 bg-lime-100 px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-lime-950 shadow-xs transition hover:bg-lime-200 active:scale-95 disabled:opacity-50"
               >
                 {logoUploading
                   ? t(messages, "dashboard.profile.states.uploadingLogo")
@@ -880,31 +1056,44 @@ export default function DashboardClient({ locale, business }: Props) {
           </section>
         )}
 
+        {/* METRICS & BOOKING STATS */}
         <StatsSection
-  messages={messages}
-  statsLoading={statsLoading}
-  stats={stats}
-/>
+          messages={messages}
+          statsLoading={statsLoading}
+          stats={stats}
+        />
 
-<ShareLinkCard
-  messages={messages}
-  bookingUrl={bookingUrl}
-  bookingPath={bookingPath}
-  copied={copied}
-  onCopy={copyLink}
-/>
-  <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-  <div className="mb-4">
-    <h2 className="text-base font-semibold">Notifications</h2>
-    <p className="mt-1 text-sm text-slate-500">
-      Get desktop alerts for new bookings and client messages.
-    </p>
-  </div>
-  <PushToggle />
-</div>        
-        
-        {/* ✅ Booking website content */}
+        {/* SHARE DIRECT BOOKING LINK DOCK */}
+        <ShareLinkCard
+          messages={messages}
+          bookingUrl={bookingUrl}
+          bookingPath={bookingPath}
+          copied={copied}
+          onCopy={copyLink}
+        />
+
+        {/* PUSH NOTIFICATIONS DOCK */}
+        <div className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-sm backdrop-blur-xl sm:p-7">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+                Desktop Notifications
+              </h2>
+              <p className="mt-1 text-sm font-medium text-slate-800">
+                Get real-time browser alerts for incoming appointment bookings
+                and client chat messages.
+              </p>
+            </div>
+            <div className="mt-3 sm:mt-0">
+              <PushToggle />
+            </div>
+          </div>
+        </div>
+
+        {/* GALLERY MANAGER */}
         <BookingGalleryManager locale={locale} />
+
+        {/* DESCRIPTION / BIO EDITOR */}
         <BookingDescriptionEditor
           locale={locale}
           initial={bookingDesc}
@@ -915,45 +1104,71 @@ export default function DashboardClient({ locale, business }: Props) {
           }}
         />
 
-        {/* Panels */}
-        <div className="mt-8 grid gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-7 space-y-6">
-  <div>
-    <div className="mb-4">
-      <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.inbox.title")}</h2>
-      <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.inbox.lead")}</p>
-    </div>
-    <Inbox />
-  </div>
-
-  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-    <div className="mb-4">
-      <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.bookings.title")}</h2>
-      <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.bookings.lead")}</p>
-    </div>
-    <BookingsPanel />
-  </div>
-</div>
-
-          <div className="space-y-6 lg:col-span-5">
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-4">
-                <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.availability.title")}</h2>
-                <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.availability.lead")}</p>
+        {/* TWO-COLUMN INBOX & OPERATIONS SPLIT */}
+        <div className="grid gap-8 lg:grid-cols-12">
+          {/* Left Column: Inbox & Confirmed Bookings */}
+          <div className="space-y-8 lg:col-span-7">
+            <div className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
+              <div className="border-b border-slate-300/70 pb-4">
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+                  {t(messages, "dashboard.panels.inbox.title")}
+                </h2>
+                <p className="mt-1 text-sm font-bold text-slate-900">
+                  {t(messages, "dashboard.panels.inbox.lead")}
+                </p>
               </div>
-              <AvailabilityEditor />
+              <div className="mt-4">
+                <Inbox />
+              </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-              <div className="mb-4">
-                <h2 className="text-base font-semibold">{t(messages, "dashboard.panels.services.title")}</h2>
-                <p className="mt-1 text-sm text-slate-500">{t(messages, "dashboard.panels.services.lead")}</p>
+            <div className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
+              <div className="border-b border-slate-300/70 pb-4">
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+                  {t(messages, "dashboard.panels.bookings.title")}
+                </h2>
+                <p className="mt-1 text-sm font-bold text-slate-900">
+                  {t(messages, "dashboard.panels.bookings.lead")}
+                </p>
               </div>
-              <ServicesEditor />
+              <div className="mt-4">
+                <BookingsPanel />
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Availability & Services Settings */}
+          <div className="space-y-8 lg:col-span-5">
+            <div className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
+              <div className="border-b border-slate-300/70 pb-4">
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+                  {t(messages, "dashboard.panels.availability.title")}
+                </h2>
+                <p className="mt-1 text-sm font-bold text-slate-900">
+                  {t(messages, "dashboard.panels.availability.lead")}
+                </p>
+              </div>
+              <div className="mt-4">
+                <AvailabilityEditor />
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
+              <div className="border-b border-slate-300/70 pb-4">
+                <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+                  {t(messages, "dashboard.panels.services.title")}
+                </h2>
+                <p className="mt-1 text-sm font-bold text-slate-900">
+                  {t(messages, "dashboard.panels.services.lead")}
+                </p>
+              </div>
+              <div className="mt-4">
+                <ServicesEditor />
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

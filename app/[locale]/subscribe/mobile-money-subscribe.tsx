@@ -61,7 +61,7 @@ export function MobileMoneySubscribe({
 
       if (!res.ok) {
         throw new Error(
-          data?.error || t(messages, "subscribe.momo.errors.requestFailed")
+          data?.error || t(messages, "subscribe.momo.errors.requestFailed"),
         );
       }
 
@@ -74,7 +74,7 @@ export function MobileMoneySubscribe({
       setError(
         err instanceof Error
           ? err.message
-          : t(messages, "subscribe.momo.errors.generic")
+          : t(messages, "subscribe.momo.errors.generic"),
       );
     } finally {
       setLoading(false);
@@ -92,8 +92,7 @@ export function MobileMoneySubscribe({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Origin:
-            typeof window !== "undefined" ? window.location.origin : "",
+          Origin: typeof window !== "undefined" ? window.location.origin : "",
         },
         body: JSON.stringify({ reference }),
       });
@@ -102,7 +101,7 @@ export function MobileMoneySubscribe({
 
       if (!res.ok) {
         throw new Error(
-          data?.error || t(messages, "subscribe.momo.errors.statusFailed")
+          data?.error || t(messages, "subscribe.momo.errors.statusFailed"),
         );
       }
 
@@ -129,7 +128,7 @@ export function MobileMoneySubscribe({
       setError(
         err instanceof Error
           ? err.message
-          : t(messages, "subscribe.momo.errors.statusFailed")
+          : t(messages, "subscribe.momo.errors.statusFailed"),
       );
     } finally {
       setChecking(false);
@@ -137,10 +136,29 @@ export function MobileMoneySubscribe({
   };
 
   return (
-    <div className="space-y-4">
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div>
-          <label className="mb-2 block text-sm font-medium text-white">
+    <div className="space-y-5 rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
+      {/* Top Header Badge */}
+      <div className="border-b border-slate-300/70 pb-4">
+        <div className="inline-flex items-center gap-2 rounded-full border border-lime-300/80 bg-lime-100 px-3 py-0.5 text-xs font-bold text-lime-950 shadow-2xs">
+          <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-lime-900 text-[9px] text-white">
+            ✓
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-wider">
+            Mobile Money Direct Gateway
+          </span>
+        </div>
+        <h3 className="mt-2 text-lg font-extrabold tracking-tight text-slate-900 sm:text-xl">
+          Direct Payment Setup
+        </h3>
+        <p className="mt-1 font-mono text-xs text-slate-600">
+          Subscribe instantly via regional mobile wallet infrastructure.
+        </p>
+      </div>
+
+      <form onSubmit={onSubmit} className="space-y-5">
+        {/* Network Provider Selector */}
+        <div className="space-y-2">
+          <label className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700">
             {t(messages, "subscribe.momo.networkLabel")}
           </label>
 
@@ -148,10 +166,10 @@ export function MobileMoneySubscribe({
             <button
               type="button"
               onClick={() => setProvider("MTN_MOMO")}
-              className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+              className={`rounded-2xl border p-3.5 font-mono text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${
                 provider === "MTN_MOMO"
-                  ? "border-white bg-white text-slate-900"
-                  : "border-white/15 bg-white/5 text-white hover:bg-white/10"
+                  ? "border-lime-300/90 bg-lime-100 text-lime-950 shadow-xs ring-1 ring-lime-400/50"
+                  : "border-slate-300/80 bg-white/80 text-slate-700 hover:border-slate-400 hover:bg-white"
               }`}
             >
               {t(messages, "subscribe.momo.mtn")}
@@ -160,10 +178,10 @@ export function MobileMoneySubscribe({
             <button
               type="button"
               onClick={() => setProvider("ORANGE_MONEY")}
-              className={`rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
+              className={`rounded-2xl border p-3.5 font-mono text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${
                 provider === "ORANGE_MONEY"
-                  ? "border-white bg-white text-slate-900"
-                  : "border-white/15 bg-white/5 text-white hover:bg-white/10"
+                  ? "border-lime-300/90 bg-lime-100 text-lime-950 shadow-xs ring-1 ring-lime-400/50"
+                  : "border-slate-300/80 bg-white/80 text-slate-700 hover:border-slate-400 hover:bg-white"
               }`}
             >
               {t(messages, "subscribe.momo.orange")}
@@ -171,10 +189,11 @@ export function MobileMoneySubscribe({
           </div>
         </div>
 
-        <div>
+        {/* Phone Input Field */}
+        <div className="space-y-1.5">
           <label
             htmlFor="momo-phone"
-            className="mb-2 block text-sm font-medium text-white"
+            className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700"
           >
             {t(messages, "subscribe.momo.phoneLabel")}
           </label>
@@ -187,81 +206,93 @@ export function MobileMoneySubscribe({
             placeholder={t(messages, "subscribe.momo.phonePlaceholder")}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-white placeholder:text-slate-400 outline-none transition focus:border-white/40"
+            className="h-11 w-full rounded-2xl border border-slate-300/80 bg-white/90 px-4 font-mono text-sm font-semibold text-slate-900 shadow-2xs outline-none transition focus:border-slate-800 focus:bg-white"
           />
         </div>
 
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-4 text-base font-semibold text-slate-900 shadow-lg transition hover:scale-[1.01] hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+          className="inline-flex w-full items-center justify-center rounded-2xl border border-lime-300/80 bg-lime-100 px-6 py-3.5 font-mono text-xs font-bold uppercase tracking-wider text-lime-950 shadow-xs transition-all hover:bg-lime-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading
             ? t(messages, "subscribe.momo.sending")
-            : t(messages, "subscribe.momo.button")}
+            : `${t(messages, "subscribe.momo.button")} →`}
         </button>
 
-        <p className="text-xs leading-6 text-slate-300">
+        <p className="font-mono text-[11px] leading-relaxed text-slate-500">
           {t(messages, "subscribe.momo.hint")}
         </p>
       </form>
 
-      {reference ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <p className="text-sm font-semibold text-white">
-            {t(messages, "subscribe.momo.status.title")}
+      {/* Transaction Status Tracker */}
+      {reference && (
+        <div className="rounded-2xl border border-slate-300/80 bg-slate-100/70 p-4">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700">
+              {t(messages, "subscribe.momo.status.title")}
+            </span>
+            <span className="rounded-md border border-slate-300/80 bg-white px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700 shadow-2xs">
+              Live Reference
+            </span>
+          </div>
+
+          <p className="mt-2 break-all font-mono text-xs text-slate-600">
+            {t(messages, "subscribe.momo.status.reference")}:{" "}
+            <span className="font-bold text-slate-900">{reference}</span>
           </p>
 
-          <p className="mt-2 break-all text-xs text-slate-300">
-            {t(messages, "subscribe.momo.status.reference")}: {reference}
-          </p>
-
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
             <button
-  type="button"
-  onClick={checkStatus}
-  disabled={checking || paymentState === "success"}
-  className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
->
-  {paymentState === "success"
-    ? t(messages, "subscribe.momo.status.completed")
-    : checking
-    ? t(messages, "subscribe.momo.status.checking")
-    : t(messages, "subscribe.momo.status.check")}
-</button>
+              type="button"
+              onClick={checkStatus}
+              disabled={checking || paymentState === "success"}
+              className="rounded-xl border border-slate-300/80 bg-white px-3.5 py-1.5 font-mono text-xs font-bold text-slate-800 shadow-2xs transition hover:bg-slate-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {paymentState === "success"
+                ? `✓ ${t(messages, "subscribe.momo.status.completed")}`
+                : checking
+                  ? t(messages, "subscribe.momo.status.checking")
+                  : `${t(messages, "subscribe.momo.status.check")} ⟳`}
+            </button>
 
-            {paymentState === "pending" ? (
-              <span className="rounded-xl border border-amber-300/30 bg-amber-400/10 px-3 py-2 text-xs font-medium text-amber-200">
+            {paymentState === "pending" && (
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300/80 bg-amber-100 px-3 py-1.5 font-mono text-xs font-bold text-amber-950">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-600" />
                 {t(messages, "subscribe.momo.status.pending")}
               </span>
-            ) : null}
+            )}
 
-            {paymentState === "success" ? (
-              <span className="rounded-xl border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-xs font-medium text-emerald-200">
+            {paymentState === "success" && (
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-lime-300/80 bg-lime-100 px-3 py-1.5 font-mono text-xs font-bold text-lime-950">
+                <span>✓</span>
                 {t(messages, "subscribe.momo.status.success")}
               </span>
-            ) : null}
+            )}
 
-            {paymentState === "failed" ? (
-              <span className="rounded-xl border border-red-300/30 bg-red-400/10 px-3 py-2 text-xs font-medium text-red-200">
+            {paymentState === "failed" && (
+              <span className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300/80 bg-rose-50 px-3 py-1.5 font-mono text-xs font-bold text-rose-700">
+                <span>✕</span>
                 {t(messages, "subscribe.momo.status.failed")}
               </span>
-            ) : null}
+            )}
           </div>
         </div>
-      ) : null}
+      )}
 
-      {message && paymentState !== "success" ? (
-  <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-    {message}
-  </div>
-) : null}
-
-      {error ? (
-        <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {error}
+      {/* Messages & Alerts */}
+      {message && paymentState !== "success" && (
+        <div className="rounded-2xl border border-lime-300/80 bg-lime-50/90 p-3.5 font-mono text-xs font-semibold text-lime-950 shadow-2xs">
+          {message}
         </div>
-      ) : null}
+      )}
+
+      {error && (
+        <div className="rounded-2xl border border-rose-300/80 bg-rose-50/90 p-3.5 font-mono text-xs font-bold text-rose-800 shadow-2xs">
+          ✕ {error}
+        </div>
+      )}
     </div>
   );
 }

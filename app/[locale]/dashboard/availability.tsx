@@ -2,7 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AvailabilityRule, Weekday, defaultAvailability } from "@/lib/availability";
+import {
+  AvailabilityRule,
+  Weekday,
+  defaultAvailability,
+} from "@/lib/availability";
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
 
@@ -40,16 +44,16 @@ export default function AvailabilityEditor() {
       3: t(dict, "availability.workingDays.days.wed"),
       4: t(dict, "availability.workingDays.days.thu"),
       5: t(dict, "availability.workingDays.days.fri"),
-      6: t(dict, "availability.workingDays.days.sat")
+      6: t(dict, "availability.workingDays.days.sat"),
     }),
-    [dict]
+    [dict],
   );
 
   const detectedTZ = useMemo(() => guessTZ(), []);
 
   const [rule, setRule] = useState<AvailabilityRule>({
     ...defaultAvailability,
-    timezone: detectedTZ
+    timezone: detectedTZ,
   });
 
   const [saving, setSaving] = useState(false);
@@ -76,18 +80,22 @@ export default function AvailabilityEditor() {
         }
 
         if (res.ok && data?.rule) {
-          const incoming: AvailabilityRule = { ...defaultAvailability, ...data.rule };
+          const incoming: AvailabilityRule = {
+            ...defaultAvailability,
+            ...data.rule,
+          };
           const tz = String((incoming as any).timezone ?? "").trim();
 
           setRule({
             ...incoming,
-            timezone: tz ? tz : detectedTZ
+            timezone: tz ? tz : detectedTZ,
           });
         } else {
           setRule({ ...defaultAvailability, timezone: detectedTZ });
         }
       } catch {
-        if (!cancelled) setRule({ ...defaultAvailability, timezone: detectedTZ });
+        if (!cancelled)
+          setRule({ ...defaultAvailability, timezone: detectedTZ });
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -116,7 +124,7 @@ export default function AvailabilityEditor() {
       const res = await fetch("/api/availability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rule: { ...rule, timezone: tz } })
+        body: JSON.stringify({ rule: { ...rule, timezone: tz } }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -143,15 +151,28 @@ export default function AvailabilityEditor() {
   const tzOk = isValidTimeZone(String(rule.timezone ?? "").trim() || "UTC");
 
   return (
-    <section className="rounded-2xl border border-slate-200 p-6 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">{t(dict, "availability.title")}</h2>
+    <div className="space-y-6">
+      {/* Top action row */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-md border border-lime-300/80 bg-lime-100 font-mono text-[10px] font-bold text-lime-950">
+              ⏱
+            </span>
+            <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+              {t(dict, "availability.title")}
+            </h3>
+          </div>
+          <p className="mt-1 text-xs text-slate-600 sm:text-sm">
+            {t(dict, "availability.lead")}
+          </p>
+        </div>
 
         <button
           type="button"
           onClick={save}
           disabled={saving || loading}
-          className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+          className="inline-flex items-center justify-center rounded-2xl border border-lime-300/80 bg-lime-100 px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-lime-950 shadow-xs transition hover:bg-lime-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {saved
             ? t(dict, "availability.states.saved")
@@ -161,70 +182,90 @@ export default function AvailabilityEditor() {
         </button>
       </div>
 
-      <p className="mt-2 text-sm text-slate-600">{t(dict, "availability.lead")}</p>
-
-      {error ? (
-        <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
-      ) : null}
+      {error && (
+        <div className="rounded-2xl border border-rose-300/80 bg-rose-50/90 p-3.5 font-mono text-xs font-bold text-rose-800 shadow-2xs">
+          ✕ {error}
+        </div>
+      )}
 
       {loading ? (
-        <div className="mt-4 rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
+        <div className="flex items-center justify-center rounded-2xl border border-slate-300/80 bg-white/60 p-8 font-mono text-xs text-slate-500 animate-pulse">
           {t(dict, "availability.states.loading")}
         </div>
       ) : (
-        <div className="mt-5 grid gap-5">
-          {/* Timezone */}
-          <div className="rounded-xl border border-slate-200 p-4">
-            <div className="text-sm font-medium">{t(dict, "availability.timezone.title")}</div>
+        <div className="space-y-6">
+          {/* Timezone configuration card */}
+          <div className="rounded-2xl border border-slate-300/80 bg-slate-100/70 p-4 sm:p-5">
+            <div className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700">
+              {t(dict, "availability.timezone.title")}
+            </div>
 
-            <div className="mt-3 grid gap-2">
-              <label className="grid gap-1 text-sm">
-                {t(dict, "availability.timezone.label")}
+            <div className="mt-3 space-y-3">
+              <label className="block space-y-1.5">
+                <span className="font-mono text-[11px] font-bold uppercase text-slate-600">
+                  {t(dict, "availability.timezone.label")}
+                </span>
                 <input
                   value={rule.timezone}
-                  onChange={(e) => setRule((r) => ({ ...r, timezone: e.target.value }))}
+                  onChange={(e) =>
+                    setRule((r) => ({ ...r, timezone: e.target.value }))
+                  }
                   className={[
-                    "max-w-sm rounded-xl border px-3 py-2",
-                    tzOk ? "border-slate-200" : "border-red-300"
+                    "h-11 w-full max-w-sm rounded-xl border bg-white/90 px-4 font-mono text-xs font-medium text-slate-900 shadow-2xs outline-none focus:bg-white",
+                    tzOk
+                      ? "border-slate-300/80 focus:border-slate-800"
+                      : "border-rose-400 focus:border-rose-600",
                   ].join(" ")}
                 />
-                <span className="text-xs text-slate-500">{t(dict, "availability.timezone.hint")}</span>
+                <span className="block font-mono text-[10px] text-slate-500">
+                  {t(dict, "availability.timezone.hint")}
+                </span>
               </label>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50"
-                  onClick={() => setRule((r) => ({ ...r, timezone: detectedTZ }))}
+                  className="rounded-xl border border-slate-300/80 bg-white/80 px-3.5 py-1.5 font-mono text-xs font-semibold text-slate-700 shadow-2xs backdrop-blur-sm transition hover:bg-white active:scale-95"
+                  onClick={() =>
+                    setRule((r) => ({ ...r, timezone: detectedTZ }))
+                  }
                 >
-                  {t(dict, "availability.timezone.useDetected").replace("{tz}", detectedTZ)}
+                  {t(dict, "availability.timezone.useDetected").replace(
+                    "{tz}",
+                    detectedTZ,
+                  )}
                 </button>
 
-                {!tzOk ? (
-                  <span className="self-center text-sm text-red-600">
-                    {t(dict, "availability.timezone.invalid")}
+                {!tzOk && (
+                  <span className="font-mono text-xs font-bold text-rose-600">
+                    ✕ {t(dict, "availability.timezone.invalid")}
                   </span>
-                ) : null}
+                )}
               </div>
             </div>
           </div>
 
-          {/* Working days */}
-          <div>
-            <div className="text-sm font-medium">{t(dict, "availability.workingDays.title")}</div>
-            <div className="mt-2 flex flex-wrap gap-2">
+          {/* Working days selector */}
+          <div className="rounded-2xl border border-slate-300/80 bg-slate-100/70 p-4 sm:p-5">
+            <div className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700">
+              {t(dict, "availability.workingDays.title")}
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
               {([0, 1, 2, 3, 4, 5, 6] as Weekday[]).map((d) => {
                 const active = rule.days.includes(d);
                 return (
                   <button
                     key={d}
                     type="button"
-                    onClick={() => setRule((r) => ({ ...r, days: toggleDay(r.days, d) }))}
+                    onClick={() =>
+                      setRule((r) => ({ ...r, days: toggleDay(r.days, d) }))
+                    }
                     className={[
-                      "rounded-xl border px-3 py-2 text-sm font-semibold",
+                      "rounded-xl border px-3.5 py-2 font-mono text-xs font-bold transition active:scale-95",
                       active
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200 hover:bg-slate-50"
+                        ? "border-lime-300/90 bg-lime-100 text-lime-950 shadow-xs"
+                        : "border-slate-300/80 bg-white/80 text-slate-700 hover:bg-white hover:text-slate-950",
                     ].join(" ")}
                   >
                     {dayLabels[d]}
@@ -234,84 +275,144 @@ export default function AvailabilityEditor() {
             </div>
           </div>
 
-          {/* Hours */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1 text-sm">
-              {t(dict, "availability.hours.start")}
-              <input
-                type="time"
-                value={rule.start}
-                onChange={(e) => setRule((r) => ({ ...r, start: e.target.value }))}
-                className="rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
+          {/* Daily Operating Hours */}
+          <div className="rounded-2xl border border-slate-300/80 bg-slate-100/70 p-4 sm:p-5">
+            <div className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700">
+              Shift Hours
+            </div>
 
-            <label className="grid gap-1 text-sm">
-              {t(dict, "availability.hours.end")}
-              <input
-                type="time"
-                value={rule.end}
-                onChange={(e) => setRule((r) => ({ ...r, end: e.target.value }))}
-                className="rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">
+              <label className="space-y-1.5">
+                <span className="font-mono text-[11px] font-bold uppercase text-slate-600">
+                  {t(dict, "availability.hours.start")}
+                </span>
+                <input
+                  type="time"
+                  value={rule.start}
+                  onChange={(e) =>
+                    setRule((r) => ({ ...r, start: e.target.value }))
+                  }
+                  className="h-11 w-full rounded-xl border border-slate-300/80 bg-white/90 px-3 font-mono text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-slate-800 focus:bg-white"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="font-mono text-[11px] font-bold uppercase text-slate-600">
+                  {t(dict, "availability.hours.end")}
+                </span>
+                <input
+                  type="time"
+                  value={rule.end}
+                  onChange={(e) =>
+                    setRule((r) => ({ ...r, end: e.target.value }))
+                  }
+                  className="h-11 w-full rounded-xl border border-slate-300/80 bg-white/90 px-3 font-mono text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-slate-800 focus:bg-white"
+                />
+              </label>
+            </div>
           </div>
 
-          {/* Break */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1 text-sm">
-              {t(dict, "availability.break.start")}
-              <input
-                type="time"
-                value={rule.breakStart ?? ""}
-                onChange={(e) => setRule((r) => ({ ...r, breakStart: e.target.value || undefined }))}
-                className="rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
+          {/* Break Window */}
+          <div className="rounded-2xl border border-slate-300/80 bg-slate-100/70 p-4 sm:p-5">
+            <div className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700">
+              Break Window
+            </div>
 
-            <label className="grid gap-1 text-sm">
-              {t(dict, "availability.break.end")}
-              <input
-                type="time"
-                value={rule.breakEnd ?? ""}
-                onChange={(e) => setRule((r) => ({ ...r, breakEnd: e.target.value || undefined }))}
-                className="rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">
+              <label className="space-y-1.5">
+                <span className="font-mono text-[11px] font-bold uppercase text-slate-600">
+                  {t(dict, "availability.break.start")}
+                </span>
+                <input
+                  type="time"
+                  value={rule.breakStart ?? ""}
+                  onChange={(e) =>
+                    setRule((r) => ({
+                      ...r,
+                      breakStart: e.target.value || undefined,
+                    }))
+                  }
+                  className="h-11 w-full rounded-xl border border-slate-300/80 bg-white/90 px-3 font-mono text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-slate-800 focus:bg-white"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="font-mono text-[11px] font-bold uppercase text-slate-600">
+                  {t(dict, "availability.break.end")}
+                </span>
+                <input
+                  type="time"
+                  value={rule.breakEnd ?? ""}
+                  onChange={(e) =>
+                    setRule((r) => ({
+                      ...r,
+                      breakEnd: e.target.value || undefined,
+                    }))
+                  }
+                  className="h-11 w-full rounded-xl border border-slate-300/80 bg-white/90 px-3 font-mono text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-slate-800 focus:bg-white"
+                />
+              </label>
+            </div>
           </div>
 
-          {/* Slot step + buffer */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1 text-sm">
-              {t(dict, "availability.rules.slotStep")}
-              <input
-                type="number"
-                min={5}
-                step={5}
-                value={rule.slotStepMin}
-                onChange={(e) =>
-                  setRule((r) => ({ ...r, slotStepMin: Number(e.target.value || 30) }))
-                }
-                className="w-full max-w-[220px] rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
+          {/* Slot Interval and Buffer Duration */}
+          <div className="rounded-2xl border border-slate-300/80 bg-slate-100/70 p-4 sm:p-5">
+            <div className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700">
+              Granularity & Buffer
+            </div>
 
-            <label className="grid gap-1 text-sm">
-              {t(dict, "availability.rules.buffer")}
-              <input
-                type="number"
-                min={0}
-                step={5}
-                value={rule.bufferMin}
-                onChange={(e) =>
-                  setRule((r) => ({ ...r, bufferMin: Number(e.target.value || 0) }))
-                }
-                className="w-full max-w-[220px] rounded-xl border border-slate-200 px-3 py-2"
-              />
-            </label>
+            <div className="mt-3 grid gap-4 sm:grid-cols-2">
+              <label className="space-y-1.5">
+                <span className="font-mono text-[11px] font-bold uppercase text-slate-600">
+                  {t(dict, "availability.rules.slotStep")}
+                </span>
+                <div className="relative flex items-center">
+                  <input
+                    type="number"
+                    min={5}
+                    step={5}
+                    value={rule.slotStepMin}
+                    onChange={(e) =>
+                      setRule((r) => ({
+                        ...r,
+                        slotStepMin: Number(e.target.value || 30),
+                      }))
+                    }
+                    className="h-11 w-full rounded-xl border border-slate-300/80 bg-white/90 px-3.5 pr-14 font-mono text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-slate-800 focus:bg-white"
+                  />
+                  <span className="pointer-events-none absolute right-3 font-mono text-xs text-slate-400">
+                    min
+                  </span>
+                </div>
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="font-mono text-[11px] font-bold uppercase text-slate-600">
+                  {t(dict, "availability.rules.buffer")}
+                </span>
+                <div className="relative flex items-center">
+                  <input
+                    type="number"
+                    min={0}
+                    step={5}
+                    value={rule.bufferMin}
+                    onChange={(e) =>
+                      setRule((r) => ({
+                        ...r,
+                        bufferMin: Number(e.target.value || 0),
+                      }))
+                    }
+                    className="h-11 w-full rounded-xl border border-slate-300/80 bg-white/90 px-3.5 pr-14 font-mono text-sm font-semibold text-slate-900 shadow-2xs outline-none focus:border-slate-800 focus:bg-white"
+                  />
+                  <span className="pointer-events-none absolute right-3 font-mono text-xs text-slate-400">
+                    min
+                  </span>
+                </div>
+              </label>
+            </div>
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

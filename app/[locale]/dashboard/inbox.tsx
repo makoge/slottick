@@ -57,18 +57,18 @@ type ActiveConversation = {
 function statusTone(status: string) {
   switch (status) {
     case "PENDING":
-      return "bg-amber-100 text-amber-800 ring-amber-200";
+      return "border-amber-300/80 bg-amber-100 text-amber-950";
     case "NEEDS_INFO":
-      return "bg-blue-100 text-blue-800 ring-blue-200";
+      return "border-blue-300/80 bg-blue-100 text-blue-950";
     case "CONFIRMED":
-      return "bg-emerald-100 text-emerald-800 ring-emerald-200";
+      return "border-lime-300/80 bg-lime-100 text-lime-950";
     case "DECLINED":
     case "CANCELLED":
-      return "bg-red-100 text-red-800 ring-red-200";
+      return "border-rose-300/80 bg-rose-100 text-rose-950";
     case "DONE":
-      return "bg-slate-100 text-slate-700 ring-slate-200";
+      return "border-slate-300/80 bg-slate-100 text-slate-800";
     default:
-      return "bg-slate-100 text-slate-700 ring-slate-200";
+      return "border-slate-300/80 bg-slate-100 text-slate-800";
   }
 }
 
@@ -76,7 +76,7 @@ function formatMoney(amount: number, currency: string, locale: string) {
   try {
     return new Intl.NumberFormat(locale, {
       style: "currency",
-      currency
+      currency,
     }).format(amount);
   } catch {
     return `${amount} ${currency}`;
@@ -106,7 +106,7 @@ export default function Inbox() {
       month: "short",
       day: "2-digit",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     }).format(d);
   }
 
@@ -115,24 +115,25 @@ export default function Inbox() {
     return tr(`inbox.status.${key}`);
   }
 
- const searchParams = useSearchParams();
-const params = useParams();
+  const searchParams = useSearchParams();
+  const params = useParams();
 
-const queryConversationId = searchParams.get("conversation") ?? "";
-const pathConversationId =
-  typeof params?.conversationId === "string" ? params.conversationId : "";
+  const queryConversationId = searchParams.get("conversation") ?? "";
+  const pathConversationId =
+    typeof params?.conversationId === "string" ? params.conversationId : "";
 
-const initialConversationId = pathConversationId || queryConversationId || "";
+  const initialConversationId = pathConversationId || queryConversationId || "";
 
-const [activeId, setActiveId] = useState<string>(initialConversationId);
-const [items, setItems] = useState<ConversationListItem[]>([]);
-const [active, setActive] = useState<ActiveConversation | null>(null);
+  const [activeId, setActiveId] = useState<string>(initialConversationId);
+  const [items, setItems] = useState<ConversationListItem[]>([]);
+  const [active, setActive] = useState<ActiveConversation | null>(null);
 
-useEffect(() => {
-  if (initialConversationId) {
-    setActiveId(initialConversationId);
-  }
-}, [initialConversationId]);
+  useEffect(() => {
+    if (initialConversationId) {
+      setActiveId(initialConversationId);
+    }
+  }, [initialConversationId]);
+
   const [loadingList, setLoadingList] = useState(true);
   const [loadingThread, setLoadingThread] = useState(false);
   const [sending, setSending] = useState(false);
@@ -143,14 +144,18 @@ useEffect(() => {
     try {
       if (!keepSelection) setLoadingList(true);
 
-      const res = await fetch("/api/dashboard/conversations", { cache: "no-store" });
+      const res = await fetch("/api/dashboard/conversations", {
+        cache: "no-store",
+      });
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
         throw new Error(data?.error || tr("inbox.errors.loadInbox"));
       }
 
-      const nextItems: ConversationListItem[] = Array.isArray(data?.conversations)
+      const nextItems: ConversationListItem[] = Array.isArray(
+        data?.conversations,
+      )
         ? data.conversations
         : [];
 
@@ -180,7 +185,7 @@ useEffect(() => {
 
       const res = await fetch(
         `/api/dashboard/conversations/${encodeURIComponent(conversationId)}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
       const data = await res.json().catch(() => ({}));
 
@@ -208,8 +213,8 @@ useEffect(() => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ body: message.trim() })
-        }
+          body: JSON.stringify({ body: message.trim() }),
+        },
       );
 
       const data = await res.json().catch(() => ({}));
@@ -225,8 +230,6 @@ useEffect(() => {
       setSending(false);
     }
   }
-
-  
 
   useEffect(() => {
     loadList(false);
@@ -248,37 +251,47 @@ useEffect(() => {
 
   const selectedSummary = useMemo(
     () => items.find((x) => x.id === activeId) ?? null,
-    [items, activeId]
+    [items, activeId],
   );
 
   return (
-    <section className="grid gap-6 lg:grid-cols-12">
+    <div className="grid gap-6 lg:grid-cols-12">
+      {/* LEFT: THREAD LIST */}
       <div className="lg:col-span-4">
-        <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_25px_70px_-35px_rgba(15,23,42,0.25)] ring-1 ring-slate-200">
-          <div className="border-b border-slate-200 px-5 py-4">
+        <div className="overflow-hidden rounded-3xl border border-slate-400/40 bg-white/70 shadow-sm backdrop-blur-xl">
+          <div className="border-b border-slate-300/70 p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {tr("inbox.title")}
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md border border-lime-300/80 bg-lime-100 font-mono text-[10px] font-bold text-lime-950">
+                    💬
+                  </span>
+                  <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+                    {tr("inbox.title")}
+                  </h3>
+                </div>
+                <p className="mt-1 text-xs text-slate-600 sm:text-sm">
                   {tr("inbox.subtitle")}
                 </p>
               </div>
 
-              <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
+              <span className="rounded-xl border border-slate-300/80 bg-white px-2.5 py-1 font-mono text-xs font-bold text-slate-800 shadow-2xs">
                 {items.length}
               </span>
             </div>
           </div>
 
-          <div className="max-h-[72vh] overflow-y-auto">
+          <div className="max-h-[72vh] overflow-y-auto p-2 sm:p-3">
             {loadingList ? (
-              <div className="p-5 text-sm text-slate-500">{tr("inbox.loading")}</div>
+              <div className="flex items-center justify-center p-8 font-mono text-xs text-slate-500 animate-pulse">
+                {tr("inbox.loading")}
+              </div>
             ) : items.length === 0 ? (
-              <div className="p-5 text-sm text-slate-500">{tr("inbox.empty")}</div>
+              <div className="rounded-2xl border border-dashed border-slate-300/80 bg-slate-100/50 p-6 text-center font-mono text-xs text-slate-500">
+                {tr("inbox.empty")}
+              </div>
             ) : (
-              <div className="divide-y divide-slate-100">
+              <div className="space-y-2">
                 {items.map((item) => {
                   const activeRow = item.id === activeId;
 
@@ -291,42 +304,61 @@ useEffect(() => {
                         setActiveId(item.id);
                       }}
                       className={[
-                        "w-full px-5 py-4 text-left transition",
-                        activeRow ? "bg-slate-50" : "hover:bg-slate-50/70"
+                        "w-full rounded-2xl border p-3.5 text-left transition-all active:scale-[0.99]",
+                        activeRow
+                          ? "border-lime-300/90 bg-lime-100 text-lime-950 shadow-xs"
+                          : "border-slate-300/70 bg-white/80 text-slate-800 hover:border-slate-400 hover:bg-white",
                       ].join(" ")}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="truncate font-semibold text-slate-900">
+                          <div className="truncate text-sm font-bold">
                             {item.customerName}
                           </div>
-                          <div className="mt-1 truncate text-sm text-slate-600">
+                          <div
+                            className={[
+                              "mt-0.5 truncate font-mono text-xs",
+                              activeRow ? "text-lime-900/80" : "text-slate-600",
+                            ].join(" ")}
+                          >
                             {item.serviceName}
                           </div>
                         </div>
 
-                        <div className="flex shrink-0 flex-col items-end gap-2">
+                        <div className="flex shrink-0 flex-col items-end gap-1.5">
                           <span
-                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${statusTone(
-                              item.bookingStatus
+                            className={`rounded-lg border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${statusTone(
+                              item.bookingStatus,
                             )}`}
                           >
                             {prettyStatus(item.bookingStatus)}
                           </span>
 
                           {item.unreadCount > 0 ? (
-                            <span className="rounded-full bg-fuchsia-600 px-2 py-0.5 text-[11px] font-semibold text-white">
-                              {item.unreadCount}
+                            <span className="rounded-md border border-lime-300/80 bg-lime-200 px-1.5 py-0.5 font-mono text-[10px] font-bold text-lime-950">
+                              {item.unreadCount} new
                             </span>
                           ) : null}
                         </div>
                       </div>
 
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <div className="min-w-0 truncate text-sm text-slate-500">
+                      <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-black/5 pt-2">
+                        <div
+                          className={[
+                            "min-w-0 truncate text-xs",
+                            activeRow
+                              ? "text-lime-950 font-medium"
+                              : "text-slate-500",
+                          ].join(" ")}
+                        >
                           {item.lastMessage?.body || tr("inbox.noMessages")}
                         </div>
-                        <div className="shrink-0 text-xs text-slate-400">
+                        <div
+                          className={[
+                            "shrink-0 font-mono text-[10px]",
+                            activeRow ? "text-lime-900/70" : "text-slate-400",
+                          ].join(" ")}
+                        >
                           {formatDateTime(item.lastMessageAt || item.startsAt)}
                         </div>
                       </div>
@@ -339,97 +371,116 @@ useEffect(() => {
         </div>
       </div>
 
+      {/* RIGHT: ACTIVE THREAD & DETAILS */}
       <div className="lg:col-span-8">
-        <div className="flex min-h-[72vh] flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_25px_70px_-35px_rgba(15,23,42,0.25)] ring-1 ring-slate-200">
+        <div className="flex min-h-[72vh] flex-col overflow-hidden rounded-3xl border border-slate-400/40 bg-white/75 shadow-xl backdrop-blur-2xl">
           {!activeId ? (
-            <div className="flex flex-1 items-center justify-center p-8 text-center text-slate-500">
+            <div className="flex flex-1 items-center justify-center p-8 text-center font-mono text-xs text-slate-500">
               {tr("inbox.selectConversation")}
             </div>
           ) : loadingThread && !active ? (
-            <div className="flex flex-1 items-center justify-center p-8 text-slate-500">
+            <div className="flex flex-1 items-center justify-center p-8 font-mono text-xs text-slate-500 animate-pulse">
               {tr("inbox.loadingConversation")}
             </div>
           ) : !active ? (
-            <div className="flex flex-1 items-center justify-center p-8 text-slate-500">
+            <div className="flex flex-1 items-center justify-center p-8 font-mono text-xs text-slate-500">
               {tr("inbox.conversationNotFound")}
             </div>
           ) : (
             <>
-              <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
+              {/* Thread Info Header */}
+              <div className="border-b border-slate-300/70 p-5 sm:p-6">
                 <div className="flex flex-col gap-4">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-xl font-semibold text-slate-900">
+                      <h3 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
                         {active.booking.customerName}
                       </h3>
                       <span
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${statusTone(
-                          active.booking.status
+                        className={`rounded-lg border px-2.5 py-0.5 font-mono text-xs font-bold uppercase tracking-wider ${statusTone(
+                          active.booking.status,
                         )}`}
                       >
                         {prettyStatus(active.booking.status)}
                       </span>
                     </div>
 
-                    <div className="mt-2 grid gap-1 text-sm text-slate-600">
+                    <div className="mt-3 grid gap-2 rounded-2xl border border-slate-300/80 bg-slate-100/70 p-3.5 font-mono text-xs text-slate-700 sm:grid-cols-2">
                       <div>
-                        <span className="font-medium text-slate-900">
+                        <span className="font-bold text-slate-500">
                           {tr("inbox.labels.service")}:
                         </span>{" "}
-                        {active.booking.serviceName}
+                        <span className="font-semibold text-slate-900">
+                          {active.booking.serviceName}
+                        </span>
                       </div>
                       <div>
-                        <span className="font-medium text-slate-900">
+                        <span className="font-bold text-slate-500">
                           {tr("inbox.labels.time")}:
                         </span>{" "}
-                        {formatDateTime(active.booking.startsAt)}
+                        <span className="font-semibold text-slate-900">
+                          {formatDateTime(active.booking.startsAt)}
+                        </span>
                       </div>
                       <div>
-                        <span className="font-medium text-slate-900">
+                        <span className="font-bold text-slate-500">
                           {tr("inbox.labels.price")}:
                         </span>{" "}
-                        {formatMoney(active.booking.price, active.booking.currency, locale)}
+                        <span className="font-semibold text-slate-900">
+                          {formatMoney(
+                            active.booking.price,
+                            active.booking.currency,
+                            locale,
+                          )}
+                        </span>
                       </div>
                       {active.booking.customerEmail ? (
                         <div>
-                          <span className="font-medium text-slate-900">
+                          <span className="font-bold text-slate-500">
                             {tr("inbox.labels.email")}:
                           </span>{" "}
-                          {active.booking.customerEmail}
+                          <span className="font-semibold text-slate-900">
+                            {active.booking.customerEmail}
+                          </span>
                         </div>
                       ) : null}
                       {active.booking.customerPhone ? (
                         <div>
-                          <span className="font-medium text-slate-900">
+                          <span className="font-bold text-slate-500">
                             {tr("inbox.labels.phone")}:
                           </span>{" "}
-                          {active.booking.customerPhone}
+                          <span className="font-semibold text-slate-900">
+                            {active.booking.customerPhone}
+                          </span>
                         </div>
                       ) : null}
                       {active.booking.notes ? (
-                        <div>
-                          <span className="font-medium text-slate-900">
+                        <div className="sm:col-span-2">
+                          <span className="font-bold text-slate-500">
                             {tr("inbox.labels.notes")}:
                           </span>{" "}
-                          {active.booking.notes}
+                          <span className="italic text-slate-900">
+                            {active.booking.notes}
+                          </span>
                         </div>
                       ) : null}
                     </div>
                   </div>
-
-                  
                 </div>
               </div>
 
               {error ? (
-                <div className="mx-5 mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 ring-1 ring-red-100 sm:mx-6">
-                  {error}
+                <div className="mx-5 mt-4 rounded-2xl border border-rose-300/80 bg-rose-50/90 p-3.5 font-mono text-xs font-bold text-rose-800 shadow-2xs sm:mx-6">
+                  ✕ {error}
                 </div>
               ) : null}
 
-              <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50/70 px-5 py-5 sm:px-6">
+              {/* Message Feed */}
+              <div className="flex-1 space-y-3 overflow-y-auto bg-slate-100/50 p-5 sm:p-6">
                 {active.messages.length === 0 ? (
-                  <div className="text-sm text-slate-500">{tr("inbox.noMessages")}</div>
+                  <div className="flex h-full items-center justify-center font-mono text-xs text-slate-500">
+                    {tr("inbox.noMessages")}
+                  </div>
                 ) : (
                   active.messages.map((m) => {
                     const isBusiness = m.senderType === "BUSINESS";
@@ -439,18 +490,20 @@ useEffect(() => {
                       <div
                         key={m.id}
                         className={[
-                          "max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm",
+                          "max-w-[85%] rounded-2xl px-4 py-3 text-xs sm:text-sm shadow-2xs",
                           isSystem
-                            ? "mx-auto bg-slate-200 text-slate-700"
+                            ? "mx-auto border border-slate-300/80 bg-slate-200/90 text-slate-700 font-mono text-xs text-center"
                             : isBusiness
-                            ? "ml-auto bg-slate-900 text-white"
-                            : "bg-white text-slate-900 ring-1 ring-slate-200"
+                              ? "ml-auto border border-lime-300/80 bg-lime-100 text-lime-950 font-medium"
+                              : "border border-slate-300/80 bg-white/95 text-slate-900",
                         ].join(" ")}
                       >
-                        <div className="whitespace-pre-wrap">{m.body}</div>
+                        <div className="whitespace-pre-wrap leading-relaxed">
+                          {m.body}
+                        </div>
                         <div
-                          className={`mt-2 text-xs ${
-                            isBusiness ? "text-white/70" : "text-slate-400"
+                          className={`mt-2 font-mono text-[10px] ${
+                            isBusiness ? "text-lime-900/70" : "text-slate-400"
                           }`}
                         >
                           {formatDateTime(m.createdAt)}
@@ -461,22 +514,23 @@ useEffect(() => {
                 )}
               </div>
 
-              <div className="border-t border-slate-200 bg-white px-5 py-4 sm:px-6">
+              {/* Reply Box */}
+              <div className="border-t border-slate-300/70 bg-white/80 p-4 sm:p-6 backdrop-blur-sm">
                 {selectedSummary ? (
-                  <div className="mb-3 text-xs text-slate-400">
+                  <div className="mb-2 font-mono text-[11px] text-slate-500">
                     {tr("inbox.replyingTo", {
                       customer: selectedSummary.customerName,
-                      service: selectedSummary.serviceName
+                      service: selectedSummary.serviceName,
                     })}
                   </div>
                 ) : null}
 
-                <div className="grid gap-3">
+                <div className="space-y-3">
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder={tr("inbox.placeholder")}
-                    className="min-h-[110px] rounded-2xl bg-white px-4 py-3 ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    className="min-h-[100px] w-full resize-y rounded-2xl border border-slate-300/80 bg-white/90 p-4 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-slate-800 focus:bg-white focus:outline-none sm:text-sm"
                   />
 
                   <div className="flex items-center justify-end">
@@ -484,9 +538,9 @@ useEffect(() => {
                       type="button"
                       onClick={sendMessage}
                       disabled={sending || !message.trim()}
-                      className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 disabled:opacity-60"
+                      className="inline-flex items-center justify-center rounded-2xl border border-lime-300/80 bg-lime-100 px-6 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-lime-950 shadow-xs transition hover:bg-lime-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {sending ? tr("inbox.sending") : tr("inbox.send")}
+                      {sending ? tr("inbox.sending") : tr("inbox.send")} →
                     </button>
                   </div>
                 </div>
@@ -495,6 +549,6 @@ useEffect(() => {
           )}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

@@ -48,7 +48,7 @@ function toLocalParts(iso: string) {
   const dt = new Date(iso);
   return {
     date: toISODateLocal(dt),
-    time: `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`
+    time: `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}`,
   };
 }
 function mondayISO(isoDate: string) {
@@ -58,9 +58,9 @@ function mondayISO(isoDate: string) {
 
 export default function SchedulePanel() {
   const params = useParams<{ locale?: string }>();
-const locale = params?.locale ?? "en";
+  const locale = params?.locale ?? "en";
 
-const messages = useMessages(locale);
+  const messages = useMessages(locale);
 
   const weekdayLabel = useMemo(
     () => [
@@ -70,9 +70,9 @@ const messages = useMessages(locale);
       t(messages, "schedule.weekdays.thu"),
       t(messages, "schedule.weekdays.fri"),
       t(messages, "schedule.weekdays.sat"),
-      t(messages, "schedule.weekdays.sun")
+      t(messages, "schedule.weekdays.sun"),
     ],
-    [messages]
+    [messages],
   );
 
   const [bookings, setBookings] = useState<DbBooking[]>([]);
@@ -83,11 +83,14 @@ const messages = useMessages(locale);
   const today = useMemo(() => todayISO(), []);
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [weekStart, setWeekStart] = useState<string>(mondayISO(today));
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
     try {
-      const res = await fetch("/api/bookings?scope=owner", { cache: "no-store" });
+      const res = await fetch("/api/bookings?scope=owner", {
+        cache: "no-store",
+      });
       const data = await res.json().catch(() => ({}));
       setBookings(res.ok && Array.isArray(data.bookings) ? data.bookings : []);
     } finally {
@@ -159,7 +162,9 @@ const messages = useMessages(locale);
   }, [weekStart, weekdayLabel]);
 
   const dayBookings = useMemo(() => {
-    return filtered.filter((b) => toLocalParts(b.startsAt).date === selectedDate);
+    return filtered.filter(
+      (b) => toLocalParts(b.startsAt).date === selectedDate,
+    );
   }, [filtered, selectedDate]);
 
   const title =
@@ -179,7 +184,6 @@ const messages = useMessages(locale);
     const next = addDays(ws, deltaDays);
     const nextWeekStartIso = toISODateLocal(next);
 
-    // opinion: guard before setting state to avoid “jumping” UX
     if (mode === "upcoming" && nextWeekStartIso < mondayISO(today)) return;
 
     setWeekStart(nextWeekStartIso);
@@ -199,30 +203,44 @@ const messages = useMessages(locale);
 
   function copyBookingText(b: DbBooking, time: string) {
     navigator.clipboard
-      .writeText(`${b.customerName} — ${selectedDate} ${time} — ${b.serviceName}`)
+      .writeText(
+        `${b.customerName} — ${selectedDate} ${time} — ${b.serviceName}`,
+      )
+      .then(() => {
+        setCopiedId(b.id);
+        setTimeout(() => setCopiedId(null), 1200);
+      })
       .catch(() => {});
   }
 
   return (
-    <section className="mt-6 rounded-2xl border border-slate-200 p-6 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-6">
+      {/* Top action & mode switcher row */}
+      <div className="flex flex-col gap-4 border-b border-slate-300/70 pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">{t(messages, "schedule.title")}</h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <div className="flex items-center gap-2">
+            <span className="flex h-5 w-5 items-center justify-center rounded-md border border-lime-300/80 bg-lime-100 font-mono text-[10px] font-bold text-lime-950">
+              📅
+            </span>
+            <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+              {t(messages, "schedule.title")}
+            </h3>
+          </div>
+          <p className="mt-1 font-mono text-xs text-slate-600 sm:text-sm">
             {t(messages, "schedule.subtitle")
               .replace("{title}", title)
               .replace("{n}", String(totalUpcoming))}
-            {mode !== "upcoming" ? "" : ""}
             {loading ? ` • ${t(messages, "common.loading")}` : ""}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        {/* Mode filter pills */}
+        <div className="flex flex-wrap gap-1.5 rounded-2xl border border-slate-300/80 bg-slate-100/70 p-1">
           {(
             [
               { id: "today", label: t(messages, "schedule.modes.today") },
               { id: "upcoming", label: t(messages, "schedule.modes.upcoming") },
-              { id: "all", label: t(messages, "schedule.modes.all") }
+              { id: "all", label: t(messages, "schedule.modes.all") },
             ] as const
           ).map((x) => {
             const active = mode === x.id;
@@ -232,10 +250,10 @@ const messages = useMessages(locale);
                 type="button"
                 onClick={() => setMode(x.id)}
                 className={[
-                  "rounded-xl border px-4 py-2 text-sm font-semibold",
+                  "rounded-xl px-3.5 py-1.5 font-mono text-xs font-bold uppercase tracking-wider transition-all active:scale-95",
                   active
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 hover:bg-slate-50"
+                    ? "border border-lime-300/90 bg-lime-100 text-lime-950 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-900",
                 ].join(" ")}
               >
                 {x.label}
@@ -245,40 +263,40 @@ const messages = useMessages(locale);
         </div>
       </div>
 
-      {/* Week nav */}
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-2">
+      {/* Week pagination bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => goWeek(-7)}
             disabled={mode === "upcoming" && weekStart <= mondayISO(today)}
-            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-1.5 font-mono text-xs font-semibold text-slate-700 shadow-2xs backdrop-blur-sm transition-all hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {t(messages, "schedule.actions.prev")}
+            ← {t(messages, "schedule.actions.prev")}
           </button>
           <button
             type="button"
             onClick={() => goWeek(7)}
-            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50"
+            className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-1.5 font-mono text-xs font-semibold text-slate-700 shadow-2xs backdrop-blur-sm transition-all hover:bg-white active:scale-95"
           >
-            {t(messages, "schedule.actions.next")}
+            {t(messages, "schedule.actions.next")} →
           </button>
         </div>
 
-        {mode === "upcoming" ? (
+        {mode === "upcoming" && (
           <button
             type="button"
             onClick={jumpToNextBookedDay}
             disabled={!upcomingDates.some((d) => d > selectedDate)}
-            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-xl border border-lime-300/80 bg-lime-100 px-3.5 py-1.5 font-mono text-xs font-bold text-lime-950 shadow-2xs transition-all hover:bg-lime-200 active:scale-95 disabled:cursor-not-allowed disabled:border-slate-300/80 disabled:bg-slate-100 disabled:text-slate-400"
           >
-            {t(messages, "schedule.actions.nextBookedDay")}
+            {t(messages, "schedule.actions.nextBookedDay")} ⚡
           </button>
-        ) : null}
+        )}
       </div>
 
-      {/* Week days */}
-      <div className="mt-4 flex flex-wrap gap-2">
+      {/* Week day strip selector */}
+      <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
         {week.map((d) => {
           const active = d.iso === selectedDate;
           const count = countsByDate.get(d.iso) ?? 0;
@@ -291,70 +309,112 @@ const messages = useMessages(locale);
               disabled={disabled}
               onClick={() => setSelectedDate(d.iso)}
               className={[
-                "relative rounded-xl border px-3 py-2 text-sm font-semibold",
-                disabled ? "opacity-40 cursor-not-allowed" : "",
+                "relative flex flex-col items-center justify-center rounded-2xl border p-2 sm:p-3 transition-all active:scale-95",
+                disabled
+                  ? "cursor-not-allowed border-slate-200 bg-slate-100/40 opacity-40"
+                  : "",
                 active
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-200 hover:bg-slate-50"
+                  ? "border-lime-300/90 bg-lime-100 text-lime-950 shadow-xs"
+                  : "border-slate-300/70 bg-white/70 text-slate-700 hover:border-slate-400 hover:bg-white",
               ].join(" ")}
             >
-              <div className="flex items-center gap-2">
-                <span>{d.label}</span>
-                <span className={active ? "text-white/80" : "text-slate-500"}>
-                  {d.iso.slice(8, 10)}
-                </span>
-              </div>
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider sm:text-xs">
+                {d.label}
+              </span>
+              <span className="mt-0.5 font-mono text-xs font-extrabold sm:text-sm">
+                {d.iso.slice(8, 10)}
+              </span>
 
-              {count > 0 ? (
+              {count > 0 && (
                 <span
                   className={[
-                    "absolute -right-1 -top-1 rounded-full px-2 py-0.5 text-xs font-bold",
-                    active ? "bg-white text-slate-900" : "bg-slate-900 text-white"
+                    "absolute -right-1 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 font-mono text-[9px] font-bold shadow-2xs",
+                    active
+                      ? "bg-slate-900 text-white"
+                      : "border border-lime-300/80 bg-lime-200 text-lime-950",
                   ].join(" ")}
                 >
                   {count}
                 </span>
-              ) : null}
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Day list */}
-      <div className="mt-5">
-        <div className="mb-2 text-sm font-semibold text-slate-900">{selectedDate}</div>
+      {/* Selected day timeline */}
+      <div className="border-t border-slate-300/70 pt-5">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-700">
+            {selectedDate}
+          </span>
+          <span className="font-mono text-xs text-slate-500">
+            {dayBookings.length}{" "}
+            {dayBookings.length === 1 ? "booking" : "bookings"}
+          </span>
+        </div>
 
-        {dayBookings.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 p-4 text-sm text-slate-600">
+        {loading ? (
+          <div className="flex items-center justify-center rounded-2xl border border-slate-300/80 bg-white/60 p-8 font-mono text-xs text-slate-500 animate-pulse">
+            {t(messages, "common.loading")}
+          </div>
+        ) : dayBookings.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300/80 bg-slate-100/50 p-6 text-center font-mono text-xs text-slate-500">
             {t(messages, "schedule.emptyDay")}
           </div>
         ) : (
-          <div className="grid gap-3">
+          <div className="space-y-3">
             {dayBookings.map((b) => {
               const { time } = toLocalParts(b.startsAt);
+              const isCopied = copiedId === b.id;
+
               return (
-                <div key={b.id} className="rounded-2xl border border-slate-200 p-4">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <div className="font-semibold">
-                        {time} • {b.customerName}
+                <div
+                  key={b.id}
+                  className="group rounded-2xl border border-slate-300/80 bg-white/80 p-4 shadow-2xs backdrop-blur-sm transition hover:border-slate-400 hover:bg-white sm:p-5"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-sm font-bold text-slate-900">
+                          {time}
+                        </span>
+                        <span className="rounded-md border border-slate-300/80 bg-slate-100 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700">
+                          {b.customerName}
+                        </span>
                       </div>
-                      <div className="mt-1 text-sm text-slate-600">
-                        {b.serviceName} • {b.durationMin} {t(messages, "schedule.minutes")} •{" "}
-                        {formatMoney(b.price, b.currency as any)}
+
+                      <div className="font-mono text-xs text-slate-600">
+                        <span className="font-semibold text-slate-800">
+                          {b.serviceName}
+                        </span>
+                        {" • "}
+                        <span>
+                          {b.durationMin} {t(messages, "schedule.minutes")}
+                        </span>
+                        {" • "}
+                        <span className="font-bold text-slate-900">
+                          {formatMoney(b.price, b.currency as any)}
+                        </span>
                       </div>
-                      <div className="mt-1 text-sm text-slate-600">
-                        {b.customerPhone}
-                        {b.notes ? ` • ${b.notes}` : ""}
+
+                      <div className="font-mono text-xs text-slate-500">
+                        <span>{b.customerPhone}</span>
+                        {b.notes && (
+                          <span className="italic">
+                            {" • "}
+                            {b.notes}
+                          </span>
+                        )}
                       </div>
                     </div>
 
                     <button
-                      className="w-fit rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
                       type="button"
                       onClick={() => copyBookingText(b, time)}
+                      className="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-300/80 bg-white px-3.5 py-1.5 font-mono text-xs font-semibold text-slate-700 shadow-2xs backdrop-blur-sm transition-all hover:bg-slate-50 active:scale-95"
                     >
-                      {t(messages, "common.copy")}
+                      {isCopied ? "✓ Copied" : t(messages, "common.copy")}
                     </button>
                   </div>
                 </div>
@@ -363,6 +423,6 @@ const messages = useMessages(locale);
           </div>
         )}
       </div>
-    </section>
+    </div>
   );
 }

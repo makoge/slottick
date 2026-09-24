@@ -15,40 +15,54 @@ export default function ShareLinkCard({
   bookingUrl,
   bookingPath,
   copied,
-  onCopy
+  onCopy,
 }: Props) {
   return (
-    <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-lime-100 shadow-sm">
-      <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <div className="text-sm font-medium text-slate-600">
-            {t(messages, "dashboard.share.title")}
-          </div>
-
-          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="min-w-0 flex-1 rounded-xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 ring-1 ring-slate-200">
-              <div className="truncate">{bookingUrl || bookingPath}</div>
+    <section className="overflow-hidden rounded-3xl border border-slate-400/40 bg-white/75 shadow-xl backdrop-blur-2xl">
+      <div className="p-6 sm:p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-md border border-lime-300/80 bg-lime-100 font-mono text-[10px] font-bold text-lime-950 shadow-2xs">
+                🔗
+              </span>
+              <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-500">
+                {t(messages, "dashboard.share.title")}
+              </h3>
             </div>
 
-            <button
-              type="button"
-              onClick={onCopy}
-              className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"
-            >
-              {copied
-                ? t(messages, "dashboard.share.copied")
-                : t(messages, "dashboard.share.copy")}
-            </button>
-          </div>
+            <div className="mt-4 flex flex-col gap-2.5 sm:flex-row sm:items-center">
+              <div className="flex min-w-0 flex-1 items-center rounded-2xl border border-slate-300/80 bg-white/90 px-4 py-3 shadow-2xs backdrop-blur-sm">
+                <span className="truncate font-mono text-xs font-medium text-slate-900 sm:text-sm">
+                  {bookingUrl || bookingPath}
+                </span>
+              </div>
 
-          <div className="mt-2 text-sm text-slate-500">
-            {t(messages, "dashboard.share.help")}
+              <button
+                type="button"
+                onClick={onCopy}
+                className="inline-flex shrink-0 items-center justify-center rounded-2xl border border-lime-300/80 bg-lime-100 px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-lime-950 shadow-xs transition-all hover:bg-lime-200 active:scale-95"
+              >
+                {copied
+                  ? `✓ ${t(messages, "dashboard.share.copied")}`
+                  : `${t(messages, "dashboard.share.copy")} →`}
+              </button>
+            </div>
+
+            <p className="mt-3 font-mono text-[11px] text-slate-500">
+              {t(messages, "dashboard.share.help")}
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="border-t border-slate-200 bg-slate-600 px-6 py-4 text-sm text-slate-50">
-        {t(messages, "dashboard.share.tip")}
+      <div className="border-t border-slate-300/70 bg-slate-100/70 px-6 py-3.5 sm:px-8">
+        <p className="font-mono text-xs text-slate-600">
+          💡{" "}
+          <span className="font-medium text-slate-800">
+            {t(messages, "dashboard.share.tip")}
+          </span>
+        </p>
       </div>
     </section>
   );
