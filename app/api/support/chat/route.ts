@@ -1,35 +1,97 @@
 import { NextResponse } from "next/server";
 import Groq from "groq-sdk";
+import type { ChatCompletionMessageParam } from "groq-sdk/resources/chat/completions";
 import { prisma } from "@/lib/db";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const { messages, businessSlug } = await req.json();
+    const apiKey = process.env.GROQ_API_KEY?.trim();
+    if (!apiKey) {
+      console.error("GROQ_API_KEY is not defined in environment variables.");
+      return NextResponse.json(
+        { error: "AI support service is temporarily unavailable." },
+        { status: 503 },
+      );
+    }
 
-    if (!Array.isArray(messages) || messages.length === 0) {
+    const body = await req.json().catch(() => ({}));
+    let rawMessages = body.messages;
+
+    // Gracefully handle single message payload if sent by UI
+    if (!Array.isArray(rawMessages) && typeof body.message === "string") {
+      rawMessages = [{ role: "user", content: body.message.trim() }];
+    }
+
+    if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
       return NextResponse.json(
         { error: "Invalid messages payload" },
         { status: 400 },
       );
     }
 
+    // Sanitize message objects for Groq API
+    // ✅ Explicit union literal
+    const formattedMessages: ChatCompletionMessageParam[] = rawMessages
+      .map((m: any) => {
+        const role: "user" | "assistant" =
+          m.role === "assistant" ? "assistant" : "user";
+        const content = String(m.content || m.text || m.body || "").trim();
+        return { role, content };
+      })
+      .filter((m) => Boolean(m.content));
+
+    if (formattedMessages.length === 0) {
+      return NextResponse.json(
+        { error: "No valid message content provided" },
+        { status: 400 },
+      );
+    }
+
     let dynamicContext = `
-You are the friendly AI Support Assistant for Slottick.
-Slottick is an appointment booking marketplace for barbers, hair stylists, nail technicians, and wellness studios.
-Help users understand how to search for services, book appointments, or navigate their dashboard.
+You are the friendly AI Concierge for Slottick.
+Slottick is an appointment scheduling platform for barbershops, hair salons, nail techs, and wellness studios.
+Guide clients on how to choose a service, pick a specialist, and book available time slots. Keep answers concise.
 `;
 
-    // RAG: Query live business details from your database if on a shop page
+    const businessSlug = body.businessSlug;
+
+    // RAG: Load live business context including services and team roster
     if (businessSlug && typeof businessSlug === "string") {
       try {
         const biz = await prisma.business.findUnique({
           where: { slug: businessSlug },
-          include: {
-            services: true,
+          select: {
+            name: true,
+            city: true,
+            country: true,
+            heroTag: true,
+            services: {
+              select: {
+                name: true,
+                price: true,
+                currency: true,
+                durationMin: true,
+                category: true,
+              },
+            },
+            staff: {
+              where: { isActive: true },
+              select: {
+                name: true,
+                title: true,
+              },
+            },
+            availabilityRules: {
+              where: { staffId: null },
+              take: 1,
+              select: {
+                start: true,
+                end: true,
+                timezone: true,
+              },
+            },
           },
         });
 
@@ -37,44 +99,61 @@ Help users understand how to search for services, book appointments, or navigate
           const servicesList = biz.services?.length
             ? biz.services
                 .map(
-                  (s: any) =>
-                    `- ${s.name}: ${s.price} ${s.currency} (${s.durationMin} mins, Category: ${s.category || "General"})`,
+                  (s) =>
+                    `- ${s.name}: ${s.price} ${s.currency} (${s.durationMin} mins, ${s.category})`,
                 )
                 .join("\n")
             : "No specific services listed currently.";
 
+          const staffList = biz.staff?.length
+            ? biz.staff
+                .map((m) => `- ${m.name}${m.title ? ` (${m.title})` : ""}`)
+                .join("\n")
+            : "Our master service team.";
+
+          const defaultRule = biz.availabilityRules?.[0];
+          const hours = defaultRule
+            ? `Standard Hours: ${defaultRule.start} - ${defaultRule.end} (${defaultRule.timezone})`
+            : "Check calendar for open hours.";
+
           dynamicContext = `
-You are the customer receptionist for "${biz.name}".
-Location: ${biz.city || "Not specified"}, ${biz.country || ""}
+You are the polite customer receptionist for "${biz.name}".
+Location: ${biz.city || "Local Studio"}, ${biz.country || ""}
+${hours}
+
+Active Specialists & Craftsmen:
+${staffList}
+
 Services Offered:
 ${servicesList}
 
 Instructions:
-- Answer client inquiries using strictly the services, prices, and details provided above.
-- If a client asks for a service not listed, politely let them know it is not currently offered.
-- Encourage them to select their preferred service and pick an open time slot directly on this page.
-- Keep answers concise, helpful, and polite.
+- Assist patrons in booking appointments and answering questions about services and specialists.
+- Only reference services, prices, and team members provided above.
+- Direct clients to pick their service and select an open calendar slot directly on this page.
+- Keep answers under 3 short sentences.
 `;
         }
       } catch (dbErr) {
         console.error("Prisma lookup failed in support route:", dbErr);
-        // Continues with general dynamicContext fallback if DB fails
       }
     }
+
+    const groq = new Groq({ apiKey });
 
     const completion = await groq.chat.completions.create({
       model: "llama-3.1-8b-instant",
       temperature: 0.2,
-      max_tokens: 300,
+      max_tokens: 250,
       messages: [
         { role: "system", content: dynamicContext },
-        ...messages.slice(-6),
+        ...formattedMessages.slice(-6),
       ],
     });
 
     const reply =
       completion.choices[0]?.message?.content ||
-      "I'm here to help. Could you please rephrase your question?";
+      "You can book directly by picking an offering and slot above.";
 
     return NextResponse.json({ reply });
   } catch (err: any) {
