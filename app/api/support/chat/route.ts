@@ -142,7 +142,7 @@ Instructions:
     const groq = new Groq({ apiKey });
 
     const completion = await groq.chat.completions.create({
-      model: "llama-3.1-8b-instant",
+      model: "llama-3.3-70b-versatile",
       temperature: 0.2,
       max_tokens: 250,
       messages: [
