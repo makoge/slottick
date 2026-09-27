@@ -13,17 +13,68 @@ function safeDays(days: unknown) {
 }
 
 export async function GET(req: NextRequest) {
-  const business = await getAuthedBusiness();
-  if (!business)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   const url = new URL(req.url);
+  const businessSlug = url.searchParams.get("businessSlug")?.trim() || null;
   const staffId = url.searchParams.get("staffId")?.trim() || null;
+
+  let targetBusinessId: string | null = null;
+  let allStaff: Array<{
+    id: string;
+    name: string;
+    title: string | null;
+    avatarUrl: string | null;
+  }> = [];
+
+  if (businessSlug) {
+    // 1. Public client booking flow: find business by slug
+    const pubBiz = await prisma.business.findUnique({
+      where: { slug: businessSlug },
+      select: {
+        id: true,
+        staff: {
+          select: {
+            id: true,
+            name: true,
+            title: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+
+    if (!pubBiz) {
+      return NextResponse.json(
+        { error: "Business not found" },
+        { status: 404 },
+      );
+    }
+
+    targetBusinessId = pubBiz.id;
+    allStaff = pubBiz.staff;
+  } else {
+    // 2. Dashboard / Admin flow: require session
+    const business = await getAuthedBusiness();
+    if (!business) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    targetBusinessId = business.id;
+
+    const staffList = await prisma.staff.findMany({
+      where: { businessId: business.id },
+      select: {
+        id: true,
+        name: true,
+        title: true,
+        avatarUrl: true,
+      },
+    });
+    allStaff = staffList;
+  }
 
   // Find staff-specific rule if staffId provided, else default business rule (staffId: null)
   let ar = await prisma.availabilityRule.findFirst({
     where: {
-      businessId: business.id,
+      businessId: targetBusinessId,
       staffId: staffId || null,
     },
   });
@@ -32,32 +83,35 @@ export async function GET(req: NextRequest) {
   if (!ar && staffId) {
     ar = await prisma.availabilityRule.findFirst({
       where: {
-        businessId: business.id,
+        businessId: targetBusinessId,
         staffId: null,
       },
     });
   }
 
-  if (!ar) return NextResponse.json({ rule: null });
-
   let days: number[] = [];
-  try {
-    days = safeDays(JSON.parse(ar.daysJson ?? "[]"));
-  } catch {}
+  if (ar) {
+    try {
+      days = safeDays(JSON.parse(ar.daysJson ?? "[]"));
+    } catch {}
+  }
 
   return NextResponse.json({
-    rule: {
-      id: ar.id,
-      staffId: ar.staffId,
-      timezone: ar.timezone,
-      days,
-      start: ar.start,
-      end: ar.end,
-      breakStart: ar.breakStart,
-      breakEnd: ar.breakEnd,
-      bufferMin: ar.bufferMin,
-      slotStepMin: ar.slotStepMin,
-    },
+    rule: ar
+      ? {
+          id: ar.id,
+          staffId: ar.staffId,
+          timezone: ar.timezone,
+          days,
+          start: ar.start,
+          end: ar.end,
+          breakStart: ar.breakStart,
+          breakEnd: ar.breakEnd,
+          bufferMin: ar.bufferMin,
+          slotStepMin: ar.slotStepMin,
+        }
+      : null,
+    staff: allStaff, // Also supplies staff roster expected by booking-client
   });
 }
 

@@ -1,8 +1,5 @@
 import type { NextConfig } from "next";
 
-
-
-
 const isDev = process.env.NODE_ENV === "development";
 
 const csp = `
@@ -18,7 +15,9 @@ const csp = `
   form-action 'self';
   frame-ancestors 'none';
   upgrade-insecure-requests;
-`.replace(/\s{2,}/g, " ").trim();
+`
+  .replace(/\s{2,}/g, " ")
+  .trim();
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -29,13 +28,18 @@ const nextConfig: NextConfig = {
       {
         source: "/",
         destination: "/en",
-        permanent: true
+        permanent: true,
       },
       {
         source: "/:locale/seo/keyword/:slug",
         destination: "/:locale/services/discover/:slug",
-        permanent: true
-      }
+        permanent: true,
+      },
+      {
+        source: "/:locale/services/discover/:slug",
+        destination: "/:locale/services/:slug",
+        permanent: true, // 301 Moved Permanently
+      },
     ];
   },
 
@@ -46,30 +50,28 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: isDev
-              ? csp.replace("upgrade-insecure-requests;", "")
-              : csp
+            value: isDev ? csp.replace("upgrade-insecure-requests;", "") : csp,
           },
           {
             key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin"
+            value: "strict-origin-when-cross-origin",
           },
           {
             key: "X-Content-Type-Options",
-            value: "nosniff"
+            value: "nosniff",
           },
           {
             key: "X-Frame-Options",
-            value: "DENY"
+            value: "DENY",
           },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=()"
-          }
-        ]
-      }
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
     ];
-  }
+  },
 };
 
 export default nextConfig;

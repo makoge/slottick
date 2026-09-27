@@ -10,10 +10,10 @@ import {
   overlapsBreak,
   slotRangeForService,
 } from "@/lib/availability";
-import { Currency, Service, formatMoney } from "@/lib/services";
+import { Currency, formatMoney } from "@/lib/services";
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
-
+import ServiceAddonSelector from "@/app/components/booking/ServiceAddonSelector";
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
@@ -32,12 +32,15 @@ type StaffMember = {
   avatarUrl?: string | null;
 };
 
-type DbService = {
+export type ServiceItem = {
   id: string;
   name: string;
-  durationMin: number;
+  description?: string | null;
   price: number;
   currency: string;
+  durationMin: number;
+  isAddon?: boolean;
+  parentServiceIds?: string[];
   depositEnabled?: boolean;
   depositType?: DepositType;
   depositValue?: number | null;
@@ -53,6 +56,15 @@ type CustomerMe = {
     phone?: string | null;
   };
 };
+
+// 1. Update your step state:
+type BookingStep =
+  | "service"
+  | "addons"
+  | "specialist"
+  | "datetime"
+  | "details"
+  | "confirmation";
 
 function stars(n: number) {
   return (
@@ -187,36 +199,53 @@ export default function BookingClient({
     return s;
   };
 
-  function depositLabel(s: Service) {
+  function depositLabel(s: ServiceItem) {
     if (!s.depositEnabled) return null;
     const v = Number(s.depositValue || 0);
     if (!v) return null;
 
     return s.depositType === "AMOUNT"
-      ? tr("booking.deposit.amount", { amount: formatMoney(v, s.currency) })
+      ? tr("booking.deposit.amount", {
+          amount: formatMoney(v, toCurrency(s.currency)),
+        })
       : tr("booking.deposit.percent", { n: v });
   }
 
+  // 1. Navigation step state
+  const [step, setStep] = useState<BookingStep>("service");
+
+  // 2. Data state
   const [rule, setRule] = useState<AvailabilityRule>(defaultAvailability);
   const [allStaff, setAllStaff] = useState<StaffMember[]>([]);
-  const [services, setServices] = useState<
-    (Service & { staff?: StaffMember[] })[]
-  >([]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
   const [loadingRule, setLoadingRule] = useState(true);
   const [loadingServices, setLoadingServices] = useState(true);
 
   const [customer, setCustomer] = useState<CustomerMe["customer"]>(null);
   const [loadingCustomer, setLoadingCustomer] = useState(true);
-
   const [dayBookings, setDayBookings] = useState<DbDayBooking[]>([]);
 
-  // Selections
-  const [serviceId, setServiceId] = useState("");
+  // 3. Selection states
+  const [serviceId, setServiceId] = useState<string>("");
+  const [selectedService, setSelectedService] = useState<ServiceItem | null>(
+    null,
+  );
+  const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [selectedStaffId, setSelectedStaffId] = useState<string>("ANY");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
 
-  // Customer Form
+  // Keep selectedService synchronized whenever serviceId changes
+  useEffect(() => {
+    if (!serviceId) {
+      setSelectedService(null);
+      return;
+    }
+    const found = services.find((s) => s.id === serviceId) || null;
+    setSelectedService(found);
+  }, [serviceId, services]);
+
+  // 4. Customer Form
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -224,9 +253,71 @@ export default function BookingClient({
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
+  // 5. Add-on & Pricing derivations
+  const availableAddons = useMemo(() => {
+    return services.filter((s) => Boolean(s.isAddon));
+  }, [services]);
+
+  const primaryServices = useMemo(() => {
+    return services.filter((s) => !s.isAddon);
+  }, [services]);
+
+  // Handler when user selects primary service
+  function handleSelectService(service: ServiceItem) {
+    setServiceId(service.id);
+    setSelectedService(service);
+    setSelectedAddonIds([]); // Reset previous add-on selections
+
+    // Check if there are applicable add-ons for this business/service
+    const hasAddons = services.some(
+      (s) =>
+        Boolean(s.isAddon) &&
+        (!s.parentServiceIds?.length ||
+          s.parentServiceIds.includes(service.id)),
+    );
+
+    if (hasAddons) {
+      setStep("addons");
+    } else {
+      setStep("specialist");
+    }
+  }
+  // Toggle Add-on
+  function handleToggleAddon(addon: ServiceItem) {
+    setSelectedAddonIds((prev) =>
+      prev.includes(addon.id)
+        ? prev.filter((id) => id !== addon.id)
+        : [...prev, addon.id],
+    );
+  }
+
+  // Total duration calculation (Primary Service + Add-ons)
+  const totalCalculatedDuration = useMemo(() => {
+    if (!selectedService) return 30;
+    const selectedAddons = services.filter((s) =>
+      selectedAddonIds.includes(s.id),
+    );
+    return (
+      selectedService.durationMin +
+      selectedAddons.reduce((sum, a) => sum + a.durationMin, 0)
+    );
+  }, [selectedService, selectedAddonIds, services]);
+
+  // Total price calculation (Primary Service + Add-ons)
+  const totalCalculatedPrice = useMemo(() => {
+    if (!selectedService) return 0;
+    const selectedAddons = services.filter((s) =>
+      selectedAddonIds.includes(s.id),
+    );
+    return (
+      selectedService.price +
+      selectedAddons.reduce((sum, a) => sum + a.price, 0)
+    );
+  }, [selectedService, selectedAddonIds, services]);
+
+  // Lightbox keyboard listener
   useEffect(() => {
     if (!lightboxUrl) return;
     const onKeyDown = (e: KeyboardEvent) =>
@@ -260,7 +351,7 @@ export default function BookingClient({
     };
   }, []);
 
-  // 2. Fetch Availability rule & staff roster (supports staff override)
+  // 2. Fetch Availability rule & staff roster
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -271,7 +362,7 @@ export default function BookingClient({
             ? `&staffId=${encodeURIComponent(selectedStaffId)}`
             : "";
         const res = await fetch(
-          `/api/availability-rule?businessSlug=${encodeURIComponent(businessSlug)}${staffParam}`,
+          `/api/availability?businessSlug=${encodeURIComponent(businessSlug)}${staffParam}`,
           { cache: "no-store" },
         );
         const data = await res.json().catch(() => ({}));
@@ -305,43 +396,20 @@ export default function BookingClient({
       try {
         const res = await fetch(
           `/api/services?businessSlug=${encodeURIComponent(businessSlug)}`,
-          {
-            cache: "no-store",
-          },
+          { cache: "no-store" },
         );
         const data = await res.json().catch(() => ({}));
         if (cancelled) return;
 
-        const mapped = Array.isArray(data.services)
-          ? (data.services as DbService[]).map((s) => ({
-              id: String(s.id),
-              name: String(s.name ?? ""),
-              durationMin: Number(s.durationMin ?? 0),
-              price: Number(s.price ?? 0),
-              currency: toCurrency(s.currency),
-              depositEnabled: Boolean(s.depositEnabled),
-              depositType: (s.depositType === "AMOUNT"
-                ? "AMOUNT"
-                : "PERCENT") as DepositType,
-              depositValue:
-                s.depositEnabled && Number.isFinite(Number(s.depositValue))
-                  ? Number(s.depositValue)
-                  : undefined,
-              images: Array.isArray(s.images)
-                ? s.images.map(String).filter(Boolean)
-                : [],
-              staff: Array.isArray(s.staff) ? s.staff : [],
-            }))
-          : [];
-
-        setServices(mapped);
+        if (Array.isArray(data?.services)) {
+          setServices(data.services);
+        }
       } catch {
         if (!cancelled) setServices([]);
       } finally {
         if (!cancelled) setLoadingServices(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
@@ -386,11 +454,6 @@ export default function BookingClient({
     };
   }, [businessSlug, date, selectedStaffId]);
 
-  const selectedService = useMemo(
-    () => services.find((s) => s.id === serviceId) ?? null,
-    [services, serviceId],
-  );
-
   // Specialists qualified for selected service
   const qualifiedStaff = useMemo(() => {
     if (!selectedService) return allStaff;
@@ -415,17 +478,26 @@ export default function BookingClient({
     return s;
   }, [dayBookings, rule]);
 
+  // Available slots computed with total combined duration (Base service + Add-ons)
   const availableSlots = useMemo(() => {
     if (!date || !selectedService) return [];
     return allSlots.filter((tm) => {
-      if (!canFitServiceAt(tm, rule, selectedService.durationMin)) return false;
-      if (overlapsBreak(tm, rule, selectedService.durationMin)) return false;
-      const needed = slotRangeForService(tm, rule, selectedService.durationMin);
+      if (!canFitServiceAt(tm, rule, totalCalculatedDuration)) return false;
+      if (overlapsBreak(tm, rule, totalCalculatedDuration)) return false;
+      const needed = slotRangeForService(tm, rule, totalCalculatedDuration);
       return needed.every((x) => !bookedSet.has(x));
     });
-  }, [allSlots, bookedSet, date, rule, selectedService]);
+  }, [
+    allSlots,
+    bookedSet,
+    date,
+    rule,
+    selectedService,
+    totalCalculatedDuration,
+  ]);
 
-  const step = !serviceId ? 1 : !date ? 2 : !time ? 3 : 4;
+  // Renamed to stepNumber so it doesn't collide with `step` state
+  const stepNumber = !serviceId ? 1 : !date ? 2 : !time ? 3 : 4;
   const loading = loadingRule || loadingServices;
 
   async function confirmBooking() {
@@ -445,8 +517,8 @@ export default function BookingClient({
 
     const tz = rule.timezone || "UTC";
 
-    // Double-check conflicting slots
-    const needed = slotRangeForService(time, rule, selectedService.durationMin);
+    // Double-check conflicting slots using the combined duration (Service + Add-ons)
+    const needed = slotRangeForService(time, rule, totalCalculatedDuration);
     for (const b of dayBookings) {
       const blocked = new Set(
         slotRangeForService(
@@ -464,6 +536,16 @@ export default function BookingClient({
     try {
       const startsAt = startsAtISOFromBusinessLocal(date, time, tz);
 
+      // Snapshot chosen add-on objects
+      const selectedAddonsList = services
+        .filter((s) => selectedAddonIds.includes(s.id))
+        .map((a) => ({
+          id: a.id,
+          name: a.name,
+          price: a.price,
+          durationMin: a.durationMin,
+        }));
+
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -471,15 +553,16 @@ export default function BookingClient({
           businessSlug,
           serviceId: selectedService.id,
           serviceName: selectedService.name,
-          durationMin: selectedService.durationMin,
-          price: selectedService.price,
-          currency: selectedService.currency,
+          durationMin: totalCalculatedDuration, // Combined duration
+          price: totalCalculatedPrice, // Combined price
+          currency: toCurrency(selectedService.currency),
           staffId: selectedStaffId === "ANY" ? null : selectedStaffId,
           startsAt,
           customerName: fullName.trim(),
           customerPhone: phone.trim(),
           customerEmail: emailTrim,
           notes: notes.trim() || null,
+          addons: selectedAddonsList, // Snapshot sent to DB
         }),
       });
 
@@ -528,7 +611,6 @@ export default function BookingClient({
 
   const description = (business.description ?? "").trim();
   const selectedStaffObj = qualifiedStaff.find((s) => s.id === selectedStaffId);
-
   return (
     <main className="min-h-screen bg-[#FBF9F5] text-[#241F1A] font-sans selection:bg-[#EAE0D0] selection:text-[#1F1914]">
       {/* Lightbox */}
@@ -719,29 +801,45 @@ export default function BookingClient({
           {/* Header Ledger Stamp */}
           <div className="border-b border-[#EBE4D8] bg-[#F6F1E9] px-6 py-4 rounded-t-2xl flex flex-wrap items-center justify-between gap-3">
             <div className="font-serif italic text-base text-[#3C3228]">
-              Appointment Ledger • Step {step} of 4
+              Appointment Ledger • Step {stepNumber} of 4
             </div>
-            <div className="flex items-center gap-2 font-mono text-xs">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
               <span
-                className={`px-2.5 py-0.5 rounded-full ${step >= 1 ? "bg-[#29221C] text-[#FAF6F0]" : "bg-[#E3D9CC] text-[#716557]"}`}
+                className={`px-2.5 py-0.5 rounded-full ${
+                  stepNumber >= 1
+                    ? "bg-[#29221C] text-[#FAF6F0]"
+                    : "bg-[#E3D9CC] text-[#716557]"
+                }`}
               >
                 1. Service
               </span>
               <span>→</span>
               <span
-                className={`px-2.5 py-0.5 rounded-full ${step >= 2 ? "bg-[#29221C] text-[#FAF6F0]" : "bg-[#E3D9CC] text-[#716557]"}`}
+                className={`px-2.5 py-0.5 rounded-full ${
+                  stepNumber >= 2
+                    ? "bg-[#29221C] text-[#FAF6F0]"
+                    : "bg-[#E3D9CC] text-[#716557]"
+                }`}
               >
                 2. Craftsman
               </span>
               <span>→</span>
               <span
-                className={`px-2.5 py-0.5 rounded-full ${step >= 3 ? "bg-[#29221C] text-[#FAF6F0]" : "bg-[#E3D9CC] text-[#716557]"}`}
+                className={`px-2.5 py-0.5 rounded-full ${
+                  stepNumber >= 3
+                    ? "bg-[#29221C] text-[#FAF6F0]"
+                    : "bg-[#E3D9CC] text-[#716557]"
+                }`}
               >
                 3. Date & Time
               </span>
               <span>→</span>
               <span
-                className={`px-2.5 py-0.5 rounded-full ${step === 4 ? "bg-[#29221C] text-[#FAF6F0]" : "bg-[#E3D9CC] text-[#716557]"}`}
+                className={`px-2.5 py-0.5 rounded-full ${
+                  stepNumber === 4
+                    ? "bg-[#29221C] text-[#FAF6F0]"
+                    : "bg-[#E3D9CC] text-[#716557]"
+                }`}
               >
                 4. Confirm
               </span>
@@ -773,7 +871,7 @@ export default function BookingClient({
                 </div>
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {services.map((s) => {
+                  {primaryServices.map((s) => {
                     const active = s.id === serviceId;
                     const d = depositLabel(s);
                     const thumb = s.images?.[0];
@@ -782,7 +880,7 @@ export default function BookingClient({
                       <div
                         key={s.id}
                         onClick={() => {
-                          setServiceId(s.id);
+                          handleSelectService(s);
                           setSelectedStaffId("ANY");
                           setDate("");
                           setTime("");
@@ -791,7 +889,7 @@ export default function BookingClient({
                         className={`group cursor-pointer rounded-xl border p-4 transition duration-200 ${
                           active
                             ? "border-[#2E251E] bg-[#F9F6F0] shadow-md ring-1 ring-[#2E251E]"
-                            : "border-[#E7DECة] bg-[#FCFBF8] hover:border-[#C4B7A5] hover:bg-white"
+                            : "border-[#E7DEC8] bg-[#FCFBF8] hover:border-[#C4B7A5] hover:bg-white"
                         }`}
                       >
                         {thumb && (
@@ -809,7 +907,7 @@ export default function BookingClient({
                             {s.name}
                           </div>
                           <div className="font-mono text-sm font-bold text-[#8C6D2B]">
-                            {formatMoney(s.price, s.currency)}
+                            {formatMoney(s.price, toCurrency(s.currency))}
                           </div>
                         </div>
 
@@ -845,6 +943,94 @@ export default function BookingClient({
                 </div>
               )}
             </div>
+
+            {/* DYNAMIC ATELIER ENHANCEMENTS / ADD-ONS */}
+            {selectedService && availableAddons.length > 0 && (
+              <div className="border-t border-[#EDE5DA] pt-8">
+                <div className="border-b border-[#ECE4D8] pb-3 mb-6 flex items-baseline justify-between">
+                  <div>
+                    <h2 className="font-serif text-2xl text-[#221C17]">
+                      Optional Atelier Enhancements
+                    </h2>
+                    <p className="font-mono text-xs text-[#7A6E5F] mt-1">
+                      Complement your session with specialized treatments
+                    </p>
+                  </div>
+                  {selectedAddonIds.length > 0 && (
+                    <span className="font-mono text-xs font-bold text-[#8C6D2B] bg-[#F7F1E4] px-2.5 py-1 rounded border border-[#DECFA9]">
+                      +{selectedAddonIds.length} added
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {availableAddons
+                    .filter(
+                      (addon) =>
+                        !addon.parentServiceIds?.length ||
+                        addon.parentServiceIds.includes(selectedService.id),
+                    )
+                    .map((addon) => {
+                      const isSelected = selectedAddonIds.includes(addon.id);
+                      return (
+                        <div
+                          key={addon.id}
+                          onClick={() => {
+                            handleToggleAddon(addon);
+                            setTime(""); // Reset selected slot since total duration may shift
+                          }}
+                          className={`cursor-pointer rounded-xl border p-4 transition duration-200 ${
+                            isSelected
+                              ? "border-[#2E251E] bg-[#F9F6F0] shadow-sm ring-1 ring-[#2E251E]"
+                              : "border-[#E7DEC8] bg-[#FCFBF8] hover:border-[#C4B7A5] hover:bg-white"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs">
+                                {isSelected ? "☑" : "☐"}
+                              </span>
+                              <div className="font-serif text-base font-medium text-[#251E19]">
+                                {addon.name}
+                              </div>
+                            </div>
+                            <div className="font-mono text-xs font-bold text-[#8C6D2B]">
+                              +
+                              {formatMoney(
+                                addon.price,
+                                toCurrency(addon.currency),
+                              )}
+                            </div>
+                          </div>
+                          {addon.description && (
+                            <p className="mt-1 font-mono text-[11px] text-[#736657] line-clamp-2">
+                              {addon.description}
+                            </p>
+                          )}
+                          <div className="mt-2 font-mono text-[11px] text-[#736657]">
+                            ⏱ +{addon.durationMin} mins
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* >>> INSERT HERE: STEP 1.5 - SERVICE ADD-ON SELECTOR <<< */}
+            {step === "addons" && selectedService && (
+              <div className="border-t border-[#EDE5DA] pt-8">
+                <ServiceAddonSelector
+                  currency={toCurrency(selectedService.currency)}
+                  primaryService={selectedService}
+                  availableAddons={services.filter((s) => s.isAddon)}
+                  selectedAddonIds={selectedAddonIds}
+                  onToggleAddon={handleToggleAddon}
+                  onProceed={() => setStep("specialist")}
+                  onBack={() => setStep("service")}
+                />
+              </div>
+            )}
 
             {/* STEP 2: CRAFTSMAN / SPECIALIST SELECTION */}
             {selectedService && (
@@ -1030,17 +1216,31 @@ export default function BookingClient({
                       </div>
                       <div className="font-mono text-xs text-[#6F6151] mt-0.5">
                         {date} • {time} ({rule.timezone}) •{" "}
-                        {selectedService.durationMin} Minutes
+                        {totalCalculatedDuration} Minutes
                       </div>
+                      {selectedAddonIds.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {services
+                            .filter((s) => selectedAddonIds.includes(s.id))
+                            .map((a) => (
+                              <span
+                                key={a.id}
+                                className="rounded bg-[#E8DFC9] px-2 py-0.5 font-mono text-[10px] text-[#4E4132]"
+                              >
+                                + {a.name} ({a.durationMin}m)
+                              </span>
+                            ))}
+                        </div>
+                      )}
                     </div>
                     <div className="text-right font-mono">
                       <div className="text-xs uppercase text-[#7D6E5D]">
-                        Honorarium
+                        Total Honorarium
                       </div>
                       <div className="text-xl font-bold text-[#8C6D2B]">
                         {formatMoney(
-                          selectedService.price,
-                          selectedService.currency,
+                          totalCalculatedPrice,
+                          toCurrency(selectedService.currency),
                         )}
                       </div>
                     </div>

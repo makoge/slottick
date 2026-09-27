@@ -1,4 +1,3 @@
-
 // app/sitemap.ts
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
@@ -15,7 +14,10 @@ import { LANDING_PAGES } from "@/lib/landing/pages";
 const INDEX_LOCALES = ["en", "fr"] as const;
 
 function baseUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "https://slottick.com").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_SITE_URL || "https://slottick.com").replace(
+    /\/$/,
+    "",
+  );
 }
 
 function safeSlug(v: unknown) {
@@ -29,20 +31,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const urls: MetadataRoute.Sitemap = [];
 
   const TOOL_SLUGS = [
-  "profit-calculator",
-  "client-follow-up-automation",
-      ] as const;
+    "profit-calculator",
+    "client-follow-up-automation",
+  ] as const;
 
-      const GUIDE_SLUGS = [
-  "buzz-cut-blond",
-  "cut-and-blow",
-  "buzz-cut",
-  "mens-haircut-styles",
-  "zoomer-perm"
-] as const;
+  const GUIDE_SLUGS = [
+    "buzz-cut-blond",
+    "cut-and-blow",
+    "buzz-cut",
+    "mens-haircut-styles",
+    "zoomer-perm",
+  ] as const;
 
   const useLocales = locales.filter((l) =>
-    (INDEX_LOCALES as readonly string[]).includes(l)
+    (INDEX_LOCALES as readonly string[]).includes(l),
   );
 
   const staticPaths = ["", "/explore", "/privacy", "/terms", "/contact"];
@@ -54,16 +56,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${site}/${locale}/blog`,
       lastModified: now,
       changeFrequency: "weekly",
-      priority: 0.7
+      priority: 0.7,
     });
 
     for (const post of blogPosts) {
-      const last = post.updatedAt ? new Date(post.updatedAt) : new Date(post.publishedAt);
+      const last = post.updatedAt
+        ? new Date(post.updatedAt)
+        : new Date(post.publishedAt);
       urls.push({
         url: `${site}/${locale}/blog/${post.slug}`,
         lastModified: isNaN(last.getTime()) ? now : last,
         changeFrequency: "monthly",
-        priority: 0.65
+        priority: 0.65,
       });
     }
   }
@@ -74,7 +78,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${site}/${locale}/landing`,
       lastModified: now,
       changeFrequency: "monthly",
-      priority: 0.55
+      priority: 0.55,
     });
 
     for (const page of LANDING_PAGES) {
@@ -82,31 +86,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${site}/${locale}/landing/${page.slug}`,
         lastModified: now,
         changeFrequency: "monthly",
-        priority: 0.5
+        priority: 0.5,
       });
     }
   }
 
   // ✅ Tools: /[locale]/tools + individual tool pages
-for (const locale of useLocales) {
-  // tools index page
-  urls.push({
-    url: `${site}/${locale}/tools`,
-    lastModified: now,
-    changeFrequency: "weekly",
-    priority: 0.8,
-  });
-
-  // individual tools
-  for (const slug of TOOL_SLUGS) {
+  for (const locale of useLocales) {
+    // tools index page
     urls.push({
-      url: `${site}/${locale}/tools/${slug}`,
+      url: `${site}/${locale}/tools`,
       lastModified: now,
       changeFrequency: "weekly",
-      priority: 0.75,
+      priority: 0.8,
     });
+
+    // individual tools
+    for (const slug of TOOL_SLUGS) {
+      urls.push({
+        url: `${site}/${locale}/tools/${slug}`,
+        lastModified: now,
+        changeFrequency: "weekly",
+        priority: 0.75,
+      });
+    }
   }
-}
 
   // ✅ Static pages
   for (const locale of useLocales) {
@@ -116,22 +120,22 @@ for (const locale of useLocales) {
         url: `${site}/${locale}${path}`,
         lastModified: now,
         changeFrequency: isHome ? "weekly" : "monthly",
-        priority: isHome ? 1 : 0.7
+        priority: isHome ? 1 : 0.7,
       });
     }
   }
 
   // ✅ Editorial guide pages: /[locale]/guides/[slug]
-for (const locale of useLocales) {
-  for (const slug of GUIDE_SLUGS) {
-    urls.push({
-      url: `${site}/${locale}/guides/${slug}`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.7
-    });
+  for (const locale of useLocales) {
+    for (const slug of GUIDE_SLUGS) {
+      urls.push({
+        url: `${site}/${locale}/guides/${slug}`,
+        lastModified: now,
+        changeFrequency: "monthly",
+        priority: 0.7,
+      });
+    }
   }
-}
 
   // ✅ Guides: /[locale]/guides/[locationSlug]/[serviceSlug]
   for (const locale of useLocales) {
@@ -141,23 +145,23 @@ for (const locale of useLocales) {
           url: `${site}/${locale}/guides/${loc.slug}/${svc.slug}`,
           lastModified: now,
           changeFrequency: "monthly",
-          priority: 0.65
+          priority: 0.65,
         });
       }
     }
   }
 
-  // ✅ Keyword discovery pages: /[locale]/services/discover/[slug]
+  // ✅ Keyword pages: /[locale]/services/[slug]
   for (const locale of useLocales) {
     for (const p of KEYWORD_PAGES) {
       const slug = safeSlug((p as any).slug);
       if (!slug) continue;
 
       urls.push({
-        url: `${site}/${locale}/services/discover/${slug}`,
+        url: `${site}/${locale}/services/${slug}`,
         lastModified: now,
         changeFrequency: "monthly",
-        priority: 0.6
+        priority: 0.65,
       });
     }
   }
@@ -177,7 +181,7 @@ for (const locale of useLocales) {
             url: `${site}/${locale}/services/${country.slug}/${citySlug}/${categorySlug}`,
             lastModified: now,
             changeFrequency: "monthly",
-            priority: 0.65
+            priority: 0.65,
           });
         }
       }
@@ -192,7 +196,7 @@ for (const locale of useLocales) {
           url: `${site}/${locale}/services/${intent.slug}/${city.slug}`,
           lastModified: now,
           changeFrequency: "monthly",
-          priority: 0.6
+          priority: 0.6,
         });
       }
     }
@@ -209,7 +213,7 @@ for (const locale of useLocales) {
           url: `${site}/${locale}/explore/country/${country.slug}/${categorySlug}`,
           lastModified: now,
           changeFrequency: "weekly",
-          priority: 0.78
+          priority: 0.78,
         });
       }
     }
@@ -219,7 +223,7 @@ for (const locale of useLocales) {
   try {
     const businesses = await prisma.business.findMany({
       where: { marketplaceEligibleAt: { not: null } },
-      select: { slug: true, updatedAt: true }
+      select: { slug: true, updatedAt: true },
     });
 
     for (const locale of useLocales) {
@@ -231,7 +235,7 @@ for (const locale of useLocales) {
           url: `${site}/${locale}/book/${encodeURIComponent(slug)}`,
           lastModified: b.updatedAt ?? now,
           changeFrequency: "weekly",
-          priority: 0.9
+          priority: 0.9,
         });
       }
     }

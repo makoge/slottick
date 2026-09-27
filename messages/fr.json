@@ -526,6 +526,77 @@
         "subtitle": "Gérez les collaborateurs, rôles et plannings dédiés.",
         "lead": "Supervisez votre équipe, assignez des compétences et organisez les présences."
       }
+    },
+    "dossier": {
+      "stamp": "DOSSIER PATRON ÉTABLI",
+      "noEmail": "Aucun e-mail enregistré",
+      "noPhone": "Aucun numéro enregistré",
+      "backToDashboard": "← Retour au tableau de bord",
+      "sensitivityAlert": "Sensibilités / Contre-indications :",
+      "tabs": {
+        "records": "Historique & Formules",
+        "gallery": "Portfolio Visuel",
+        "preferences": "Préférences & Sensibilités"
+      },
+      "records": {
+        "title": "Registre des Prestations & Formules",
+        "newEntryBtn": "+ Enregistrer une Formule / Prestation",
+        "cancelBtn": "Annuler",
+        "drawerTitle": "Inscrire un Nouveau Registre de Prestation",
+        "serviceLabel": "Prestation Réalisée *",
+        "servicePlaceholder": "ex. Dégradé à blanc & barbe ou Balayage complet",
+        "formulaLabel": "Formule Technique / Détails",
+        "formulaPlaceholder": "ex. Sabot #1.5 ouvert; Wella 8/38 20vol 30min",
+        "internalNotesLabel": "Notes Internes de l'Artisan",
+        "internalNotesPlaceholder": "Texture capillaire, épi, sujets de conversation, ou ajustements pour la prochaine séance...",
+        "submitBtn": "Consigner l'Entrée →",
+        "submitting": "Inscription en cours...",
+        "empty": "Aucune formule ni visite enregistrée pour le moment.",
+        "craftsmanLabel": "Artisan :",
+        "formulaTag": "Formule / Réglage Sabot :"
+      },
+      "gallery": {
+        "title": "Archives Visuelles",
+        "subtitle": "Galerie privée documentant l'évolution et les résultats du client",
+        "uploadBtn": "+ Ajouter une Photo au Portfolio",
+        "beforeHeader": "Avant la Prestation",
+        "afterHeader": "Résultat / Après",
+        "emptyBefore": "Aucune photo de départ enregistrée.",
+        "emptyAfter": "Aucune photo de résultat enregistrée."
+      },
+      "preferences": {
+        "title": "Notes & Sensibilités du Client",
+        "subtitle": "Dossier confidentiel accessible uniquement à l'équipe lors de la préparation.",
+        "allergiesLabel": "Allergies, Sensibilités & Contre-indications",
+        "allergiesPlaceholder": "ex. Cuir chevelu sensible, allergie à la PPD, sensibilité au nickel",
+        "generalNotesLabel": "Préférences & Notes d'Accueil",
+        "generalNotesPlaceholder": "ex. Préfère de l'eau gazeuse avec citron; rendez-vous silencieux; raie à gauche.",
+        "saveBtn": "Sauvegarder le Dossier →",
+        "saving": "Conservation en cours...",
+        "successAlert": "Dossier client mis à jour avec succès."
+      }
+    },
+    "dossierPanel": {
+      "title": "Dossier & Formules des Clients",
+      "lead": "Préférences clients, antécédents de sensibilités, formules chimiques et archives visuelles.",
+      "searchPlaceholder": "Rechercher un client ou téléphone...",
+      "refresh": "Actualiser",
+      "states": {
+        "loading": "Chargement des dossiers clients...",
+        "noResults": "Aucun client ne correspond à votre recherche.",
+        "empty": "Aucun profil client enregistré pour le moment."
+      },
+      "errors": {
+        "loadFailed": "Échec du chargement du registre clients"
+      },
+      "card": {
+        "allergyBadge": "⚠️ Allergie",
+        "notePrefix": "Note :",
+        "lastFormulaPrefix": "Dernière Formule :",
+        "visitsLogged": "{n} visite enregistrée",
+        "visitsLoggedPlural": "{n} visites enregistrées",
+        "viewDossier": "Voir le Dossier →"
+      }
     }
   },
 

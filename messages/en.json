@@ -518,6 +518,77 @@
         "subtitle": "Manage team members, roles, and schedules.",
         "lead": "Manage team members, roles, and schedules."
       }
+    },
+    "dossier": {
+      "stamp": "ESTABLISHED PATRON DOSSIER",
+      "noEmail": "No email on file",
+      "noPhone": "No phone on file",
+      "backToDashboard": "← Return to Dashboard",
+      "sensitivityAlert": "Sensitivity / Contraindications:",
+      "tabs": {
+        "records": "Visit History & Formulas",
+        "gallery": "Visual Portfolio",
+        "preferences": "Preferences & Sensitivities"
+      },
+      "records": {
+        "title": "Service & Formula Ledger",
+        "newEntryBtn": "+ Log Treatment / Formula",
+        "cancelBtn": "Cancel",
+        "drawerTitle": "Inscribe New Treatment Record",
+        "serviceLabel": "Service Performed *",
+        "servicePlaceholder": "e.g. Skin Fade & Beard Sculpt or Full Balayage",
+        "formulaLabel": "Technical Formula / Specs",
+        "formulaPlaceholder": "e.g. #1.5 guard foil open; Wella 8/38 20vol 30min",
+        "internalNotesLabel": "Internal Provider Notes",
+        "internalNotesPlaceholder": "Hair texture, cowlick behavior, conversation topics, or requested tweaks for next session...",
+        "submitBtn": "Record Entry →",
+        "submitting": "Inscribing...",
+        "empty": "No appointment formulas or visits registered yet.",
+        "craftsmanLabel": "Craftsman:",
+        "formulaTag": "Formula / Guard Setup:"
+      },
+      "gallery": {
+        "title": "Visual Archives",
+        "subtitle": "Private gallery entries documenting patron transformations",
+        "uploadBtn": "+ Upload Portfolio Photo",
+        "beforeHeader": "Before Service",
+        "afterHeader": "After Service / Result",
+        "emptyBefore": "No prior baseline photos recorded.",
+        "emptyAfter": "No completed work photos uploaded."
+      },
+      "preferences": {
+        "title": "Patron Notes & Sensitivities",
+        "subtitle": "Private records accessible exclusively to studio staff during service prep.",
+        "allergiesLabel": "Allergies, Sensitivities & Contraindications",
+        "allergiesPlaceholder": "e.g. Sensitive scalp, allergy to paraphenylenediamine (PPD), nickel sensitivity",
+        "generalNotesLabel": "Personal Preferences & Hospitality Notes",
+        "generalNotesPlaceholder": "e.g. Prefers sparkling water with lemon; quiet appointment preference; parting on the left.",
+        "saveBtn": "Save Patron Dossier →",
+        "saving": "Preserving...",
+        "successAlert": "Patron file updated successfully."
+      }
+    },
+    "dossierPanel": {
+      "title": "Patron Dossier & Formulas",
+      "lead": "Client preferences, sensitivity histories, chemical formulas, and visual archives.",
+      "searchPlaceholder": "Search patron or phone...",
+      "refresh": "Refresh",
+      "states": {
+        "loading": "Loading patron dossiers...",
+        "noResults": "No patrons match your search.",
+        "empty": "No patron profiles recorded yet."
+      },
+      "errors": {
+        "loadFailed": "Failed to load client ledger"
+      },
+      "card": {
+        "allergyBadge": "⚠️ Allergy",
+        "notePrefix": "Note:",
+        "lastFormulaPrefix": "Last Formula:",
+        "visitsLogged": "{n} visit logged",
+        "visitsLoggedPlural": "{n} visits logged",
+        "viewDossier": "View Dossier →"
+      }
     }
   },
 

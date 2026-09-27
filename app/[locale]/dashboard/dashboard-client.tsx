@@ -13,6 +13,7 @@ import PushToggle from "./push-toggle";
 import ShareLinkCard from "./share-link-card";
 import StatsSection from "./stats-section";
 import StaffEditor from "./staff"; // Team / Specialists Manager
+import PatronsPanel from "./patrons";
 
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
@@ -872,7 +873,6 @@ export default function DashboardClient({ locale, business }: Props) {
           onRefresh={() => refreshStats()}
           onLogout={logout}
         />
-
         {/* TRIAL NOTIFICATION CALLOUT */}
         {biz.subscriptionStatus === "TRIALING" && trialDaysLeft !== null && (
           <section className="flex items-center justify-between rounded-3xl border border-lime-300/80 bg-lime-100 p-5 shadow-xs backdrop-blur-xl">
@@ -902,7 +902,6 @@ export default function DashboardClient({ locale, business }: Props) {
             </button>
           </section>
         )}
-
         {/* PROFILE EDITOR MODAL / PANEL */}
         {editing && (
           <section className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
@@ -1103,14 +1102,12 @@ export default function DashboardClient({ locale, business }: Props) {
             </div>
           </section>
         )}
-
         {/* METRICS & BOOKING STATS */}
         <StatsSection
           messages={messages}
           statsLoading={statsLoading}
           stats={stats}
         />
-
         {/* SHARE DIRECT BOOKING LINK DOCK */}
         <ShareLinkCard
           messages={messages}
@@ -1119,7 +1116,6 @@ export default function DashboardClient({ locale, business }: Props) {
           copied={copied}
           onCopy={copyLink}
         />
-
         {/* PUSH NOTIFICATIONS DOCK */}
         <div className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-sm backdrop-blur-xl sm:p-7">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1137,7 +1133,6 @@ export default function DashboardClient({ locale, business }: Props) {
             </div>
           </div>
         </div>
-
         {/* TEAM & SPECIALISTS MANAGER */}
         <section className="rounded-3xl border border-slate-400/40 bg-white/75 p-6 shadow-xl backdrop-blur-2xl sm:p-8">
           <div className="border-b border-slate-300/70 pb-4">
@@ -1152,7 +1147,8 @@ export default function DashboardClient({ locale, business }: Props) {
             <StaffEditor locale={locale} />
           </div>
         </section>
-
+        {/* PATRON DOSSIER & FORMULAS CRM */}
+        <PatronsPanel locale={locale} /> {/* <-- 2. Render here */}
         {/* TWO-COLUMN INBOX & OPERATIONS SPLIT */}
         <div className="grid gap-8 lg:grid-cols-12">
           {/* Left Column: Inbox & Bookings */}
@@ -1217,10 +1213,8 @@ export default function DashboardClient({ locale, business }: Props) {
             </div>
           </div>
         </div>
-
         {/* GALLERY MANAGER */}
         <BookingGalleryManager locale={locale} />
-
         {/* DESCRIPTION / BIO EDITOR */}
         <BookingDescriptionEditor
           locale={locale}
