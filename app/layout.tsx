@@ -5,6 +5,7 @@ import Script from "next/script";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import SupportWidget from "@/app/components/SupportWidget";
+import Providers from "@/app/providers";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -59,7 +60,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
 
       <body className="min-h-dvh bg-slate-300 font-sans text-slate-900 antialiased selection:bg-lime-200 selection:text-lime-950">
-        {children}
+        <Providers>{children}</Providers>
         {/* Global Floating AI Support Widget */}
         <SupportWidget />
       </body>

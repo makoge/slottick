@@ -14,7 +14,7 @@ function asString(v: unknown) {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => ({} as any));
+    const body = await req.json().catch(() => ({}) as any);
 
     const token = asString(body.token).trim();
     const businessSlug = asString(body.businessSlug).trim();
@@ -27,11 +27,17 @@ export async function POST(req: Request) {
     }
 
     if (!businessSlug) {
-      return NextResponse.json({ error: "Missing businessSlug" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing businessSlug" },
+        { status: 400 },
+      );
     }
 
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      return NextResponse.json({ error: "Rating must be between 1 and 5" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Rating must be between 1 and 5" },
+        { status: 400 },
+      );
     }
 
     const reviewTokenHash = hashToken(token);
@@ -55,34 +61,43 @@ export async function POST(req: Request) {
       },
     });
 
- 
-
     if (!booking) {
-      return NextResponse.json({ error: "Invalid or expired review link" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Invalid or expired review link" },
+        { status: 404 },
+      );
     }
 
-      const endsAt = new Date(
-        new Date(booking.startsAt).getTime() + booking.durationMin * 60_000
-        );
+    const endsAt = new Date(
+      new Date(booking.startsAt).getTime() + booking.durationMin * 60_000,
+    );
 
-  if (Date.now() < endsAt.getTime()) {
-  return NextResponse.json(
-    { error: "You can review only after the appointment is completed." },
-    { status: 403 }
-  );
+    if (Date.now() < endsAt.getTime()) {
+      return NextResponse.json(
+        { error: "You can review only after the appointment is completed." },
+        { status: 403 },
+      );
     }
 
     if (booking.review) {
-      return NextResponse.json({ error: "Review already submitted" }, { status: 409 });
+      return NextResponse.json(
+        { error: "Review already submitted" },
+        { status: 409 },
+      );
     }
-   
 
-    await prisma.review.create({
+    // 1. Assign the created review to a variable
+    const review = await prisma.review.create({
       data: {
         bookingId: booking.id,
         businessId: booking.businessId,
         rating,
         comment,
+      },
+      select: {
+        id: true,
+        rating: true,
+        comment: true,
       },
     });
 
@@ -100,10 +115,17 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ ok: true });
+    // 2. Return reviewId in the JSON response
+    return NextResponse.json({
+      ok: true,
+      reviewId: review.id,
+      rating: review.rating,
+    });
   } catch (err) {
     console.error("POST /api/reviews failed:", err);
-    return NextResponse.json({ error: "Failed to submit review" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to submit review" },
+      { status: 500 },
+    );
   }
 }
-

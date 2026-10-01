@@ -1,3 +1,5 @@
+// app/[locale]/explore/explore-client.tsx (Part 2 Replacement)
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -274,20 +276,28 @@ export default function ExploreClient({
     return key;
   };
 
+  // 1. Initial State Hydration (Including `category` and incoming searchParams)
+  const urlCategory = sp.get("category") || "";
+  const urlQ = sp.get("q") || initialQ;
+  const urlCity = sp.get("city") || initialCity || defaultCity;
+
   const initialIndustryValue = toIndustryKeyOrAll(initialIndustry);
 
-  const [q, setQ] = useState(initialQ);
-  const [city, setCity] = useState(initialCity || defaultCity);
+  const [q, setQ] = useState(
+    urlCategory ? `${urlQ} ${urlCategory}`.trim() : urlQ,
+  );
+  const [city, setCity] = useState(urlCity);
   const [industry, setIndustry] = useState<IndustryKey | "All">(
     initialIndustryValue,
   );
 
-  const [draftQ, setDraftQ] = useState(initialQ);
-  const [draftCity, setDraftCity] = useState(initialCity || defaultCity);
+  const [draftQ, setDraftQ] = useState(q);
+  const [draftCity, setDraftCity] = useState(city);
   const [draftIndustry, setDraftIndustry] = useState<IndustryKey | "All">(
-    initialIndustryValue,
+    industry,
   );
 
+  // Available unique cities for the dropdown
   const cities = useMemo(() => {
     const set = new Set(
       (businesses ?? []).map((b) => b.city).filter((x): x is string => !!x),
@@ -321,6 +331,7 @@ export default function ExploreClient({
     setDraftIndustry(nextIndustry);
   }
 
+  // Sync state to URL without reloading
   useEffect(() => {
     const next = new URLSearchParams(sp.toString());
 
@@ -333,6 +344,9 @@ export default function ExploreClient({
     if (industry !== "All") next.set("industry", industry);
     else next.delete("industry");
 
+    // Clean legacy category param once consumed into query
+    next.delete("category");
+
     const qs = next.toString();
     router.replace(qs ? `/${locale}/explore?${qs}` : `/${locale}/explore`, {
       scroll: false,
@@ -340,11 +354,17 @@ export default function ExploreClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, city, industry, locale]);
 
+  // 2. Resilient Filtering (City case-insensitivity + Neighborhood/Service search)
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
+    const cityFilter = city.trim().toLowerCase();
 
     return (businesses ?? [])
-      .filter((b) => (city ? b.city === city : true))
+      .filter((b) => {
+        if (!cityFilter) return true;
+        const bizCity = String(b.city ?? "").toLowerCase();
+        return bizCity === cityFilter || bizCity.includes(cityFilter);
+      })
       .filter((b) =>
         industry === "All" ? true : String(b.industry ?? "") === industry,
       )
@@ -354,8 +374,12 @@ export default function ExploreClient({
         const ind = String(b.industry ?? "").toLowerCase();
         const city0 = String(b.city ?? "").toLowerCase();
         const country = String(b.country ?? "").toLowerCase();
+        const heroTag = String(b.heroTag ?? "").toLowerCase();
         const serviceNames = (b.services ?? []).map((s) =>
           String(s.name ?? "").toLowerCase(),
+        );
+        const serviceCategories = (b.services ?? []).map((s) =>
+          String(s.category ?? "").toLowerCase(),
         );
 
         return (
@@ -363,17 +387,29 @@ export default function ExploreClient({
           ind.includes(query) ||
           city0.includes(query) ||
           country.includes(query) ||
-          serviceNames.some((x) => x.includes(query))
+          heroTag.includes(query) ||
+          serviceNames.some((x) => x.includes(query)) ||
+          serviceCategories.some((x) => x.includes(query))
         );
       })
       .sort((a, b) => Number(b.ratingAvg ?? 0) - Number(a.ratingAvg ?? 0));
   }, [businesses, q, city, industry]);
 
+  // 3. Fallback: Recommended Nearby if exact filter returns 0
+  const nearbyFallback = useMemo(() => {
+    if (filtered.length > 0) return [];
+    return (businesses ?? []).slice(0, 4);
+  }, [filtered, businesses]);
+
   const insightSource = filtered.length > 0 ? filtered : businesses;
 
   const insightData = useMemo(() => {
     const inCity = city
-      ? insightSource.filter((b) => String(b.city ?? "") === city)
+      ? insightSource.filter((b) =>
+          String(b.city ?? "")
+            .toLowerCase()
+            .includes(city.toLowerCase()),
+        )
       : insightSource;
 
     const source = inCity.length > 0 ? inCity : insightSource;
@@ -444,7 +480,7 @@ export default function ExploreClient({
 
   return (
     <div className="w-full pb-20">
-      {/* 1. TOP HEADER & SEARCH DOCK (Full edge-to-edge breathable section) */}
+      {/* 1. TOP HEADER & SEARCH DOCK */}
       <section className="relative w-full border-b border-slate-400/30 bg-white/40 px-4 py-8 shadow-sm backdrop-blur-2xl sm:px-8 sm:py-12">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -474,7 +510,7 @@ export default function ExploreClient({
             </Link>
           </div>
 
-          {/* GLASS SEARCH INPUTS */}
+          {/* SEARCH DOCK */}
           <div className="mt-8 rounded-3xl border border-slate-400/40 bg-white/70 p-4 shadow-lg backdrop-blur-xl sm:p-5">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-12">
               {/* Query search */}
@@ -494,7 +530,7 @@ export default function ExploreClient({
                 />
               </div>
 
-              {/* City dropdown */}
+              {/* City / Neighborhood dropdown */}
               <div className="sm:col-span-3">
                 <select
                   className="w-full rounded-2xl border border-slate-300/80 bg-white/90 py-3 px-3.5 text-sm font-medium text-slate-900 focus:border-slate-800 focus:bg-white focus:outline-none"
@@ -596,26 +632,58 @@ export default function ExploreClient({
         <div className="flex items-center justify-between pb-4">
           <div className="font-mono text-xs font-bold uppercase tracking-wider text-slate-600">
             {t("explore.results.showing", { n: filtered.length })}
+            {city ? ` • in ${city}` : ""}
           </div>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="rounded-3xl border border-slate-400/40 bg-white/60 p-12 text-center backdrop-blur-xl">
-            <span className="text-4xl">🔎</span>
-            <p className="mt-3 text-base font-semibold text-slate-800">
-              {t("explore.results.empty")}
-            </p>
-            <button
-              onClick={() => {
-                setDraftQ("");
-                setDraftCity("");
-                setDraftIndustry("All");
-                applySearch({ q: "", city: "", industry: "All" });
-              }}
-              className="mt-5 inline-flex rounded-xl border border-lime-300/80 bg-lime-100 px-4 py-2 font-mono text-xs font-bold text-lime-950 hover:bg-lime-200"
-            >
-              Reset Filters
-            </button>
+          <div className="space-y-8">
+            <div className="rounded-3xl border border-slate-400/40 bg-white/60 p-12 text-center backdrop-blur-xl">
+              <span className="text-4xl">📍</span>
+              <p className="mt-3 text-base font-semibold text-slate-800">
+                {t("explore.results.empty")}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                No active appointments in this exact search. Try resetting
+                filters or browsing regional spots below.
+              </p>
+              <button
+                onClick={() => {
+                  setDraftQ("");
+                  setDraftCity("");
+                  setDraftIndustry("All");
+                  applySearch({ q: "", city: "", industry: "All" });
+                }}
+                className="mt-5 inline-flex rounded-xl border border-lime-300/80 bg-lime-100 px-4 py-2 font-mono text-xs font-bold text-lime-950 hover:bg-lime-200"
+              >
+                Reset All Filters
+              </button>
+            </div>
+
+            {/* Smart Fallback: Surrounding Regional Listings */}
+            {nearbyFallback.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-slate-600">
+                  Recommended Spots Across Nearby Neighborhoods
+                </h3>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  {nearbyFallback.map((b) => (
+                    <Link
+                      key={b.slug}
+                      href={`/${locale}/book/${b.slug}`}
+                      className="rounded-2xl border border-slate-300/80 bg-white/80 p-4 shadow-sm transition hover:border-lime-400"
+                    >
+                      <h4 className="font-bold text-slate-900 truncate">
+                        {b.name}
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1">
+                        📍 {b.city || "Featured"}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

@@ -17,6 +17,7 @@ import PatronsPanel from "./patrons";
 
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
+import ReviewsSection from "@/app/components/reviews/review-section";
 
 type Props = {
   locale: string;
@@ -1108,6 +1109,14 @@ export default function DashboardClient({ locale, business }: Props) {
           statsLoading={statsLoading}
           stats={stats}
         />
+        {/* Client Reviews & Social Proof Section */}
+        <section className="mt-10">
+          <ReviewsSection
+            businessName={biz.name}
+            businessSlug={biz.slug}
+            locale={locale}
+          />
+        </section>
         {/* SHARE DIRECT BOOKING LINK DOCK */}
         <ShareLinkCard
           messages={messages}

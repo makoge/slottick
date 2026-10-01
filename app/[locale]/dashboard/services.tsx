@@ -5,6 +5,7 @@ import { Currency, Service, formatMoney } from "@/lib/services";
 import { useMessages } from "@/lib/use-messages";
 import { t } from "@/lib/i18n";
 import { useParams } from "next/navigation";
+import ServiceShareModal from "@/app/components/services/service-share-modal";
 
 const currencyOptions: Currency[] = ["EUR", "USD", "FCFA"];
 type DepositType = "PERCENT" | "AMOUNT";
@@ -116,6 +117,10 @@ export default function ServicesEditor() {
   const [newImages, setNewImages] = useState<string[]>([]);
   const [uploadingNewImage, setUploadingNewImage] = useState(false);
 
+  const [sharingService, setSharingService] =
+    useState<ServiceWithDeposit | null>(null);
+  const [businessSlug, setBusinessSlug] = useState<string>("");
+
   function categoryLabel(cat: ServiceCategory) {
     return t(messages, `services.categories.${cat}`);
   }
@@ -149,6 +154,10 @@ export default function ServicesEditor() {
         setServices([]);
         setError(data.error || t(messages, "services.errors.loadFailed"));
         return;
+      }
+
+      if (data.businessSlug) {
+        setBusinessSlug(data.businessSlug);
       }
 
       const mapped: ServiceWithDeposit[] = Array.isArray(data.services)
@@ -668,14 +677,25 @@ export default function ServicesEditor() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => deleteService(s.id)}
-                    disabled={saving}
-                    className="inline-flex shrink-0 items-center justify-center rounded-xl border border-rose-300/80 bg-rose-50 px-3.5 py-1.5 font-mono text-xs font-semibold text-rose-700 shadow-2xs transition hover:bg-rose-100 active:scale-95 disabled:opacity-50"
-                  >
-                    {t(messages, "services.actions.delete")}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSharingService(s)}
+                      className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-lime-300/80 bg-lime-100 px-3 py-1.5 font-mono text-xs font-bold text-lime-950 shadow-2xs transition hover:bg-lime-200 active:scale-95"
+                    >
+                      <span>📢</span>
+                      <span>Share Card</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => deleteService(s.id)}
+                      disabled={saving}
+                      className="inline-flex shrink-0 items-center justify-center rounded-xl border border-rose-300/80 bg-rose-50 px-3.5 py-1.5 font-mono text-xs font-semibold text-rose-700 shadow-2xs transition hover:bg-rose-100 active:scale-95 disabled:opacity-50"
+                    >
+                      {t(messages, "services.actions.delete")}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Inline Editing Controls */}
@@ -947,6 +967,15 @@ export default function ServicesEditor() {
               </div>
             );
           })
+        )}
+
+        {sharingService && (
+          <ServiceShareModal
+            service={sharingService}
+            businessSlug={businessSlug}
+            locale={locale}
+            onClose={() => setSharingService(null)}
+          />
         )}
       </div>
     </div>
